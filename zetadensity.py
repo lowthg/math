@@ -64,11 +64,13 @@ xvals = np.linspace(0, maxx, npts)
 psivals = [psi(x) for x in xvals]
 phivals = [phi(x) for x in xvals]
 
-plt.rcParams.update({"text.usetex": True})
+#plt.rcParams.update({"text.usetex": True})
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.plot(xvals, phivals, linewidth=1, color='green', label='$\\Phi$')
 ax.plot(xvals, psivals, linewidth=1, color='blue', label='$\\Psi$')
+ax.fill_between(xvals, phivals, facecolor='green', alpha=0.08)
+ax.fill_between(xvals, psivals, facecolor='blue', alpha=0.08)
 plt.subplots_adjust(left=0.05, right=0.97, bottom=0.05, top=0.99, hspace=0, wspace=0)
 ax.legend(loc='upper right')
 ax.set_xlim(0, maxx)
