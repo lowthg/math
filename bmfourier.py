@@ -70,15 +70,19 @@ def main():
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.plot(times, bpath, label='B', linewidth=1, color='black')
+    ax.plot(times, bpath, label='Brownian bridge', linewidth=1, color='black')
     for n in range(1, 10):
-        color = (0.2, 0.2, 1)
-        ax.plot(times, sineseries[n-1], label='s{}'.format(n), linewidth=1, color=color, alpha=0.5)
+        color = 'blue'
+        label = 'sine approximations' if n == 1 else None
+        ax.plot(times, sineseries[n-1], label=label, linewidth=1, color=color, alpha=0.8)
     n = nsines
-    ax.plot(times, sineseries[n-1], label='s{}'.format(n), linewidth=1, color=(1, 0, 0), alpha=1)
-
+    ax.plot(times, sineseries[n-1], label='sine approx., {} terms'.format(n), linewidth=1, color='red', alpha=1)
+    ax.plot([0, 1], [0, 0], linewidth=0.5, color='black')
     ax.set_xlim(0, 1)
-    plt.subplots_adjust(left=0.05, right=0.97, bottom=0.05, top=0.99, hspace=0, wspace=0)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    plt.subplots_adjust(left=0.01, right=0.99, bottom=0.01, top=0.99, hspace=0, wspace=0)
+    ax.legend(loc='lower right')
     plt.show()
 
 
