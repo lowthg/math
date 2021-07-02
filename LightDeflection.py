@@ -123,16 +123,25 @@ if input().lower()[0] == 'y':
     ax.set_aspect(1)
     #plt.subplots_adjust(left=0.01, right=0.99, bottom=0.01, top=0.99, hspace=0, wspace=0)
     plt.show()
-
-print('Show refractive index? [y/n]')
-if input().lower()[0] == 'y':
+else:
     fig = plt.figure()
     ax = fig.add_subplot(111)
+    plt.ylabel('$n(r)$')
+    plt.xlabel('$r$')
     xvals = np.linspace(r1, 60.0, 100)
     yvals = [rho1d(r) for r in xvals]
-    # zvals = [rho1d(r) * r for r in xvals]
     ax.plot(xvals, yvals)
     ax.set_xlim(xvals[0], xvals[-1])
     ax.set_ylim(1, yvals[0])
+#    ax2 = fig.add_subplot(212)
+#    xvals2 = np.linspace(1.001, 20.0, 100)
+#    yvals2 = [rho1d(r) * r for r in xvals2]
+#    ax2.plot(xvals2, yvals2)
+#    ax2.set_xlim(1, xvals2[-1])
+#    ax2.set_ylim(10, yvals2[-1])
+#    plt.ylabel('$n(r)r$')
+#    plt.xlabel('$r$')
+    plt.rcParams.update({"text.usetex": True})
+
     plt.grid()
     plt.show()
