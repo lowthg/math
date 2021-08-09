@@ -35,13 +35,13 @@ for i in range(npaths):
     log0 = math.log(n)
     yvals = [math.log(x) - log0 for x in path]
     xvals = [x for x in range(len(yvals))]
-    ax.plot(xvals, yvals)
+    ax.plot(xvals, yvals, color='tab:blue')
     xmax = max(xmax, len(xvals) - 1)
     ymax = max(ymax, max(yvals))
     ymin = min(ymin, min(yvals))
 
 ax.set_xlim(0, xmax)
 ax.set_ylim(ymin, ymax)
-plt.subplots_adjust(left=0.05, right=0.99, bottom=0.05, top=0.99, hspace=0, wspace=0)
+plt.subplots_adjust(left=0.08, right=0.99, bottom=0.05, top=0.99, hspace=0, wspace=0)
 
 plt.show()
