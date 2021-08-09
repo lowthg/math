@@ -7,7 +7,7 @@ from matplotlib import cm
 
 
 x, y, t = symbols('x y t')
-if False:
+if True:
     p = plot_implicit(Eq(y*y + 3 * x * y - x * x * x + 4 * x, 1), (x, -4.6, 7.8), (y, -6.4, 9.4), adaptive=False,
                       depth=1, points=2000, line_color='grey', show=False, xlabel='$x$', ylabel='$y$')
     p.show()
@@ -226,7 +226,7 @@ if False:  # circle
     ax.scatter([0, x1, z1, x2, z2, x3, z3, x4, z4], [1, y1, a, y2, a, y3, a, y4, a])
     backend.plt.show()
 
-if True:  # sphere projection
+if False:  # sphere projection
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
