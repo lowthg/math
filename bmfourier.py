@@ -21,7 +21,7 @@ nt = 399
 nsines = 100
 np.random.seed(6)
 times = np.linspace(0.0, 1.0, nt+1)
-nrands = nt + nsines+1
+nrands = nt + nsines + 1
 cov = np.zeros(shape=(nrands, nrands))
 
 for i, t in enumerate(times):
