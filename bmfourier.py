@@ -13,78 +13,49 @@ where
 """
 
 import numpy as np
-import math
+from math import pi, sin, exp
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 
 
-def bbcovs(cov, times):
-    ntimes = len(times)
-    for i in range(0, ntimes):
-        t = 1 - times[i]
-        cov[i] = t * times[i]
-        for j in range(0, i):
-            cov[i, j] = cov[j, i] = times[j] * t
+nt = 399
+nsines = 100
+np.random.seed(6)
+times = np.linspace(0.0, 1.0, nt+1)
+nrands = nt + nsines+1
+cov = np.zeros(shape=(nrands, nrands))
 
+for i, t in enumerate(times):
+    cov[i] = t * (1-t)
+    for j in range(0, i):
+        cov[i, j] = cov[j, i] = times[j] * (1-t)
 
-def main():
-    seed = 6
-    ntimes = 400
-    nsines = 100
+# compute c-values
+for n in range(1, nsines + 1):
+    cov[nt + n, nt + n] = c = 2 / (pi * pi * n * n)
+    for i, t in enumerate(times):
+        cov[nt+n, i] = cov[i, nt+n] = c * sin(pi * n * t)
 
-    pi = math.pi
-    sin = math.sin
+rands = np.random.multivariate_normal(np.zeros(shape=(nrands,)), cov)
 
-    np.random.seed(seed)
-    times = np.linspace(0.0, 1.0, ntimes)
+# compute sine series
+sineseries = []
+sinepath = times * 0
+for n in range(1, nsines + 1):
+    sinepath += [sin(pi * n * t) * rands[nt + n] for t in times]
+    sineseries.append(sinepath.copy())
 
-    nrands = ntimes + nsines
-    cov = np.ndarray(shape=(nrands, nrands))
-
-    bbcovs(cov, times)
-
-    # compute c-values
-    c0 = ntimes - 1
-    for n in range(1, nsines + 1):
-        c = pi * n
-        c = 2 / (c*c)
-        cov[c0 + n, c0 + n] = c
-        for m in range(1, n):
-            cov[c0 + m, c0 + n] = cov[c0+n, c0+m] = 0
-        for i in range(0, ntimes):
-            cov[c0+n, i] = cov[i, c0+n] = c * sin(pi * n * times[i])
-
-    rands = np.random.multivariate_normal(np.zeros(shape=(nrands,)), cov)
-
-    # compute Brownian bridge
-    bpath = rands[0:ntimes]
-
-    # compute sign series
-    sineseries = []
-    sinepath = np.zeros(ntimes)
-    for n in range(1, nsines + 1):
-        c = rands[c0 + n]
-        for i in range(0, ntimes):
-            sinepath[i] += c * sin(pi * n * times[i])
-        sineseries.append(sinepath.copy())
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.plot(times, bpath, label='Brownian bridge', linewidth=1, color='black')
-    for n in range(1, 40):
-        color = (0, 0, 1)
-        alpha = 0.8 * math.exp(-(n-1) * 0.1)
-        label = 'sine approximations' if n == 1 else None
-        ax.plot(times, sineseries[n-1], label=label, linewidth=1, color=color, alpha=alpha)
-    n = nsines
-    ax.plot(times, sineseries[n-1], label='sine approx., {} terms'.format(n), linewidth=1, color='red', alpha=1)
-    ax.plot([0, 1], [0, 0], linewidth=0.5, color='black')
-    ax.set_xlim(0, 1)
-    ax.set_xticks([])
-    ax.set_yticks([])
-    plt.subplots_adjust(left=0.01, right=0.99, bottom=0.01, top=0.99, hspace=0, wspace=0)
-    ax.legend(loc='lower right')
-    plt.show()
-
-
-main()
+fig = plt.figure()
+ax = fig.add_subplot(111)
+ax.plot(times, rands[0:nt+1], label='Brownian bridge', linewidth=1, color='black')  # plot bbridge
+for n in range(1, 40):
+    alpha = 0.8 * exp(-(n-1) * 0.1)
+    label = 'sine approximations' if n == 1 else None
+    ax.plot(times, sineseries[n-1], label=label, linewidth=1, color='blue', alpha=alpha)
+ax.plot(times, sineseries[nsines-1], label='sine approx., {} terms'.format(nsines), linewidth=1, color='red')
+ax.plot([0, 1], [0, 0], linewidth=0.5, color='black')
+ax.set_xlim(0, 1)
+ax.set_xticks([])
+ax.set_yticks([])
+plt.subplots_adjust(left=0.01, right=0.99, bottom=0.01, top=0.99, hspace=0, wspace=0)
+ax.legend(loc='lower right')
+plt.show()
