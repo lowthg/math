@@ -17,36 +17,32 @@ from math import pi, sin, exp
 import matplotlib.pyplot as plt
 
 
-nt = 399
+nt = 400
 nsines = 100
 np.random.seed(6)
-times = np.linspace(0.0, 1.0, nt+1)
-nrands = nt + nsines + 1
+times = np.linspace(0.0, 1.0, nt)
+nrands = nt + nsines
 cov = np.zeros(shape=(nrands, nrands))
 
 for i, t in enumerate(times):
-    cov[i] = t * (1-t)
-    for j in range(0, i):
-        cov[i, j] = cov[j, i] = times[j] * (1-t)
+    for j, s in enumerate(times[:i+1]):
+        cov[i, j] = cov[j, i] = s * (1-t)
 
-# compute c-values
-for n in range(1, nsines + 1):
-    cov[nt + n, nt + n] = c = 2 / (pi * pi * n * n)
-    for i, t in enumerate(times):
-        cov[nt+n, i] = cov[i, nt+n] = c * sin(pi * n * t)
+for n in range(nsines):
+    cov[nt + n, nt + n] = c = 2 / (pi * (n+1))**2
+    cov[nt + n, :nt] = cov[:nt, nt+n] = [c * sin(pi*(n+1)*t) for t in times]
 
 rands = np.random.multivariate_normal(np.zeros(shape=(nrands,)), cov)
 
-# compute sine series
 sineseries = []
 sinepath = times * 0
 for n in range(1, nsines + 1):
-    sinepath += [sin(pi * n * t) * rands[nt + n] for t in times]
+    sinepath += [sin(pi * n * t) * rands[nt + n-1] for t in times]
     sineseries.append(sinepath.copy())
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
-ax.plot(times, rands[0:nt+1], label='Brownian bridge', linewidth=1, color='black')  # plot bbridge
+ax.plot(times, rands[0:nt], label='Brownian bridge', linewidth=1, color='black')  # plot bbridge
 for n in range(1, 40):
     alpha = 0.8 * exp(-(n-1) * 0.1)
     label = 'sine approximations' if n == 1 else None
