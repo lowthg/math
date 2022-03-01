@@ -13,7 +13,7 @@ where
 """
 
 import numpy as np
-from math import pi, sin, exp
+from math import pi, exp
 import matplotlib.pyplot as plt
 
 
@@ -25,29 +25,28 @@ nrands = nt + nsines
 cov = np.zeros(shape=(nrands, nrands))
 
 for i, t in enumerate(times):
-    for j, s in enumerate(times[:i+1]):
-        cov[i, j] = cov[j, i] = s * (1-t)
+    cov[i, :i+1] = cov[:i+1, i] = times[:i+1] * (1-t)
 
 for n in range(nsines):
     cov[nt + n, nt + n] = c = 2 / (pi * (n+1))**2
-    cov[nt + n, :nt] = cov[:nt, nt+n] = [c * sin(pi*(n+1)*t) for t in times]
+    cov[nt + n, :nt] = cov[:nt, nt+n] = np.sin(times * pi * (n+1)) * c
 
 rands = np.random.multivariate_normal(np.zeros(shape=(nrands,)), cov)
 
-sineseries = []
-sinepath = times * 0
-for n in range(1, nsines + 1):
-    sinepath += [sin(pi * n * t) * rands[nt + n-1] for t in times]
-    sineseries.append(sinepath.copy())
+series = []
+path = times * 0
+for n in range(nsines):
+    path += np.sin(times * pi * (n+1)) * rands[nt + n]
+    series.append(path.copy())
 
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.plot(times, rands[0:nt], label='Brownian bridge', linewidth=1, color='black')  # plot bbridge
-for n in range(1, 40):
-    alpha = 0.8 * exp(-(n-1) * 0.1)
-    label = 'sine approximations' if n == 1 else None
-    ax.plot(times, sineseries[n-1], label=label, linewidth=1, color='blue', alpha=alpha)
-ax.plot(times, sineseries[nsines-1], label='sine approx., {} terms'.format(nsines), linewidth=1, color='red')
+for n in range(39):
+    alpha = 0.8 * exp(-n * 0.1)
+    label = 'sine approximations' if n == 0 else None
+    ax.plot(times, series[n], label=label, linewidth=1, color='blue', alpha=alpha)
+ax.plot(times, series[nsines-1], label='sine approx., {} terms'.format(nsines), linewidth=1, color='red')
 ax.plot([0, 1], [0, 0], linewidth=0.5, color='black')
 ax.set_xlim(0, 1)
 ax.set_xticks([])
