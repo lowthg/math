@@ -43,7 +43,7 @@ for n in range(39):
     alpha = 0.8 * exp(-n * 0.1)
     label = 'sine approximations' if n == 0 else None
     ax.plot(times, series[n], label=label, linewidth=1, color='blue', alpha=alpha)
-ax.plot(times, series[nsines-1], label='sine approx., {} terms'.format(nsines), linewidth=1, color='red')
+ax.plot(times, series[-1], label='sine approx., {} terms'.format(nsines), linewidth=1, color='red')
 ax.plot([0, 1], [0, 0], linewidth=0.5, color='black')
 ax.set_xlim(0, 1)
 ax.set_xticks([])
