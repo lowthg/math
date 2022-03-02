@@ -13,7 +13,6 @@ where
 """
 
 import numpy as np
-from math import pi, exp
 import matplotlib.pyplot as plt
 
 # compute Brownian bridge and sine series
@@ -28,11 +27,11 @@ for i, t in enumerate(times):
     cov[i, :i+1] = cov[:i+1, i] = times[:i+1] * (1-t)
 
 for n in range(nsines):
-    cov[nt + n, nt + n] = c = 2 / (pi * (n+1))**2
-    cov[nt + n, :nt] = cov[:nt, nt+n] = np.sin(times * pi * (n+1)) * c
+    cov[nt + n, nt + n] = c = 2 / (np.pi * (n+1))**2
+    cov[nt + n, :nt] = cov[:nt, nt+n] = np.sin(times * np.pi * (n+1)) * c
 
 rands = np.random.multivariate_normal(np.zeros(shape=(nrands,)), cov)
-terms = [np.sin(times * pi * (n+1)) * rands[nt + n] for n in range(nsines)]
+terms = [np.sin(times * np.pi * (n+1)) * rands[nt + n] for n in range(nsines)]
 series = np.cumsum(terms, axis=0)
 
 # plot results
@@ -40,7 +39,7 @@ fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.plot(times, rands[0:nt], label='Brownian bridge', linewidth=1, color='black')  # plot bbridge
 for n in range(39):
-    alpha = 0.8 * exp(-n * 0.1)
+    alpha = 0.8 * np.exp(-n * 0.1)
     label = 'sine approximations' if n == 0 else None
     ax.plot(times, series[n], label=label, linewidth=1, color='blue', alpha=alpha)
 ax.plot(times, series[-1], label='sine approx., {} terms'.format(nsines), linewidth=1, color='red')
