@@ -16,7 +16,7 @@ import numpy as np
 from math import pi, exp
 import matplotlib.pyplot as plt
 
-
+# compute Brownian bridge and sine series
 nt = 400
 nsines = 100
 np.random.seed(6)
@@ -32,13 +32,10 @@ for n in range(nsines):
     cov[nt + n, :nt] = cov[:nt, nt+n] = np.sin(times * pi * (n+1)) * c
 
 rands = np.random.multivariate_normal(np.zeros(shape=(nrands,)), cov)
+terms = [np.sin(times * pi * (n+1)) * rands[nt + n] for n in range(nsines)]
+series = np.cumsum(terms, axis=0)
 
-series = []
-path = times * 0
-for n in range(nsines):
-    path += np.sin(times * pi * (n+1)) * rands[nt + n]
-    series.append(path.copy())
-
+# plot results
 fig = plt.figure()
 ax = fig.add_subplot(111)
 ax.plot(times, rands[0:nt], label='Brownian bridge', linewidth=1, color='black')  # plot bbridge
