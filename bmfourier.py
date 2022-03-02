@@ -31,8 +31,7 @@ for n in range(nsines):
     cov[nt + n, :nt] = cov[:nt, nt+n] = np.sin(times * np.pi * (n+1)) * c
 
 rands = np.random.multivariate_normal(np.zeros(shape=(nrands,)), cov)
-terms = [np.sin(times * np.pi * (n+1)) * rands[nt + n] for n in range(nsines)]
-series = np.cumsum(terms, axis=0)
+series = np.cumsum([np.sin(times * np.pi * (n+1)) * rands[nt + n] for n in range(nsines)], axis=0)
 
 # plot results
 fig = plt.figure()
