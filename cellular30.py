@@ -23,8 +23,8 @@ printrow.row = 0
 edgecolor = (255, 255, 255)
 
 case = 4
-# end = 10000000
-end = 1000000000
+end = 10000000
+# end = 1000000000
 #end = 150
 start = end - 150
 
