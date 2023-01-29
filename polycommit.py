@@ -21,7 +21,7 @@ for k in range(1000):
 else:
     raise "Could not find prime p"
 
-for x in range(1000):
+for x in range(1, 1000):
     w = pow(x, (p-1)//N, p)
     a = pow(w, N//2, p)
     if a == p - 1:
@@ -32,6 +32,23 @@ else:
     raise "Could not find w"
 
 print("w = {}".format(hex(w)))
+
+avals = []
+bvals = set()
+bvals.add(1)
+
+for a in range(1, 1000):
+    b = pow(a, N, p)
+    if b not in bvals:
+        bvals.add(b)
+        avals.append(a)
+        if len(avals) >= 100:
+            break
+else:
+    raise Exception("could not find a values")
+
+print(len(avals))
+print(avals)
 
 if False:
     values = [random.randrange(p) for _ in range(N)]
