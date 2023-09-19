@@ -22,7 +22,7 @@ col1 = "blue"
 marker1 = dict(marker='o', markerfacecolor='white', markeredgecolor=col1)
 marker2 = dict(marker='o', markerfacecolor=col1, markeredgecolor=col1)
 
-concentration=True
+concentration = True
 
 if concentration:
     xmax = 1.2
@@ -50,6 +50,8 @@ if concentration:
     ax.set_xticks([0, 1/r7, 1/r5, 1/r3, 2/r6, 1], [0, '$\\frac1{\\sqrt7}$', '$\\frac1{\\sqrt5}$', '$\\frac1{\\sqrt3}$',
                                                    '$\\frac2{\\sqrt6}$', 1])
     ax.set_yticks([0, 7/32, 1/4, 3/8, 29/64, 1/2, 1], [0, '7/32', '1/4', '3/8', '29/64', '1/2', 1])
+
+ax.legend(loc='upper right')
 
 ax.set_xlim(0, xmax)
 ax.set_ylim(0, 1)
