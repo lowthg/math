@@ -55,15 +55,16 @@ if concentration:
     ax.set_yticks([0, 7/32, 1/4, 3/8, 29/64, 1/2, 1], [0, '7/32', '1/4', '3/8', '29/64', '1/2', 1])
     ax.legend(loc='upper right')
 else:
-    xmax = 2
+    xmax = 3/r2
     ax.plot([0, 1], [1, 1], linewidth=2, color=col1, **marker1, clip_on=False, zorder=3)
     ax.plot([0], [1], linewidth=2, color=col1, **marker2, clip_on=False, zorder=3)
     ax.plot([1, r2], [1/2, 1/2], linewidth=2, color=col1, **marker1)
     ax.plot([1], [1/2], linewidth=2, color=col1, **marker2)
     ax.plot([r2, r3], [1/4, 1/4], linewidth=2, color=col1, **marker1)
     ax.plot([r2], [1/4], linewidth=2, color=col1, **marker2)
-    ax.plot([r3, 2], [1/8, 1/8], linewidth=2, color=col1, **marker1, clip_on=False, zorder=3)
-    ax.plot([r3], [1/8], linewidth=2, color=col1, **marker2, zorder=3)
+    ax.plot([r3, 2], [1/8, 1/8], linewidth=2, color=col1, **marker1)
+    ax.plot([r3], [1/8], linewidth=2, color=col1, **marker2)
+    ax.plot([2, 3/r2], [9/128, 9/128], linewidth=2, color=col1, **marker1, clip_on=False, zorder=3)
     ax.plot([2], [9/128], linewidth=2, color=col1, **marker2, clip_on=False, zorder=3)
 
     xvals = np.linspace(0, xmax, 200)
