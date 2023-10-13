@@ -87,7 +87,7 @@ def plot_paths(a, ax, txt=True, adj=True):
     xmax = x + 0.1
     xmin = -0.05
     h = level * math.sqrt(sum([ai*ai for ai in a]))
-    ax.plot([xmin, x], [1, 1], linewidth=lw1, linestyle='dashed', color='black')
+    ax.plot([xmin, xmax], [1, 1], linewidth=lw1, linestyle='dashed', color='black')
 
     ax.set_xticks([])
     ax.set_yticks([])
