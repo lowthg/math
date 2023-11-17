@@ -11,7 +11,7 @@ import scipy.stats as stats
 
 
 # plot results
-# plt.rcParams.update({"text.usetex": True})
+plt.rcParams.update({"text.usetex": True})
 fig = plt.figure()
 ax = fig.add_subplot(111)
 col1 = "grey"
@@ -104,6 +104,16 @@ ax.text(7.1, y2, '$z\'_2$', ha='left', va='top')
 ax.text(7.1, y3, '$z\'_3$', ha='left', va='top')
 ax.text(7.1, y4, '$z\'_4$', ha='left', va='top')
 ax.text(0.5, 1, '$1$', ha='center', va='bottom')
+
+ax.text(3.4, z1+0.16, '$Z_1$', ha='center', va='center')
+ax.text(3.4, z2-0.15, '$Z_2$', ha='center', va='center')
+ax.text(3.4, z3-0.15, '$Z_3$', ha='center', va='center')
+ax.text(3.4, z4-0.15, '$Z_4$', ha='center', va='center')
+ax.text(9, y1+0.06, '$Z\'_1$', ha='center', va='center')
+ax.text(9, y2+0.09, '$Z\'_2$', ha='center', va='center')
+ax.text(9, y3-0.07, '$Z\'_3$', ha='center', va='center')
+ax.text(9, y4+0.09, '$Z\'_4$', ha='center', va='center')
+
 
 ax.plot([7, 7], [z4+h, z1], linewidth=0.5, linestyle='dashed', color='grey')
 ax.text(7, 0, '$N$', ha='center', va='bottom')
