@@ -126,14 +126,41 @@ class DifferentWeight(Scene):
 
 class MonkeyType(Scene):
     def construct(self):
-        ft = Text("THE INFINITE MONKEY THEOREM", font="Courier New", weight=SEMIBOLD, color=BLUE, font_size=30)
-        ft2 = Text("A monkey hitting keys at random, on a typewriter\n"
-                   "keyboard for an infinite amount of time will almost\n"
-                   "surely type any given text, including the complete\n"
-                   "works of William Shakespeare.", font="Courier New", font_size=30, line_spacing=1.2)
+        monkey = ImageMobject("Chimpanzee_seated_at_typewriter.jpg").scale(0.7).to_edge(DR, buff=0.1)
+        ft = Text("THE INFINITE MONKEY THEOREM", font="Courier New", weight=SEMIBOLD, color=BLUE, font_size=30)\
+            .to_edge(UP, buff=1).shift(LEFT).set_opacity(0)
+        bodytext = "\tA monkey hitting keys at random on a\n"\
+                   "typewriter keyboard, for an infinite amount\n"\
+                   "of time, will almost surely type any given\n"\
+                   "text, including the complete\n"\
+                   "works of William Shakespeare."
+        ft2 = Text(bodytext, font="Courier New", font_size=30, line_spacing=1.2).set_opacity(0)
+
+        ias = ft2.text.find('almost')
 
         ft2.next_to(ft, DOWN, buff=0.5)
+
+        self.add(monkey)
+
         self.add(ft, ft2)
+
+        if True:
+            for x in ft:
+                self.wait(0.12)
+                x.set_opacity(1)
+
+            for x in ft2:
+                self.wait(0.12)
+                x.set_opacity(1)
+        else:
+            ft.set_opacity(1)
+            ft2.set_opacity(1)
+
+        self.play(ft2[ias:ias+10].animate.set(color=RED, weight=HEAVY))
+        self.play(ft.animate.set_opacity(0), ft2[:ias].animate.set_opacity(0), ft2[ias+10:].animate.set_opacity(0),
+                  monkey.animate.set_opacity(0), run_time=3)
+        self.play(ft2.animate.set(font_size=100, weight=HEAVY).shift(RIGHT*2))
+        self.wait(1)
 
 
 class MathTeXDemo(Scene):
