@@ -126,8 +126,7 @@ class DifferentWeight(Scene):
 
 class MonkeyType(Scene):
     def construct(self):
-        ft = Text("THE INFINITE MONKEY THEOREM", font="Courier New", weight=SEMIBOLD, color=BLUE, font_size=30).move_to(
-            TOP)
+        ft = Text("THE INFINITE MONKEY THEOREM", font="Courier New", weight=SEMIBOLD, color=BLUE, font_size=30)
         ft2 = Text("A monkey hitting keys at random, on a typewriter\n"
                    "keyboard for an infinite amount of time will almost\n"
                    "surely type any given text, including the complete\n"
