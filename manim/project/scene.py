@@ -155,11 +155,12 @@ class MonkeyType(Scene):
         else:
             ft.set_opacity(1)
             ft2.set_opacity(1)
+            self.wait(1)
 
-        self.play(ft2[ias:ias+10].animate.set(color=RED, weight=HEAVY))
+        self.play(ft2[ias:ias+10].animate.set(color="#E02A20").set_style(stroke_width=1.2))
         self.play(ft.animate.set_opacity(0), ft2[:ias].animate.set_opacity(0), ft2[ias+10:].animate.set_opacity(0),
                   monkey.animate.set_opacity(0), run_time=3)
-        self.play(ft2.animate.set(font_size=100, weight=HEAVY).shift(RIGHT*2))
+        self.play(ft2.animate.set(font_size=100).shift(RIGHT*2.6))
         self.wait(1)
 
 
