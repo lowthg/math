@@ -129,7 +129,7 @@ class MathTeXDemo(Scene):
         rtarrow0 = MathTex(r"\xrightarrow{x^6y^8}", font_size=96)
         rtarrow1 = Tex(r"$\xrightarrow{x^6y^8}$", font_size=96)
 
-        self.add(VGroup(rtarrow0, rtarrow1).arrange(DOWN))
+        self.play(VGroup(rtarrow0, rtarrow1).arrange(DOWN).animate)
 
 
 class AddPackageLatex(Scene):
@@ -142,3 +142,39 @@ class AddPackageLatex(Scene):
             font_size=144,
         )
         self.add(tex)
+
+class LaTeXAttributes(Scene):
+    def construct(self):
+        tex = Tex(r'Hello \LaTeX', color=BLUE, font_size=144)
+        self.add(tex)
+
+
+class LaTeXSubstrings(Scene):
+    def construct(self):
+        tex = Tex('Hello', r'$\bigstar$', r'\LaTeX', font_size=144).move_to(UP)
+        tex2 = MathTex(r'\int_{-\infty}^\infty e^{-\frac12{{x^2}}}\,dx=\sqrt{2\pi}',
+                   font_size=80).next_to(tex, DOWN)
+        tex.set_color_by_tex('igsta', RED)
+        tex2[1].set_color(RED)
+        equation = MathTex(
+            r"e^x = x^0 + x^1 + \frac{1}{2} x^2 + \frac{1}{6} x^3 + \cdots + \frac{1}{n!} x^n + \cdots",
+            substrings_to_isolate="x"
+        ).next_to(tex2, DOWN)
+        equation.set_color_by_tex("x", YELLOW)
+        self.add(tex)
+        self.add(tex2, equation)
+        self.play(tex2[0][2:4].animate.set_color(BLUE))
+        self.wait(2)
+
+
+class IndexLabelsMathTex(Scene):
+    def construct(self):
+        text = MathTex(r"\binom{2n}{n+2}", font_size=96)
+
+        # index the first (and only) term of the MathTex mob
+        self.add(index_labels(text[0]))
+
+        text[0][1:3].set_color(YELLOW)
+        text[0][3:6].set_color(RED)
+        text[0][6].set_color(BLUE)
+        self.add(text)
