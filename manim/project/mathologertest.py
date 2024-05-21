@@ -212,9 +212,20 @@ class Quadratic(Scene):
                   ReplacementTransform(eq2_1.copy()[0], eq10[0][2:7]),
                   ReplacementTransform(eq9[0][2:], eq10[0][7:]))
 
-
-
         self.wait(0.5)
+        eq11 = MathTex(r'x=\frac{-b\pm\sqrt{b^2-4ac}}{2a}')
+        eq11.shift(eq10[0][1].get_center() - eq11[0][1].get_center())
+        #eq11.shift(UP)
+        #self.add(eq11, index_labels(eq10[0]), index_labels(eq11[0]))
+
+        self.play(ReplacementTransform(eq10[0][0:4], eq11[0][0:4]),
+                  ReplacementTransform(eq10[0][7:16], eq11[0][4:13]),
+                  ReplacementTransform(eq10[0][4:7], eq11[0][13:16]),
+                  ReplacementTransform(eq10[0][16:19], eq11[0][13:16]),
+                  FadeOut(eq10[0][19])
+                  )
+
+        self.wait(1)
 
 if __name__ == "__main__":
     Quadratic().construct()
