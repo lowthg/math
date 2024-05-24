@@ -220,6 +220,7 @@ class GeometricMean(Scene):
 
         eq6 = MathTex(r'{{=}}{{\sum_{m=0}^\infty}}\sum_{n=0}^{m-1}{{\mathbb P(N_H = m)}}', font_size=font_size)
         eq6.shift(eq5[1].get_center() - eq6[0].get_center())
+
         self.play(ReplacementTransform(eq5[2], eq6[1]),
                  # ReplacementTransform(eq5[3], eq6[2]),
                   ReplacementTransform(eq5[3][0], eq6[2][0]),
@@ -229,7 +230,7 @@ class GeometricMean(Scene):
         self.wait(0.5)
         eq7 = MathTex(r'{{=}}{{\sum_{n=0}^\infty}}\sum_{m=n+1}^\infty{{\mathbb P(N_H = m)}}', font_size=font_size)
         eq7.shift(eq6[0].get_center() - eq7[0].get_center())
-        self.play(ReplacementTransform(eq6[0], eq7[0]),
+        self.play(ReplacementTransform(eq5[1], eq7[0]),
                   ReplacementTransform(eq6[2][3:], eq7[1][1:]),
                   ReplacementTransform(eq6[2][:3], eq7[1][:1]),
                   ReplacementTransform(eq6[1][:4], eq7[2][:4]),
@@ -298,14 +299,15 @@ class GeometricMean(Scene):
                   FadeOut(eq12[1][5]),
                   run_time=1)
         self.wait(2)
+
         return [eq4, eq13]
 
     def construct(self):
         font_size = 60
 
-        explicit_calc = False
+        explicit_calc = True
         alt_calc = True
-        initial_anim = False
+        initial_anim = True
 
         coins = VGroup(*[get_coin(face) for face in 'TTTTH']).arrange(RIGHT).to_edge(UP)
 
@@ -343,7 +345,6 @@ class GeometricMean(Scene):
                           font_size=font_size).next_to(txt2, DOWN).align_to(txt2, LEFT)
             self.wait(0.5)
             self.play(FadeIn(eq1), run_time=0.5)
-
 
             class label_ctr(Text):
                 def __init__(self, text, font_size):
@@ -427,7 +428,7 @@ class GeometricMean(Scene):
             self.wait(0.5)
             eq8 = MathTex(r'{{\mathbb E[N_H]}}{{=}}\frac1p', font_size=font_size)
             eq8.shift(eq7[2].get_center()-eq8[1].get_center())
-            #eq8.align_to(txt2, LEFT).shift(RIGHT)
+            eq8.align_to(eq7, LEFT)
 
             self.play(ReplacementTransform(eq7[0], eq8[0]),
                       ReplacementTransform(eq7[2], eq8[1]),
