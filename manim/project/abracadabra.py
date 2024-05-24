@@ -456,4 +456,18 @@ class GeometricMean(Scene):
             self.wait(0.5)
 
 
+class MartingaleH(Scene):
+    """
+    Time to get H
+    """
+    def construct(self):
+        wojak = ImageMobject("wojak.png")
+        wojak.pixel_array = np.flip(wojak.pixel_array, 0)
+        ft = Text("THE INFINITE MONKEY THEOREM", font="Courier New", weight=SEMIBOLD, color=BLUE, font_size=30)\
+            .to_edge(UP, buff=1).shift(LEFT).set_opacity(0)
+        self.add(wojak)
 
+        ft.set_opacity(1)
+        self.wait(1)
+
+MartingaleH().construct()
