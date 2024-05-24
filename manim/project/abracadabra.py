@@ -138,23 +138,9 @@ class SequenceH(Scene):
 
 
 class GeometricMean(Scene):
-    def construct(self):
-        font_size = 60
-
-        self.wait(0.1)
-        coins = VGroup(*[get_coin(face) for face in 'TTTTH']).arrange(RIGHT).to_edge(UP)
-        for coin in coins:
-            animate_flip(self, coin)
-
-        txt0 = VGroup(Tex(r'Biased coin with $\mathbb P({\rm H})=p$', font_size=60),
-                      Tex(r'$N_H=$ number of tosses to get H', font_size=60))\
-            .arrange(DOWN, center=False, aligned_edge=LEFT).to_edge(UL).shift(DOWN*1.4)
-
-        self.play(FadeIn(txt0[0]), run_time=1)
-        self.play(FadeIn(txt0[1]), run_time=1)
-
+    def explicit_calc(self, top: VMobject, font_size=60):
         eq1 = MathTex(r'\mathbb P(N_H > n){{=}}\mathbb P({{{\rm first\ }n{\rm\ tosses\ are\ T}}})',
-                      font_size=font_size).next_to(txt0, DOWN, buff=1).align_to(txt0, LEFT)
+                      font_size=font_size).next_to(top, DOWN, buff=1).align_to(top, LEFT)
         self.play(FadeIn(eq1), run_time=0.5)
 
         eq2 = MathTex(r'{{=}}\mathbb P({{1^{\rm st}{\rm\ is\ T}}},{{2^{\rm nd}{\rm\ is\ T}}},\ldots,{{n^{\rm th}{\rm\ is\ T}}})',
@@ -162,7 +148,6 @@ class GeometricMean(Scene):
         eq2.shift(eq1[1].get_center()-eq2[0].get_center())
         self.wait(0.5)
         self.play(ReplacementTransform(eq1[1:3], eq2[0:2]),
-                  #ReplacementTransform(eq1[4], eq2[7]),
                   run_time=0.5)
         self.play(FadeOut(eq1[3:5]),
                   FadeIn(eq2[2:8]),
@@ -224,7 +209,7 @@ class GeometricMean(Scene):
         self.play(FadeOut(txt2), run_time=0.1)
         self.wait(0.5)
 
-        self.play(eq4.animate.next_to(txt0, DOWN).align_to(txt0, LEFT))
+        self.play(eq4.animate.next_to(top, DOWN).align_to(top, LEFT))
 
         self.wait(1)
 
@@ -313,65 +298,161 @@ class GeometricMean(Scene):
                   FadeOut(eq12[1][5]),
                   run_time=1)
         self.wait(2)
+        return [eq4, eq13]
 
-
-class Teaser2(Scene):
     def construct(self):
+        font_size = 60
 
-        Row = 'TTHHHT'
+        explicit_calc = False
+        alt_calc = True
+        initial_anim = False
 
-        RowCoins = [get_coin(face) for face in Row]
+        coins = VGroup(*[get_coin(face) for face in 'TTTTH']).arrange(RIGHT).to_edge(UP)
 
-        RowImg = VGroup(*RowCoins).arrange(RIGHT)
+        if initial_anim:
+            self.wait(0.1)
+            for coin in coins:
+                animate_flip(self, coin)
 
-        for coin in RowImg:
-            animate_flip(self, coin)
+        txt0 = VGroup(Tex(r'Biased coin with $\mathbb P({\rm H})=p$', font_size=font_size),
+                      Tex(r'$N_H=$ number of tosses to get H', font_size=60))\
+            .arrange(DOWN, center=False, aligned_edge=LEFT).to_edge(UL).shift(DOWN*1.4)
 
-        self.wait(0.5)
+        if initial_anim:
+            self.play(FadeIn(txt0[0]), run_time=1)
+            self.play(FadeIn(txt0[1]), run_time=1)
+        else:
+            self.add(coins, txt0)
 
-        return
+        if explicit_calc:
+            explicit_obj = self.explicit_calc(txt0)
+            if alt_calc:
+                self.play(FadeOut(*explicit_obj), run_time=1)
 
-        coin_scale = 2
+        if alt_calc:
+            txt1 = Text(r'Markov/recursive method', color=RED, font_size=font_size).next_to(txt0, DOWN).shift(DOWN)\
+                .move_to(ORIGIN, coor_mask=np.array([1, 0, 0]))
+            self.play(FadeIn(txt1), run_time=0.5)
+            self.wait(1)
+            self.play(FadeOut(txt1), run_time=0.5)
 
-        # VGroup(Tex("takes \emph{longer} than"),Tex("(on average)")).arrange(DOWN)
+            txt2 = Tex(r'$X =$ first coin flip', font_size=font_size).next_to(txt0, DOWN).align_to(txt0, LEFT)
+            self.play(FadeIn(txt2), run_time=0.5)
 
-        HH = VGroup(H.copy(), H.copy()).scale(coin_scale).arrange(RIGHT)
-        HT = VGroup(H.copy(), T.copy()).scale(coin_scale).arrange(RIGHT)
-
-        vs = VGroup(HT, Tex("vs").scale(4), HH).arrange(RIGHT)
-        off_x = 0.5
-        vs[0].shift(off_x * LEFT)
-        vs[2].shift(off_x * RIGHT)
-
-        text = Tex("A Probability Puzzle").scale(2)
-
-        vg = VGroup(vs, text).arrange(DOWN)
-
-        off_y = 0.4
-        vg[0].shift(off_y * UP)
-        vg[1].shift(off_y * DOWN)
+            eq1 = MathTex(r'\mathbb E[N_H]{{=}} 1 + {{\mathbb E[N_H-1\vert X={\rm T}]}}\mathbb P(X={\rm T})',
+                          font_size=font_size).next_to(txt2, DOWN).align_to(txt2, LEFT)
+            self.wait(0.5)
+            self.play(FadeIn(eq1), run_time=0.5)
 
 
-        HH_anim = [animate_flip(HH[i], final='HH'[i], side_H=H.copy().scale(2),
-                                      side_T=T.copy().scale(2)) for i in range(2)]
+            class label_ctr(Text):
+                def __init__(self, text, font_size):
+                    Text.__init__(self, text, font_size=font_size, color=RED)
+            br1 = BraceLabel(eq1[2][0], r'First flip', label_constructor=label_ctr, font_size=40,
+                             brace_config={'color': RED})
+            br2 = BraceLabel(eq1[3][2:6], r'Additional tosses in case first is not H',
+                             label_constructor=label_ctr, font_size=40, brace_config={'color': RED})
 
-        HT_anim = [ animate_flip(HT[i], final='HT'[i], side_H=H.copy().scale(2),
-                                      side_T=T.copy().scale(2)) for i in range(2)]
+            self.play(FadeIn(br1), run_time=0.5)
+            self.wait(1)
+            self.play(FadeOut(br1), run_time=0.5)
+            self.play(FadeIn(br2), run_time=0.5)
+            self.wait(1)
+            self.play(FadeOut(br2), run_time=0.5)
 
-        # Initial coin flipping sequence
-        for i in range(2):
-            for a in HT_anim[i]:
-                self.play(a, run_time=0.2)
+            eq2 = MathTex(r'\mathbb E[N_H-1\vert X={\rm T}]={{\mathbb E[N_H]}}',
+                          font_size=font_size).next_to(eq1, DOWN).align_to(eq1, LEFT)
+            self.play(FadeIn(eq2), run_time=0.5)
 
-        self.play(Write(vs[1]), run_time=0.5)
+            txt3 = Text(r'Markov property!', color=RED, font_size=font_size).next_to(eq2, DOWN, buff=0.5)
+            self.play(FadeIn(txt3), run_time=0.5)
+            self.wait(1)
+            self.play(FadeOut(txt3), run_time=0.5)
 
-        for i in range(2):
-            for a in HH_anim[i]:
-                self.play(a, run_time=0.2)
+            eq3 = eq2[1].copy()
+            self.play(FadeOut(eq1[3]),
+                      eq3.animate.move_to(eq1[3]),
+                      run_time=1)
 
-        # self.play(FadeOut(vs))
-        # self.wait(2)
+            eq4 = MathTex(r'{{=}} 1 + {{\mathbb E[N_H]}}\mathbb P(X={\rm T})',
+                          font_size=font_size)
+            eq4.shift(eq1[1].get_center()-eq4[0].get_center())
 
-        self.play(Write(text), run_time=1)
-        self.wait(3)
-        self.play(*[FadeOut(mob) for mob in [HH, HT, vs[1], text]])
+            self.play(ReplacementTransform(eq1[1:3], eq4[0:2]),
+                      ReplacementTransform(eq3, eq4[2]),
+                      ReplacementTransform(eq1[4], eq4[3]),
+                      FadeOut(eq2),
+                      run_time=1)
+
+            eq5 = MathTex(r'{{=}} 1 + {{\mathbb E[N_H]}}(1-p)',
+                          font_size=font_size)
+            eq5.shift(eq4[0].get_center()-eq5[0].get_center())
+
+            self.play(ReplacementTransform(eq4[0:3], eq5[0:3]),
+                      FadeOut(eq4[3]),
+                      FadeIn(eq5[3]),
+                      run_time=2)
+            self.wait(0.5)
+
+            eq6 = MathTex(r'{{\mathbb E[N_H]}}-{{\mathbb E[N_H]}}{{(1-p)}}={{1}}', font_size=font_size)
+            eq6.shift(eq5[0].get_center()-eq6[4].get_center())
+            eq6.align_to(txt2, LEFT)
+
+            self.play(ReplacementTransform(eq1[0], eq6[0]),
+                      ReplacementTransform(eq5[1][1], eq6[1][0]),
+                      ReplacementTransform(eq5[2:4], eq6[2:4]),
+                      ReplacementTransform(eq5[0], eq6[4]),
+                      ReplacementTransform(eq5[1][0], eq6[-1][0]),
+                      FadeOut(txt2),
+                      run_time=2)
+
+            self.wait(0.5)
+
+            l1 = Line(LEFT * 0.8, RIGHT * 0.8, color=BLUE, stroke_width=10).move_to(eq6[0]).rotate(0.6)
+            l2 = Line(LEFT * 0.4, RIGHT * 0.4, color=BLUE, stroke_width=10).move_to(eq6[3][1]).rotate(0.8)
+            self.play(FadeIn(l1, l2), run_time=0.5)
+            self.wait(0.5)
+            self.play(FadeOut(l1, l2, eq6[0], eq6[3][1]), run_time=1)
+            self.play(FadeOut(eq6[1], eq6[3][2], eq6[3][0], eq6[3][4]), run_time=0.5)
+
+            eq7 = MathTex(r'{{\mathbb E[N_H]}}p{{=}}1', font_size=font_size)
+            eq7.shift(eq6[4].get_center()-eq7[2].get_center())
+            eq7.align_to(txt2, LEFT).shift(RIGHT)
+
+            self.play(ReplacementTransform(eq6[2], eq7[0]),
+                      ReplacementTransform(eq6[3][3], eq7[1]),
+                      ReplacementTransform(eq6[4], eq7[2]),
+                      ReplacementTransform(eq6[5], eq7[3]),
+                      run_time=1)
+            self.wait(0.5)
+            eq8 = MathTex(r'{{\mathbb E[N_H]}}{{=}}\frac1p', font_size=font_size)
+            eq8.shift(eq7[2].get_center()-eq8[1].get_center())
+            #eq8.align_to(txt2, LEFT).shift(RIGHT)
+
+            self.play(ReplacementTransform(eq7[0], eq8[0]),
+                      ReplacementTransform(eq7[2], eq8[1]),
+                      ReplacementTransform(eq7[3][0], eq8[2][0]),
+                      ReplacementTransform(eq7[1][0], eq8[2][2]),
+                      FadeIn(eq8[2][1]),
+                      run_time=2)
+
+
+            self.wait(1)
+
+
+            return
+
+            txt4 = MathTex(r'{{=}}& {{1}}{{\,\mathbb P(X_1={\rm H})}}\\'
+                           r'&+{{(1+\mathbb E[N_H])}}\,\mathbb P(X_1={\rm T})',
+                           font_size=font_size)
+            txt4.shift(txt3[1].get_center() - txt4[0].get_center())
+            txt4_1 = txt4[2].copy()
+            txt4_2 = txt4[5].copy()
+            txt4_1.shift((txt3[3].get_center() - txt4_1.get_center()) * np.array([1, 0, 0]))
+            txt4_2.shift((txt3[6].get_center() - txt4_2.get_center()) * np.array([1, 0, 0]))
+            self.wait(0.5)
+            self.play(FadeOut(txt3[3]), FadeIn(txt4_1), FadeOut(txt3[6]), FadeIn(txt4[5]), run_time=2)
+            self.wait(0.5)
+
+
+
