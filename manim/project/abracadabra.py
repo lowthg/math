@@ -443,7 +443,6 @@ class GeometricMean(Scene):
             return
 
 
-
 class MartingaleH(Scene):
     """
     Time to get H
