@@ -440,34 +440,60 @@ class GeometricMean(Scene):
 
             self.wait(1)
 
-
             return
 
-            txt4 = MathTex(r'{{=}}& {{1}}{{\,\mathbb P(X_1={\rm H})}}\\'
-                           r'&+{{(1+\mathbb E[N_H])}}\,\mathbb P(X_1={\rm T})',
-                           font_size=font_size)
-            txt4.shift(txt3[1].get_center() - txt4[0].get_center())
-            txt4_1 = txt4[2].copy()
-            txt4_2 = txt4[5].copy()
-            txt4_1.shift((txt3[3].get_center() - txt4_1.get_center()) * np.array([1, 0, 0]))
-            txt4_2.shift((txt3[6].get_center() - txt4_2.get_center()) * np.array([1, 0, 0]))
-            self.wait(0.5)
-            self.play(FadeOut(txt3[3]), FadeIn(txt4_1), FadeOut(txt3[6]), FadeIn(txt4[5]), run_time=2)
-            self.wait(0.5)
 
 
 class MartingaleH(Scene):
     """
     Time to get H
     """
-    def construct(self):
-        wojak = ImageMobject("wojak.png")
-        wojak.pixel_array = np.flip(wojak.pixel_array, 0)
-        ft = Text("THE INFINITE MONKEY THEOREM", font="Courier New", weight=SEMIBOLD, color=BLUE, font_size=30)\
-            .to_edge(UP, buff=1).shift(LEFT).set_opacity(0)
-        self.add(wojak)
+    def get_door(self):
+        door_back = ImageMobject('doorway.png', z_index=0).scale(0.6).to_edge(UR)
+        a = door_back.pixel_array.copy()
+        m,n,p = a.shape
+        for i in range(m):
+            for j in range(int(n/2)):
+                a[i, j, 3] = 0
 
-        ft.set_opacity(1)
+        door_front = ImageMobject(a, z_index=3).scale(0.6).to_edge(UR)
+        door_hide=Rectangle(width=1, height=2, fill_opacity=1, fill_color=BLACK, stroke_opacity=0, z_index=2).\
+            next_to(door_front, RIGHT, buff=-0.1)
+        return Group(door_back, door_hide, door_front)
+
+    def construct(self):
+        rules_size = 40
+        rules = VGroup(
+            Tex(r'\underline{Biased Coin Toss Game Rules}', font_size=rules_size),
+            Tex(r'Biased coin probabilities are given up-front: $p_T+p_H=1$.', font_size=rules_size),
+            Tex(r'Before flip: Choose H or T and place your stake', font_size=rules_size),
+            Tex(r'If your choice is incorrect: Receive nothing, losing the stake', font_size=rules_size),
+            Tex(r'If your choice ($X$) is correct: Receive stake multiplied by $1/p_X$', font_size=rules_size),
+        ).arrange(DOWN, center=False, aligned_edge=LEFT).to_edge(UL)
+        rules.shift(rules.get_center() * np.array([-1, 0, 0]))
+
+        for rule in rules:
+            self.play(FadeIn(rule), run_time=0.5)
+            self.wait(1)
         self.wait(1)
 
-MartingaleH().construct()
+        box = SurroundingRectangle(rules, color=RED, corner_radius=0.1)
+        self.play(FadeIn(box), run_time=0.5)
+
+        door = self.get_door()
+        door.to_edge(DR)
+        wojak0 = ImageMobject("wojak.png")
+        wojak = ImageMobject(np.flip(wojak0.pixel_array, 1), z_index=1).scale(0.2).move_to(door[1])
+        wojak.shift(LEFT*3)
+        wojak_pos = wojak.get_center()
+        wojak.align_to(door, RIGHT)
+
+        self.play(FadeIn(door), run_time=1)
+        self.play(wojak.animate.move_to(wojak_pos), run_time=1.5)
+        self.play(FadeOut(door), run_time=1)
+
+        self.wait(1)
+
+
+if __name__ == "__main__":
+    MartingaleH().construct()
