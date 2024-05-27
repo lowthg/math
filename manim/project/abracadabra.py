@@ -566,20 +566,34 @@ class MartingaleH(Scene):
         self.play(wojak.animate.move_to(wojak_pos), run_time=1.5)
         self.play(FadeOut(door), run_time=1)
 
-        t1 = MobjectTable([[Text(r'$0', color=RED)], [Text(r'$0', color=GREEN)]],
+        t1 = MobjectTable([[Text(r'$0', color=RED, font_size=40)], [Text(r'$0', color=GREEN, font_size=40)]],
                    row_labels=[Text('Paid', font_size=40), Text('Won', font_size=40)],
                    include_outer_lines=True)
         t1.to_edge(DR).shift(UP*1.2)
 
-        t2 = MobjectTable([[Text(r'$0')]],
+        t2 = MobjectTable([[Text(r'$0', font_size=40)]],
                    row_labels=[Text('Stake', font_size=40)],
-                   include_outer_lines=True)
+                   include_outer_lines=True,
+                          z_index=1)
         t2.to_edge(DL)
         t2.align_to(t1, UP)
 
         self.play(FadeIn(t1, t2), run_time=2)
 
         self.wait(1)
+
+        coin = ImageMobject('coin.png', z_index=0).scale(0.1).move_to(wojak).shift(LEFT*0.5)
+
+        self.play(coin.animate.move_to(t2[0][1].get_right()), run_time=2)
+        self.play(FadeOut(coin), run_time=0.5)
+
+        eq5 = Text(r'$1', font_size=40)
+        eq5.shift(t2[0][1][0].get_center()-eq5[0].get_center())
+        self.play(Transform(t2[0][1][0], eq5[0]),
+                  FadeOut(t2[0][1][1]),
+                  FadeIn(eq5[1]),
+                  run_time=0.5)
+        t2[0][1] = eq5
 
 
 
