@@ -560,7 +560,9 @@ class MartingaleH(Scene):
         door = self.get_door(z_index=1)
         door.to_edge(DR).shift(UP*1.4)
         wojak0 = ImageMobject("wojak.png")
+        wojak_happy0 = ImageMobject("wojak_happy.png")
         wojak = ImageMobject(np.flip(wojak0.pixel_array, 1), z_index=2).scale(0.2).move_to(door[1])
+        wojak_happy = ImageMobject(np.flip(wojak_happy0.pixel_array, 1), z_index=3).scale(0.2)
         wojak.shift(LEFT*4.5)
         wojak_pos = wojak.get_center()
         wojak.align_to(door, RIGHT)
@@ -616,12 +618,14 @@ class MartingaleH(Scene):
                           FadeIn(eq7[1:]),
                           run_time=0.5)
             else:
+                wojak_happy.move_to(wojak)
+                self.add(wojak_happy)
+                self.remove(wojak)
                 coin2 = coin.copy()
                 coin2.shift(RIGHT*0.3).set_z_index(0)
                 coin_win = Group(coin, coin2)
                 eq8 = Text(r'${}'.format(winnings), font_size=40, color=GREEN)
                 eq8.shift(t1[0][3][0].get_center()-eq8[0].get_center())
-
                 self.play(ReplacementTransform(t2[0][1][0], eq7[0]),
                           FadeOut(t2[0][1][1:]),
                           FadeIn(eq7[1:]),
@@ -655,19 +659,9 @@ class MartingaleH(Scene):
         self.play(FadeOut(eq9_1, eq9_2, eq9[14]),
                   FadeIn(eq10[1:]),
                   run_time=2)
-        return [eq10[1:], eq9[:6], wojak, t1]
+        return [eq10[1:], eq9[:6], wojak_happy, t1]
 
-    def construct(self):
-        if True:
-            box = self.initial_setup()
-        else:
-            box = Rectangle(width=2, height=2).to_edge(UC)
-
-        if False:
-            r = self.play_game(flips='TTTH')
-            self.wait(2)
-            self.play(FadeOut(*r), run_time=2)
-
+    def do_calc(self, box):
         eq_size=50
         txt1 = Tex(r'\underline{General case', font_size=eq_size).to_edge(LEFT).align_to(box, DOWN).shift(RIGHT+DOWN)
         self.play(FadeIn(txt1), run_time=1)
@@ -742,6 +736,22 @@ class MartingaleH(Scene):
                   ReplacementTransform(eq9[0][:3], eq10[2][2:]),
                   run_time=2)
         self.wait(2)
+
+
+    def construct(self):
+        if True:
+            box = self.initial_setup()
+        else:
+            box = Rectangle(width=2, height=2).to_edge(UP)
+
+        if True:
+            r = self.play_game(flips='TTTH')
+            self.wait(2)
+            self.play(FadeOut(*r), run_time=2)
+
+        if True:
+            self.do_calc(box)
+
 
 
 
