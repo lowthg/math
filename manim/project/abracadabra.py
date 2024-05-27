@@ -450,20 +450,20 @@ class MartingaleH(Scene):
     """
     Time to get H
     """
-    def get_door(self):
-        door_back = ImageMobject('doorway.png', z_index=0).scale(0.6).to_edge(UR)
+    def get_door(self, z_index=0):
+        door_back = ImageMobject('doorway.png', z_index=z_index).scale(0.6).to_edge(UR)
         a = door_back.pixel_array.copy()
         m,n,p = a.shape
         for i in range(m):
             for j in range(int(n/2)):
                 a[i, j, 3] = 0
 
-        door_front = ImageMobject(a, z_index=3).scale(0.6).to_edge(UR)
-        door_hide=Rectangle(width=1, height=2, fill_opacity=1, fill_color=BLACK, stroke_opacity=0, z_index=2).\
+        door_front = ImageMobject(a, z_index=z_index+3).scale(0.6).to_edge(UR)
+        door_hide=Rectangle(width=1, height=2, fill_opacity=1, fill_color=BLACK, stroke_opacity=0, z_index=z_index+2).\
             next_to(door_front, RIGHT, buff=-0.1)
         return Group(door_back, door_hide, door_front)
 
-    def construct(self):
+    def initial_setup(self):
         rules_size = 40
         rules = VGroup(
             Tex(r'\underline{Coin Toss Game Rules}', font_size=rules_size),
@@ -554,10 +554,13 @@ class MartingaleH(Scene):
 
         self.play(FadeOut(strat), run_time=1)
 
-        door = self.get_door()
+    def construct(self):
+        #self.initial_setup()
+
+        door = self.get_door(z_index=1)
         door.to_edge(DR).shift(UP*1.4)
         wojak0 = ImageMobject("wojak.png")
-        wojak = ImageMobject(np.flip(wojak0.pixel_array, 1), z_index=1).scale(0.2).move_to(door[1])
+        wojak = ImageMobject(np.flip(wojak0.pixel_array, 1), z_index=2).scale(0.2).move_to(door[1])
         wojak.shift(LEFT*4.5)
         wojak_pos = wojak.get_center()
         wojak.align_to(door, RIGHT)
@@ -572,9 +575,9 @@ class MartingaleH(Scene):
         t1.to_edge(DR).shift(UP*1.2)
 
         t2 = MobjectTable([[Text(r'$0', font_size=40)]],
-                   row_labels=[Text('Stake', font_size=40)],
-                   include_outer_lines=True,
-                          z_index=1)
+                          row_labels=[Text('Stake', font_size=40)],
+                          include_outer_lines=True,
+                          z_index=2)
         t2.to_edge(DL)
         t2.align_to(t1, UP)
 
@@ -582,12 +585,14 @@ class MartingaleH(Scene):
 
         self.wait(1)
 
-        coin = ImageMobject('coin.png', z_index=0).scale(0.1)
+        coin = ImageMobject('coin.png', z_index=1).scale(0.1)
 
-        flips = 'TTTTH'
-        coins = VGroup(*[get_coin(face) for face in flips]).arrange(RIGHT).to_edge(DL)
+        flips = 'TTTH'
+        coins = VGroup(*[get_coin(face) for face in flips]).arrange(RIGHT).to_edge(DL).shift(UP*0.5)
 
         paid = 0
+        winnings = 2
+
         for i, flip in enumerate(flips):
             coin.move_to(wojak).shift(LEFT * 0.3)
             eq5 = Text(r'$1', font_size=40)
@@ -595,23 +600,64 @@ class MartingaleH(Scene):
             paid += 1
             eq6 = Text(r'${}'.format(paid), font_size=40, color=RED)
             eq6.shift(t1[0][1][0].get_center() - eq6[0].get_center())
-            self.play(coin.animate.move_to(t2[0][1:].get_right()), run_time=2)
+            self.play(coin.animate(rate_func=lambda t: t).move_to(t2[0][1:].get_right()), run_time=1)
             self.play(ReplacementTransform(t2[0][1][0], eq5[0]),
                       ReplacementTransform(t1[0][1][0], eq6[0]),
                       FadeOut(t1[0][1][1], t2[0][1][1:], coin),
                       FadeIn(eq5[1:], eq6[1:]),
                       run_time=0.5)
-            t2[0][1] = eq5
             t1[0][1] = eq6
-            animate_flip(self, coins[i])
+            t2[0][1] = eq5
+            coins[i] = animate_flip(self, coins[i])
             eq7 = Text(r'$0', font_size=40)
             eq7.shift(t2[0][1][0].get_center() - eq7[0].get_center())
-            self.play(ReplacementTransform(t1[0][1][0], eq7[0]),
-                      FadeOut(t1[0][1][1:]),
-                      FadeIn(eq7[1:]),
-                      run_time=0.5)
-            t1[0][1] = eq7
+            if flip == 'T':
+                self.play(ReplacementTransform(t2[0][1][0], eq7[0]),
+                          FadeOut(t2[0][1][1:]),
+                          FadeIn(eq7[1:]),
+                          run_time=0.5)
+            else:
+                coin2 = coin.copy()
+                coin2.shift(RIGHT*0.3).set_z_index(0)
+                coin_win = Group(coin, coin2)
+                eq8 = Text(r'${}'.format(winnings), font_size=40, color=GREEN)
+                eq8.shift(t1[0][3][0].get_center()-eq8[0].get_center())
 
+                self.play(ReplacementTransform(t2[0][1][0], eq7[0]),
+                          FadeOut(t2[0][1][1:]),
+                          FadeIn(eq7[1:]),
+                          coin_win.animate(rate_func=linear).move_to(wojak),
+                          run_time=1)
+                self.play(FadeOut(coin_win),
+                          FadeOut(t1[0][3][1:]),
+                          FadeIn(eq8[1:]),
+                          ReplacementTransform(t1[0][3][0], eq8[0]),
+                          run_time=0.8)
+                t1[0][3] = eq8
+
+            t2[0][1] = eq7
+
+        self.wait(1)
+        eq9 = Text(r'Profit = Winnings  - Paid', font_size=60).to_edge(DL).shift(UP*0.8)
+        eq9_1 = Text(r'${}'.format(winnings), font_size=60, color=GREEN).move_to(eq9[6:14])
+        eq9_2 = Text(r'${}'.format(paid), font_size=60, color=RED).move_to(eq9[15:])
+        self.play(FadeOut(coins, t2), run_time=2)
+        self.play(FadeIn(eq9), run_time=1)
+        self.wait(1)
+        self.play(FadeOut(eq9[6:14]),
+                  ReplacementTransform(t1[0][3].copy(), eq9_1),
+                  run_time=2)
+        self.play(FadeOut(eq9[15:]),
+                  ReplacementTransform(t1[0][1].copy(), eq9_2),
+                  run_time=2)
+        self.wait(1)
+        eq10 = Text(r'= -${}'.format(paid-winnings), font_size=60)
+        eq10.shift(eq9[5].get_center()-eq10[0].get_center())
+        self.play(FadeOut(eq9_1, eq9_2, eq9[14]),
+                  FadeIn(eq10[1:]),
+                  run_time=2)
+        self.wait(2)
+        self.play(FadeOut(eq10[1:], eq9[:6], wojak, t1), run_time=2)
 
 
 
