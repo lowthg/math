@@ -1,15 +1,11 @@
 """
-Plots a Brownian motion B(t), using covariances E[B(s)B(t)]=s(1-t) over s <= t
+Plots a Brownian motion B(t), using covariances E[B(s)B(t)]=s over s <= t
 and,
-- sine series B(t) = sum_{n >= 1} s(n) sin(pi n t)
-- cos-sin series B(t) = sum_{n >=1}( c(2n) cos(2 pi n t) + s(2n) sin(2 pi n t) )
+- sine series B(t) = sum_{n >= 1} s(n) sin(pi n t/2)
 where
-- Var(s(n)) = Var(c(n)) = 2/(pi n)^2
-- Cov(s(m),s(n)) = Cov(c(m),c(n)) = 0 for m != n
-- Cov(s(n),B(t)) = sin(pi n t) * 2/(pi n)^2
-- Cov(c(n),B(t)) = cos(pi n t) * 2/(pi n)^2 for n even
-- Cov(s(m),c(n)) = 0 for m+n even
-- Cov(s(m),c(n)) = ( (1/(m-n)-1/(m+n)) * 4 / (pi^3 * m * n) for m+n odd
+- Var(s(n)) = 8/(pi n)^2
+- Cov(s(m),s(n)) = 0 for m != n
+- Cov(s(n),B(t)) = sin(pi n t) * 8/(pi n)^2
 """
 
 import numpy as np
@@ -24,19 +20,19 @@ nrands = nt + nsines
 cov = np.zeros(shape=(nrands, nrands))
 
 for i, t in enumerate(times):
-    cov[i, :i+1] = cov[:i+1, i] = times[:i+1] * (1-t)
+    cov[i, :i+1] = cov[:i+1, i] = times[:i+1]
 
 for i in range(nsines):
-    cov[nt + i, nt + i] = c = 2 / (np.pi * (i+1))**2
-    cov[nt + i, :nt] = cov[:nt, nt+i] = np.sin(times * np.pi * (i+1)) * c
+    cov[nt + i, nt + i] = c = 8 / (np.pi * (i*2+1))**2
+    cov[nt + i, :nt] = cov[:nt, nt+i] = np.sin(times * np.pi * (i+1/2)) * c
 
 rands = np.random.multivariate_normal(np.zeros(shape=(nrands,)), cov)
-series = np.cumsum([np.sin(times * np.pi * (i+1)) * rands[nt + i] for i in range(nsines)], axis=0)
+series = np.cumsum([np.sin(times * np.pi * (i+1/2)) * rands[nt + i] for i in range(nsines)], axis=0)
 
 # plot results
 fig = plt.figure()
 ax = fig.add_subplot(111)
-ax.plot(times, rands[0:nt], label='Brownian bridge', linewidth=1, color='black')  # plot bbridge
+ax.plot(times, rands[0:nt], label='Brownian motion', linewidth=1, color='black')  # plot bbridge
 for i in range(39):
     alpha = 0.8 * np.exp(-i * 0.1)
     label = 'sine approximations' if i == 0 else None

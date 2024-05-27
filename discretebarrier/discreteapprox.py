@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy.stats as stats
 
-
 def is_hit(ntimes, dt, level):
     """
     returns (is hit, prob cts interpolation hits)

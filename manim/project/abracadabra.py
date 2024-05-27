@@ -582,18 +582,35 @@ class MartingaleH(Scene):
 
         self.wait(1)
 
-        coin = ImageMobject('coin.png', z_index=0).scale(0.1).move_to(wojak).shift(LEFT*0.5)
+        coin = ImageMobject('coin.png', z_index=0).scale(0.1)
 
-        self.play(coin.animate.move_to(t2[0][1].get_right()), run_time=2)
-        self.play(FadeOut(coin), run_time=0.5)
+        flips = 'TTTTH'
+        coins = VGroup(*[get_coin(face) for face in flips]).arrange(RIGHT).to_edge(DL)
 
-        eq5 = Text(r'$1', font_size=40)
-        eq5.shift(t2[0][1][0].get_center()-eq5[0].get_center())
-        self.play(Transform(t2[0][1][0], eq5[0]),
-                  FadeOut(t2[0][1][1]),
-                  FadeIn(eq5[1]),
-                  run_time=0.5)
-        t2[0][1] = eq5
+        paid = 0
+        for i, flip in enumerate(flips):
+            coin.move_to(wojak).shift(LEFT * 0.3)
+            eq5 = Text(r'$1', font_size=40)
+            eq5.shift(t2[0][1][0].get_center() - eq5[0].get_center())
+            paid += 1
+            eq6 = Text(r'${}'.format(paid), font_size=40, color=RED)
+            eq6.shift(t1[0][1][0].get_center() - eq6[0].get_center())
+            self.play(coin.animate.move_to(t2[0][1:].get_right()), run_time=2)
+            self.play(ReplacementTransform(t2[0][1][0], eq5[0]),
+                      ReplacementTransform(t1[0][1][0], eq6[0]),
+                      FadeOut(t1[0][1][1], t2[0][1][1:], coin),
+                      FadeIn(eq5[1:], eq6[1:]),
+                      run_time=0.5)
+            t2[0][1] = eq5
+            t1[0][1] = eq6
+            animate_flip(self, coins[i])
+            eq7 = Text(r'$0', font_size=40)
+            eq7.shift(t2[0][1][0].get_center() - eq7[0].get_center())
+            self.play(ReplacementTransform(t1[0][1][0], eq7[0]),
+                      FadeOut(t1[0][1][1:]),
+                      FadeIn(eq7[1:]),
+                      run_time=0.5)
+            t1[0][1] = eq7
 
 
 

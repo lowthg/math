@@ -30,7 +30,7 @@ def f4(x):
     return max(1+x*(1+x/2*(1+x/3)), 0) * math.exp(-x)
 
 def scalef4(n):
-    return math.sqrt(math.sqrt(n))
+    return math.sqrt(math.sqrt(np.longdouble(n)))
 
 def g4(x):
     return math.exp(-x**4/24)
@@ -56,7 +56,7 @@ def update(frame):
     plt.text(0, 1.05, 'n = {}'.format(n), ha='center', va='center')
 
 
-style = 4
+style = 0
 
 if style == 2:
     f = f2
@@ -84,11 +84,43 @@ elif style == 4:
     lprop = {'size': 8}
     frames = list(range(1, 20))
     frames += list(range(20, 40, 4))
-    frames += list(range(40, 60, 10))
-    frames += list(range(100, 150, 20))
+    frames += list(range(40, 80, 10))
+    frames += list(range(80, 150, 15))
     frames += list(range(150, 400, 50))
-    frames += list(range(400, 10000, 200))
-    frames += list(range(10000, 50000, 1000))
+    frames += list(range(400, 5000, 200))
+elif style == 0:
+    def f(x):
+        y = math.fabs(x)
+        if y < 1e-10:
+            return 1.0
+        else:
+            return 1 - math.exp(-1/y*(1+math.sin(2/y)/2))
+
+    def g(x):
+        y = math.fabs(x)
+        if y <= 1:
+            return 1.0
+        else:
+            return 0.0
+
+    def scalef(n):
+        """
+        exp(-n*exp(-1/x * (1+sin(1/x)/2)))
+        exp(-exp(log(n)-log(n)/x * (2+sin(log(n)/x))))
+        """
+        return math.log(n)
+
+    fstr = '$f(x)=1-e^{-(1+\\sin(2/|x|)/2)/|x|}$'
+    scalestr = '$f(x/\\log(n))^n$'
+    gstr = '$I(|x| < 1)$'
+    xrange = [-2, 2]
+    lprop = {'size': 8}
+    frames = list(range(2, 20))
+    frames += list(range(20, 70, 5))
+    frames += list(range(70, 100, 10))
+    frames += list(range(100, 200, 20))
+    frames += list(range(200, 1000, 50))
+    frames += list(range(1000, 2000, 200))
 
 var = 1  # -f(0)/f''(0)
 
@@ -102,7 +134,7 @@ print(len(frames))
 
 ani = animation.FuncAnimation(fig, update, frames=frames, interval=100)
 
-if False:
+if True:
     animation_file = 'functionpowers.gif'
     ani.save(animation_file, writer='pillow')
 else:
