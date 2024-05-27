@@ -12,6 +12,12 @@ H = LabeledDot(Text("H", color=BLACK, font='Helvetica', weight=SEMIBOLD), radius
 T = LabeledDot(Text("T", color=BLACK, font='Helvetica', weight=SEMIBOLD), radius=0.35, color=YELLOW).scale(1.5)
 
 
+class label_ctr(Text):
+    def __init__(self, text, font_size):
+        Text.__init__(self, text, font_size=font_size, color=RED)
+
+def label_ctrMU(text, font_size):
+    return MarkupText(text, font_size=font_size, color=RED)
 
 def get_coin(face='H'):
     global H, T
@@ -346,9 +352,6 @@ class GeometricMean(Scene):
             self.wait(0.5)
             self.play(FadeIn(eq1), run_time=0.5)
 
-            class label_ctr(Text):
-                def __init__(self, text, font_size):
-                    Text.__init__(self, text, font_size=font_size, color=RED)
             br1 = BraceLabel(eq1[2][0], r'First flip', label_constructor=label_ctr, font_size=40,
                              brace_config={'color': RED})
             br2 = BraceLabel(eq1[3][2:6], r'Additional tosses in case first is not H',
@@ -463,11 +466,10 @@ class MartingaleH(Scene):
     def construct(self):
         rules_size = 40
         rules = VGroup(
-            Tex(r'\underline{Biased Coin Toss Game Rules}', font_size=rules_size),
-            Tex(r'Biased coin probabilities are given up-front: $p_T+p_H=1$.', font_size=rules_size),
-            Tex(r'Before flip: Choose H or T and place your stake', font_size=rules_size),
-            Tex(r'If your choice is incorrect: Receive nothing, losing the stake', font_size=rules_size),
-            Tex(r'If your choice ($X$) is correct: Receive stake multiplied by $1/p_X$', font_size=rules_size),
+            Tex(r'\underline{Coin Toss Game Rules}', font_size=rules_size),
+            Tex(r'Before flip: Place your stake', font_size=rules_size),
+            Tex(r'If T comes up: Receive nothing, losing the stake', font_size=rules_size),
+            Tex(r'If H comes up: Receive stake multiplied by $1/p$', font_size=rules_size),
         ).arrange(DOWN, center=False, aligned_edge=LEFT).to_edge(UL)
         rules.shift(rules.get_center() * np.array([-1, 0, 0]))
 
@@ -479,11 +481,84 @@ class MartingaleH(Scene):
         box = SurroundingRectangle(rules, color=RED, corner_radius=0.1)
         self.play(FadeIn(box), run_time=0.5)
 
+        eq1 = MathTex(r'{\rm Expected\ profit} {{=}} -S + \frac{S}{p}\mathbb{P}(H)', font_size=60)
+        eq1.next_to(rules, DOWN, buff=1)
+
+        self.play(FadeIn(eq1), run_time=1)
+        self.wait(1)
+
+        br1 = BraceLabel(eq1[2][:2], r'Initial stake', label_constructor=label_ctr, font_size=40,
+                         brace_config={'color': RED})
+        br2 = BraceLabel(eq1[2][3:6], r'Winnings if H comes up', label_constructor=label_ctr, font_size=40,
+                         brace_config={'color': RED})
+        br3 = BraceLabel(eq1[2][6:], '   Probability of H\n(independent of stake)', label_constructor=label_ctr, font_size=40,
+                         brace_config={'color': RED})
+
+        self.play(FadeIn(br1), run_time=0.5)
+        self.wait(1)
+        self.play(FadeOut(br1), run_time=0.5)
+        self.play(FadeIn(br2), run_time=0.5)
+        self.wait(1)
+        self.play(FadeOut(br2), run_time=0.5)
+        self.play(FadeIn(br3), run_time=0.5)
+        self.wait(1)
+        self.play(FadeOut(br3), run_time=0.5)
+
+        eq2 = MathTex(r'\frac{S}{p}p', font_size=60)
+        eq2.shift(eq1[2][4].get_center() - eq2[0][1].get_center())
+
+        self.wait(1)
+        self.play(FadeOut(eq1[2][6:]), FadeIn(eq2[0][3]), run_time=1)
+        self.wait(1)
+
+        l1 = Line(LEFT*0.4, RIGHT*0.4, color=BLUE, stroke_width=10).move_to(eq1[2][5]).rotate(0.5)
+        l2 = Line(LEFT*0.4, RIGHT*0.4, color=BLUE, stroke_width=10).move_to(eq2[0][3]).rotate(0.5)
+        self.play(FadeIn(l1, l2), run_time=0.5)
+        self.wait(2)
+        self.play(FadeOut(l1, l2, eq1[2][5], eq2), run_time=0.5)
+
+        eq3 = MathTex(r'{{=}}-S+S', font_size=60)
+        eq3.shift(eq1[1].get_center()-eq3[0].get_center())
+        self.play(FadeOut(eq1[2][4]), run_time=0.5)
+        self.play(ReplacementTransform(eq1[2][:4], eq3[1][:4]),
+                  run_time=1)
+
+        l3 = Line(LEFT*0.6, RIGHT*0.6, color=BLUE, stroke_width=10).move_to(eq3[1][1]).rotate(0.8)
+        l4 = Line(LEFT*0.6, RIGHT*0.6, color=BLUE, stroke_width=10).move_to(eq3[1][3]).rotate(0.8)
+        self.play(FadeIn(l3, l4))
+        self.wait(2)
+        self.play(FadeOut(l3, l4, eq3[1][0:2], eq3[1][3]), run_time=0.5)
+        self.wait(1)
+
+        eq4 = MathTex(r'{{=}}0', font_size=60)
+        eq4.shift(eq1[1].get_center()-eq4[0].get_center())
+        self.play(FadeIn(eq4[1]), FadeOut(eq3[1][2]), run_time=1)
+
+        txt1 = Tex(r'$\Rightarrow$\ Fair Game!!!', font_size=60, color=RED).next_to(eq4, RIGHT, buff=0.2)
+        self.play(FadeIn(txt1), run_time=1)
+        self.wait(2)
+        self.play(FadeOut(eq1[0:2], eq4, txt1), run_time=1)
+
+        strat = VGroup(
+            Tex(r'\underline{Strategy}', font_size=rules_size),
+            Tex(r'Stake \$1 before each toss', font_size=rules_size),
+            Tex(r'If T comes up: continue playing', font_size=rules_size),
+            Tex(r'If H comes up: quit the game', font_size=rules_size),
+        ).arrange(DOWN, center=False, aligned_edge=LEFT).next_to(rules, DOWN, buff=1)
+        #rules.shift(rules.get_center() * np.array([-1, 0, 0]))
+
+        for rule in strat:
+            self.play(FadeIn(rule), run_time=0.5)
+            self.wait(1)
+        self.wait(2)
+
+        self.play(FadeOut(strat), run_time=1)
+
         door = self.get_door()
-        door.to_edge(DR)
+        door.to_edge(DR).shift(UP*1.4)
         wojak0 = ImageMobject("wojak.png")
         wojak = ImageMobject(np.flip(wojak0.pixel_array, 1), z_index=1).scale(0.2).move_to(door[1])
-        wojak.shift(LEFT*3)
+        wojak.shift(LEFT*4.5)
         wojak_pos = wojak.get_center()
         wojak.align_to(door, RIGHT)
 
@@ -491,7 +566,22 @@ class MartingaleH(Scene):
         self.play(wojak.animate.move_to(wojak_pos), run_time=1.5)
         self.play(FadeOut(door), run_time=1)
 
+        t1 = MobjectTable([[Text(r'$0', color=RED)], [Text(r'$0', color=GREEN)]],
+                   row_labels=[Text('Paid', font_size=40), Text('Won', font_size=40)],
+                   include_outer_lines=True)
+        t1.to_edge(DR).shift(UP*1.2)
+
+        t2 = MobjectTable([[Text(r'$0')]],
+                   row_labels=[Text('Stake', font_size=40)],
+                   include_outer_lines=True)
+        t2.to_edge(DL)
+        t2.align_to(t1, UP)
+
+        self.play(FadeIn(t1, t2), run_time=2)
+
         self.wait(1)
+
+
 
 
 if __name__ == "__main__":
