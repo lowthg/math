@@ -613,6 +613,7 @@ class MartingaleH(Scene):
             eq7 = Text(r'$0', font_size=40)
             eq7.shift(t2[0][1][0].get_center() - eq7[0].get_center())
             if flip == 'T':
+                self.wait(1)
                 self.play(ReplacementTransform(t2[0][1][0], eq7[0]),
                           FadeOut(t2[0][1][1:]),
                           FadeIn(eq7[1:]),
@@ -621,6 +622,7 @@ class MartingaleH(Scene):
                 wojak_happy.move_to(wojak)
                 self.add(wojak_happy)
                 self.remove(wojak)
+                self.wait(1)
                 coin2 = coin.copy()
                 coin2.shift(RIGHT*0.3).set_z_index(0)
                 coin_win = Group(coin, coin2)
@@ -737,7 +739,6 @@ class MartingaleH(Scene):
                   run_time=2)
         self.wait(2)
 
-
     def construct(self):
         if True:
             box = self.initial_setup()
@@ -753,11 +754,144 @@ class MartingaleH(Scene):
             self.do_calc(box)
 
 
+class Pairs(Scene):
+    def construct(self):
+        tosses = 'TTHTHHTHHH'
+        coins = VGroup(*[get_coin(face).scale(0.8) for face in tosses]).arrange(RIGHT).to_edge(UP)
+        self.add(coins)
+        n = len(tosses) - 1
+        box = None
+        prev_eq = coins
+        eqns = []
+        for i in range(n):
+            new_box = SurroundingRectangle(VGroup(coins[i], coins[i + 1]), color=RED, corner_radius=0.2, stroke_width=6)
+            pair = tosses[i:i+2]
+            eq = MathTex('P_{}={{\\rm {}{} }}'.format(i+1, *pair), font_size=50).next_to(prev_eq, DOWN)
+            if i == 0:
+                box = new_box
+                self.play(FadeIn(box))
+                eq.to_edge(LEFT).next_to(coins, DOWN, coor_mask=UP)
+            else:
+                self.play(box.animate.move_to(new_box), run_time=0.5)
+                eq.next_to(eqns[-1], DOWN).align_to(eqns[-1], LEFT)
+            self.wait(0.4)
+            self.play(FadeIn(eq), run_time=0.4)
+            self.wait(0.4)
+            eqns.append(eq)
+        self.play(FadeOut(box))
 
+        eqs1 = VGroup(
+            MathTex(r'N_{HH}=6', font_size=60),
+            MathTex(r'N^P_{HH}=5', font_size=60),
+            MathTex(r'N_{HT}=4', font_size=60),
+            MathTex(r'N^P_{HT}=3', font_size=60),
+        ).arrange_in_grid(rows=2, buff=(1, 0.5)).next_to(eqns[0], RIGHT, buff=1).next_to(coins, DOWN, coor_mask=UP, buff=1)
 
+        box = SurroundingRectangle(coins[:6], color=RED, corner_radius=0.2, stroke_width=6)
+        self.play(FadeIn(box, eqs1[0]), run_time=0.5)
+        self.wait(1)
+        self.play(FadeOut(box), run_time=0.5)
+        box = SurroundingRectangle(VGroup(*[X[0][-2:] for X in eqns[:5]]), color=RED, corner_radius=0.2, stroke_width=6)
+        self.play(FadeIn(box, eqs1[1]), run_time=0.5)
+        self.wait(1)
+        self.play(FadeOut(box), run_time=0.5)
+        box = SurroundingRectangle(coins[:4], color=RED, corner_radius=0.2, stroke_width=6)
+        self.play(FadeIn(box, eqs1[2]), run_time=0.5)
+        self.wait(1)
+        self.play(FadeOut(box), run_time=0.5)
+        box = SurroundingRectangle(VGroup(*[X[0][-2:] for X in eqns[:3]]), color=RED, corner_radius=0.2, stroke_width=6)
+        self.play(FadeIn(box, eqs1[3]), run_time=0.5)
+        self.wait(1)
+        self.play(FadeOut(box), run_time=0.5)
+        self.wait(1)
+
+        eq2 = MathTex(r'N_{XY}=N^P_{XY}+1', font_size=60).align_to(eqs1, UP+LEFT).shift(RIGHT)
+        self.play(FadeOut(eqs1), FadeIn(eq2), run_time=2)
+
+        eq3 = MathTex(r'\mathbb P(HH){{=}}{{\mathbb P(H)}}{{\mathbb P(H)}}', font_size=60).next_to(eq2, DOWN).align_to(eq2, LEFT)
+        self.wait(1)
+        self.play(FadeIn(eq3), run_time=0.5)
+        eq4 = MathTex(r'={{(1/2)}}{{(1/2)}}', font_size=60)
+        eq4.shift(eq3[1][0].get_center()-eq4[0][0].get_center())
+        self.play(FadeOut(eq3[2][0], eq3[2][2], eq3[3][0], eq3[3][2]),
+                  FadeIn(eq4[1][1:4], eq4[2][1:4]),
+                  ReplacementTransform(eq3[2][1], eq4[1][0]),
+                  ReplacementTransform(eq3[2][3], eq4[1][4]),
+                  ReplacementTransform(eq3[3][1], eq4[2][0]),
+                  ReplacementTransform(eq3[3][3], eq4[2][4]),
+                  run_time=1)
+        self.wait(1)
+        eq5 = MathTex(r'{{\mathbb P(HH)}}={{1/4}}', font_size=60)
+        eq5.shift(eq4[0][0].get_center()-eq5[1][0].get_center())
+        self.play(FadeOut(eq4[1][0], eq4[1][4], eq4[2][0], eq4[2][4]),
+                  ReplacementTransform(eq4[1][1:3], eq5[2][0:2]),
+                  ReplacementTransform(eq4[2][1:3], eq5[2][0:2]),
+                  FadeOut(eq4[1][3], target_position=eq5[2][2]),
+                  FadeOut(eq4[2][3], target_position=eq5[2][2]),
+                  FadeIn(eq5[2][2]),
+                  ReplacementTransform(eq3[0], eq5[0]),
+                  run_time=1)
+        self.wait(1)
+
+        eq6 = MathTex(r'\mathbb E[N_{HH}]{{=}}{{\mathbb E[N^P_{HH}]}}+1', font_size=60).next_to(eq5, DOWN).align_to(eq5, LEFT)
+        self.play(FadeIn(eq6), run_time=1)
+        self.wait(1)
+
+        eq7 = MathTex(r'\approx{{\frac1{\mathbb P(HH)} }}', font_size=60)
+        eq7.shift(eq6[1][0].get_center()-eq7[0][0].get_center())
+        eq7[1].move_to(eq6[2], coor_mask=RIGHT)
+        self.play(FadeOut(eq6[2]),
+                  FadeIn(eq7[1]),
+                  ReplacementTransform(eq6[1][0], eq7[0][0]),
+                  run_time=2)
+        self.wait(1)
+
+        eq8 = MathTex(r'\approx{{\frac1{1/4} }}', font_size=60)
+        eq8.shift(eq7[0][0].get_center()-eq8[0][0].get_center())
+        eq8[1][2:].move_to(eq7[1][2:], coor_mask=RIGHT)
+        self.play(FadeOut(eq7[1][2:]),
+                  ReplacementTransform(eq5[2][:].copy(), eq8[1][2:]),
+                  run_time=2)
+        self.wait(1)
+
+        eq9 = MathTex(r'\approx{{4}}', font_size=60)
+        eq9.shift(eq7[0][0].get_center()-eq9[0][0].get_center())
+        eq9[1].move_to(eq7[1][1], coor_mask=RIGHT)
+        self.play(FadeOut(eq7[1][:2], eq8[1][2:4]),
+                  ReplacementTransform(eq8[1][4], eq9[1][0]),
+                  run_time=2)
+        self.wait(1)
+
+        eq10 = MathTex(r'{{\mathbb E[N_{HH}]}}\approx{{5}}\ ?', font_size=60)
+        eq10.shift(eq7[0][0].get_center()-eq10[1][0].get_center())
+        self.play(FadeOut(eq6[3], target_position=eq10[2]),
+                  FadeOut(eq9[1], target_position=eq10[2]),
+                  FadeIn(eq10[2]),
+                  ReplacementTransform(eq7[0], eq10[1]),
+                  ReplacementTransform(eq6[0], eq10[0]),
+                  run_time=1)
+        self.wait(1)
+        self.play(FadeIn(eq10[3]), run_time=0.5)
+
+        eq11 = MathTex(r'{{\mathbb E[N_{HT}]}}\approx{{5}}\ ?', font_size=60).next_to(eq10, DOWN).align_to(eq10, LEFT)
+        self.play(FadeIn(eq11), run_time=1)
+        self.wait(1)
+
+        box = SurroundingRectangle(VGroup(eqns[0][0][-1], eqns[1][0][-1]), color=RED, corner_radius=0.27, stroke_width=6)
+        box.move_to(eqns[0][0][-2:], coor_mask=RIGHT)
+        box.height *= 1.3
+        box.width *= 0.8
+        box.rotate(-0.5)
+        self.play(FadeIn(box), run_time=0.5)
+        for i in range(1, n-1):
+            self.wait(1)
+            self.play(box.animate.move_to((eqns[i][0][-2:].get_center()+eqns[i+1][0][-2:].get_center())/2), run_time=0.4)
+        self.wait(1)
+        self.play(FadeOut(box), run_time=0.5)
 
 
 
 
 if __name__ == "__main__":
-    MartingaleH().construct()
+#    MartingaleH().construct()
+    print(SequenceH.sequences(10))
