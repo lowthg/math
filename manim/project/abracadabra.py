@@ -889,8 +889,50 @@ class Pairs(Scene):
         self.wait(1)
         self.play(FadeOut(box), run_time=0.5)
 
+        self.wait(1)
 
+        eq12 = MathTex(r'\mathbb P(P_n=P_{n+1}=HT) = 0 {{ < \mathbb P(HT)^2}}', font_size=60) \
+                    .next_to(eq11, DOWN).next_to(eqns[0], RIGHT, coor_mask=RIGHT, buff=1)
+        self.play(FadeIn(eq12[0]), run_time=0.5)
+        self.wait(1)
+        self.play(FadeIn(eq12[1]), run_time=0.5)
+        self.wait(1)
 
+        eq13 = MathTex(r'\mathbb P(P_n=P_{n+1}=HH){{=}}\mathbb P(HHH)^3', font_size=60)\
+            .next_to(eq12, DOWN).align_to(eq12, LEFT)
+        self.play(FadeIn(eq13[0:2], eq13[2][:-1]), run_time=0.5)
+        self.wait(1)
+
+        eq14 = MathTex(r'{{=}}\mathbb P(H)^3', font_size=60)
+        eq14.shift(eq13[1].get_center()-eq14[0].get_center())
+        self.play(ReplacementTransform(eq13[2][:3], eq14[1][:3]),
+                  ReplacementTransform(eq13[2][3], eq14[1][2]),
+                  ReplacementTransform(eq13[2][4], eq14[1][2]),
+                  ReplacementTransform(eq13[2][5], eq14[1][3]),
+                  FadeIn(eq14[1][4], target_mobject=eq13[2][-1]),
+                  run_time=1)
+        self.wait(1)
+
+        eq15 = MathTex(r'{{=}}(1/2)^3', font_size=60)
+        eq15.shift(eq13[1].get_center()-eq15[0].get_center())
+        self.play(ReplacementTransform(eq14[1][1], eq15[1][0]),
+                  ReplacementTransform(eq14[1][3:], eq15[1][4:]),
+                  FadeOut(eq14[1][2], eq14[1][0]),
+                  FadeIn(eq15[1][1:4]),
+                  run_time=1
+                  )
+        self.wait(1)
+
+        eq16 = MathTex(r'{{=}}1/8 {{ > \mathbb P(HH)^2 }}', font_size=60)
+        eq16.shift(eq13[1].get_center()-eq16[0].get_center())
+        self.play(ReplacementTransform(eq15[1][1:3], eq16[1][0:2]),
+                  FadeOut(eq15[1][0], eq15[1][4:]),
+                  FadeOut(eq15[1][3], target_mobject=eq16[1][2]),
+                  FadeIn(eq16[1][2]),
+                  run_time=1)
+        self.wait(1)
+        self.play(FadeIn(eq16[2]), run_time=0.5)
+        self.wait(1)
 
 if __name__ == "__main__":
 #    MartingaleH().construct()
