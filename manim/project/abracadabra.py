@@ -50,11 +50,12 @@ def animate_flip(scene: Scene, coin, rate=0.1, nflips=1):
 
     offset = 1 if final == 'H' else 0  # Ensures the coin lands on the side requested
 
-    scale = coin.radius/H.radius
+    scale = coin.width/H.width
 
     full_fc = [H.copy().move_to(coin.get_center()).scale(scale), T.copy().move_to(coin.get_center()).scale(scale)]
 
     rate_fn = lambda t: 1 - math.cos(math.pi * t * 0.95 / 2)
+    coin = coin.copy()
 
     for i in range(2*nflips):
         scene.play(coin.animate(rate_func=rate_fn, remover=True).stretch(0.0, dim=1), run_time=rate)
@@ -909,7 +910,7 @@ class Pairs(Scene):
                   ReplacementTransform(eq13[2][3], eq14[1][2]),
                   ReplacementTransform(eq13[2][4], eq14[1][2]),
                   ReplacementTransform(eq13[2][5], eq14[1][3]),
-                  FadeIn(eq14[1][4], target_mobject=eq13[2][-1]),
+                  FadeIn(eq14[1][4], target_position=eq13[2][-1]),
                   run_time=1)
         self.wait(1)
 
@@ -927,7 +928,7 @@ class Pairs(Scene):
         eq16.shift(eq13[1].get_center()-eq16[0].get_center())
         self.play(ReplacementTransform(eq15[1][1:3], eq16[1][0:2]),
                   FadeOut(eq15[1][0], eq15[1][4:]),
-                  FadeOut(eq15[1][3], target_mobject=eq16[1][2]),
+                  FadeOut(eq15[1][3], target_position=eq16[1][2]),
                   FadeIn(eq16[1][2]),
                   run_time=1)
         self.wait(1)
@@ -947,6 +948,125 @@ class Pairs(Scene):
         self.play(Transform(eq11[1], eq17[0]), run_time=1)
         self.wait(1)
 
+
+class AdhocHH(Scene):
+    def constructHT(self):
+        seq_HT = ['TTH', 'HHHT']
+        coinsHT = VGroup(*[
+            VGroup(*[get_coin(face).scale(0.6) for face in row]).arrange(RIGHT) for row in seq_HT
+        ]).arrange(DOWN, center=False, aligned_edge=LEFT).to_edge(UL, buff=2)
+
+        coins = []
+        for row in coinsHT:
+            for coin in row:
+                coins.append(animate_flip(self, coin))
+                self.wait(0.5)
+            self.wait(2)
+
+        box = SurroundingRectangle(coinsHT[0], color=RED, stroke_width=5, corner_radius=0.2)
+        self.play(FadeIn(box), run_time=0.5)
+        self.wait(1)
+
+        eq1 = MathTex(r'N_H', font_size=60).next_to(coinsHT[0], RIGHT).next_to(coinsHT, RIGHT, coor_mask=RIGHT).shift(RIGHT*0.2)
+        self.play(FadeIn(eq1), run_time=1)
+        self.wait(1)
+
+        box2 = SurroundingRectangle(coinsHT[1], color=RED, stroke_width=5, corner_radius=0.2)
+        self.play(ReplacementTransform(box, box2), run_time=1)
+        self.wait(1)
+
+        eq2 = MathTex(r'N^\prime\sim N_T', font_size=60).next_to(coinsHT[1], RIGHT).next_to(coinsHT, RIGHT, coor_mask=RIGHT).shift(RIGHT*0.2)
+        self.play(FadeIn(eq2), run_time=1)
+        self.wait(1)
+        self.play(FadeOut(box2), run_time=0.5)
+
+        eq4 = MathTex(r'\mathbb E[N_{HT}]{{=}}\mathbb E[N_H+N^\prime_T]', font_size=60).next_to(coinsHT, DOWN, buff=1).align_to(coinsHT, LEFT)
+        eq3 = MathTex(r'N_{HT} {{=}} N_H+N^\prime_T', font_size=60).next_to(coinsHT, DOWN)
+        eq3.shift(eq4[1].get_center()-eq3[1].get_center())
+        self.play(FadeIn(eq3), run_time=1)
+        self.wait(2)
+        self.play(ReplacementTransform(eq3[0][:], eq4[0][2:5]),
+                  ReplacementTransform(eq3[1], eq4[1]),
+                  ReplacementTransform(eq3[2][:], eq4[2][2:-1]),
+                  run_time=1)
+        self.play(FadeIn(eq4[0][:2], eq4[0][5:], eq4[2][:2], eq4[2][-1:]), run_time=1)
+        self.wait(1)
+
+        eq5 = MathTex(r'{{=}}\mathbb E[N_H] {{+}} \mathbb E[N^\prime_T]', font_size=60)
+        eq5.shift(eq4[1].get_center()-eq5[0].get_center())
+        self.play(ReplacementTransform(eq4[2][:4], eq5[1][:4]),
+                  ReplacementTransform(eq4[2][4], eq5[2][0]),
+                  ReplacementTransform(eq4[2][-4:], eq5[3][-4:]),
+                  run_time=1)
+        self.play(FadeIn(eq5[1][-1], eq5[3][:2]), run_time=1)
+        self.wait(1)
+        self.play(FadeOut(eq5[3][-3]), run_time=0.5)
+        self.wait(2)
+
+        eq6 = MathTex(r'{{=}}2+2', font_size=60)
+        eq6.shift(eq4[1].get_center()-eq6[0].get_center())
+        eq6[1][0].move_to(eq5[1], coor_mask=RIGHT)
+        eq6[1][2].move_to(eq5[3], coor_mask=RIGHT)
+        self.play(FadeOut(eq5[1], eq5[3][:3], eq5[3][-2:]),
+                  FadeIn(eq6[1][0], eq6[1][2]),
+                  run_time=2)
+        self.wait(1)
+
+        eq7 = MathTex(r'\mathbb E[N_{HT}] {{=}} 4', font_size=60)
+        eq7.shift(eq4[1].get_center()-eq7[1].get_center())
+        self.play(ReplacementTransform(eq4[:2], eq7[:2]),
+                  FadeOut(eq6[1][2], target_position=eq7[2]),
+                  FadeOut(eq6[1][0], target_position=eq7[2]),
+                  FadeOut(eq5[2], target_position=eq7[2]),
+                  FadeIn(eq7[2]),
+                  run_time=2)
+
+        self.wait(1)
+        group = Group(*coins, eq1, eq2)
+        self.play(group.animate.to_edge(UL), eq7.animate.next_to(group.copy().to_edge(UL), RIGHT, buff=1.7), run_time=2)
+
+        return Group(*coins, eq7, eq1, eq2)
+
+    def construct(self):
+        self.wait(1)
+        if True:
+            cHT = self.constructHT()
+            self.wait(2)
+        else:
+            cHT = Rectangle(width=1, height=1).to_edge(UL)
+        return
+
+        seq_HH = ['TTHT', 'HT', 'THT', 'HH']
+        coinsHT = VGroup(*[
+            VGroup(*[get_coin(face).scale(0.6) for face in row]).arrange(RIGHT) for row in seq_HH
+        ]).arrange(DOWN, center=False, aligned_edge=LEFT).next_to(cHT, DOWN).align_to(cHT, LEFT)
+        coins = []
+        last_coins = []
+        boxes = []
+        for row in coinsHT:
+            for coin in row[:-1]:
+                coins.append(animate_flip(self, coin))
+                self.wait(0.3)
+            coin = row[-1]
+            boxes.append(SurroundingRectangle(coin, color=RED, corner_radius=0.2, stroke_width=5))
+            self.play(FadeIn(boxes[-1]), run_time=1)
+            self.wait(1)
+            last_coins.append(animate_flip(self, coin))
+            self.wait(1)
+
+        txt = r'N_T+1'
+        eqs = []
+        for row in coinsHT:
+            eqs.append(MathTex(txt, font_size=60).next_to(coinsHT, RIGHT, buff=1).next_to(row, RIGHT, coor_mask=UP))
+            self.play(FadeIn(eqs[-1], run_time=1))
+            txt = r'\sim N_T+1'
+
+        self.wait(1)
+
+        self.wait(2)
+
+
+
 if __name__ == "__main__":
-#    MartingaleH().construct()
-    print(SequenceH.sequences(10))
+    AdhocHH().construct()
+#    print(SequenceH.sequences(10))
