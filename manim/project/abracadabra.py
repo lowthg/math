@@ -933,6 +933,19 @@ class Pairs(Scene):
         self.wait(1)
         self.play(FadeIn(eq16[2]), run_time=0.5)
         self.wait(1)
+        box = SurroundingRectangle(VGroup(eq10, eq11), color=RED, corner_radius=0.2, stroke_width=6)
+        self.play(FadeIn(box), run_time=1)
+        self.wait(1)
+
+        eq17 = MathTex(r'>', font_size=60)
+        eq17.move_to(eq10[1])
+        self.play(Transform(eq10[1], eq17[0]), run_time=1)
+        self.wait(1)
+
+        eq17 = MathTex(r'<', font_size=60)
+        eq17.move_to(eq11[1])
+        self.play(Transform(eq11[1], eq17[0]), run_time=1)
+        self.wait(1)
 
 if __name__ == "__main__":
 #    MartingaleH().construct()
