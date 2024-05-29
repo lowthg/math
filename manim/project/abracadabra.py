@@ -16,6 +16,10 @@ class label_ctr(Text):
     def __init__(self, text, font_size):
         Text.__init__(self, text, font_size=font_size, color=RED)
 
+class mathlabel_ctr(MathTex):
+    def __init__(self, text, font_size):
+        MathTex.__init__(self, text, font_size=font_size)
+
 def label_ctrMU(text, font_size):
     return MarkupText(text, font_size=font_size, color=RED)
 
@@ -1027,23 +1031,15 @@ class AdhocHH(Scene):
 
         return Group(*coins, eq7, eq1, eq2)
 
-    def construct(self):
-        self.wait(1)
-        if True:
-            cHT = self.constructHT()
-            self.wait(2)
-        else:
-            cHT = Rectangle(width=1, height=1).to_edge(UL)
-        return
-
-        seq_HH = ['TTHT', 'HT', 'THT', 'HH']
-        coinsHT = VGroup(*[
+    def constructHH(self, top_obj):
+        seq_HH = ['TTHT', 'HT', 'THH']
+        coinsHH = VGroup(*[
             VGroup(*[get_coin(face).scale(0.6) for face in row]).arrange(RIGHT) for row in seq_HH
-        ]).arrange(DOWN, center=False, aligned_edge=LEFT).next_to(cHT, DOWN).align_to(cHT, LEFT)
+        ]).arrange(DOWN, center=False, aligned_edge=LEFT).next_to(top_obj, DOWN, buff=0.8).align_to(top_obj, LEFT)
         coins = []
         last_coins = []
         boxes = []
-        for row in coinsHT:
+        for row in coinsHH:
             for coin in row[:-1]:
                 coins.append(animate_flip(self, coin))
                 self.wait(0.3)
@@ -1054,19 +1050,170 @@ class AdhocHH(Scene):
             last_coins.append(animate_flip(self, coin))
             self.wait(1)
 
-        txt = r'N_T+1'
+        txt = r'N_H+1'
         eqs = []
-        for row in coinsHT:
-            eqs.append(MathTex(txt, font_size=60).next_to(coinsHT, RIGHT, buff=1).next_to(row, RIGHT, coor_mask=UP))
+        for row in coinsHH:
+            eqs.append(MathTex(txt, font_size=60).next_to(coinsHH, RIGHT, buff=1).next_to(row, RIGHT, coor_mask=UP))
             self.play(FadeIn(eqs[-1], run_time=1))
-            txt = r'\sim N_T+1'
+            txt = r'\sim N_H+1'
 
         self.wait(1)
 
+        x_pos = max([x.get_center()[0] for x in last_coins])
+
+        self.play(*[x.animate.set_x(x_pos) for x in last_coins + boxes],
+                  run_time=2)
+        box = SurroundingRectangle(Group(*last_coins), color=RED, corner_radius=0.2, stroke_width=5)
+        self.play(FadeIn(box), run_time=0.5)
+        self.play(FadeOut(*boxes), run_time=0.5)
+        self.wait(1)
+        br1 = BraceLabel(box, r'M\sim N_H', label_constructor=mathlabel_ctr, font_size=60)
+        self.play(FadeIn(br1))
+        self.wait(1)
+
+        eq1 = MathTex(r'{{N_{HH} }} = {{(N^{(1)}_H+1)}} + \cdots + {{(N^{(M)}_H+1)}}', font_size=60)
+        eq2 = MathTex(r'{{\mathbb E[N_{HH}\vert M] }} = {{\mathbb E[N^{(1)}_H\!+1\vert M]}}'
+                      r'+\cdots + {{\mathbb E[N^{(M)}_H\!\!+1\vert M]}}', font_size=60).next_to(br1.label, DOWN).to_edge(LEFT, buff=0.15)
+        eq1.shift(eq2[1].get_center()-eq1[1].get_center())
+        self.play(FadeIn(eq1), run_time=1)
+        self.wait(1)
+        self.play(ReplacementTransform(eq1[0][:], eq2[0][2:-3]),
+                  ReplacementTransform(eq1[1], eq2[1]),
+                  ReplacementTransform(eq1[2][1:-1], eq2[2][2:-3]),
+                  ReplacementTransform(eq1[3], eq2[3]),
+                  ReplacementTransform(eq1[4][1:-1], eq2[4][2:-3]),
+                  FadeOut(eq1[2][0], eq1[2][-1], eq1[4][0], eq1[4][-1]),
+                  run_time=1)
+        self.play(FadeIn(eq2[0][:2], eq2[0][-3:], eq2[2][:2], eq2[2][-3:], eq2[4][:2], eq2[4][-3:]),
+                  run_time=1)
+        self.wait(0.5)
+        txt1 = Tex(r'$N^{(i)}_H\sim N_H$ independently of $M$', color=RED, font_size=50).next_to(eq2, UP).to_edge(RIGHT)
+        self.play(FadeIn(txt1), run_time=0.5)
+        self.wait(1)
+        self.play(FadeOut(eq2[2][3:6], eq2[4][3:6]), run_time=0.5)
+        self.wait(1)
+
+        eq3 = MathTex(r'\mathbb E[N^{(1)}_H\!+1]', r'\mathbb E[N^{(M)}_H\!\!+1]', font_size=60)
+        eq3[0].shift(eq2[2][-1].get_center()-eq3[0][-1].get_center())
+        eq3[0].shift(eq2[2][0].get_center()-eq3[0][0].get_center())
+        eq3[1].shift(eq2[4][-1].get_center()-eq3[1][-1].get_center()).align_to(eq2[4], LEFT)
+        self.play(FadeOut(eq2[2][-3:-1], eq2[4][-3:-1]),
+                  Transform(eq2[2][-1], eq3[0][-1]),
+                  Transform(eq2[4][-1], eq3[1][-1]),
+                  run_time=1)
+        self.wait(1)
+
+        eq4 = MathTex(r'{{=}}\mathbb E[N_H+1]M', font_size=60)
+        eq4.shift(eq2[1].get_center()-eq4[0].get_center())
+        self.play(ReplacementTransform(eq2[2][:3], eq4[1][:3]),
+                  ReplacementTransform(eq2[2][6:9], eq4[1][3:6]),
+                  ReplacementTransform(eq2[2][-1], eq4[1][-2]),
+                  FadeOut(eq2[3], target_position=eq4[1][:-1]),
+                  ReplacementTransform(eq2[4][:3], eq4[1][:3]),
+                  ReplacementTransform(eq2[4][6:9], eq4[1][3:6]),
+                  ReplacementTransform(eq2[4][-1], eq4[1][-2]),
+                  FadeIn(eq4[1][-1]),
+                  run_time=2)
+        self.play(FadeOut(txt1), run_time=0.5)
+        self.wait(1)
+
+        eq5 = MathTex(r'\mathbb E[\mathbb E[N_{HH}\vert M]] {{=}} \mathbb E[\mathbb E[N_H+1]M]', font_size=60)
+        eq5.shift(eq2[1].get_center()-eq5[1].get_center()).align_to(eq2, LEFT)
+        self.play(ReplacementTransform(eq2[0][:], eq5[0][2:-1]),
+                  ReplacementTransform(eq2[1], eq5[1]),
+                  ReplacementTransform(eq4[1][:], eq5[2][2:-1]),
+                  run_time=1)
+        self.play(FadeIn(eq5[0][:2], eq5[0][-1], eq5[2][:2], eq5[2][-1]), run_time=1)
+        self.wait(1)
+
+        eq6 = MathTex(r'\mathbb E[N_{HH}] {{=}} \mathbb E[N_H+1]\mathbb E[M]', font_size=60)
+        eq6.shift(eq5[0][2].get_center()-eq6[0][0].get_center())
+        self.play(ReplacementTransform(eq5[0][2:7], eq6[0][:5]),
+                  ReplacementTransform(eq5[0][-1], eq6[0][-1]),
+                  ReplacementTransform(eq5[0][-2], eq6[0][-1]),
+                  ReplacementTransform(eq5[0][:2], eq6[0][:2]),
+                  FadeOut(eq5[0][-4:-2]),
+                  run_time=2)
+        shift = eq5[1].get_center()-eq6[1].get_center()
+        self.play(eq6[0].animate.shift(shift), run_time=1)
+        eq6[1:].shift(shift)
+        self.wait(1)
+        self.play(ReplacementTransform(eq5[1], eq6[1]),
+                  ReplacementTransform(eq5[2][2:9], eq6[2][:7]),
+                  ReplacementTransform(eq5[2][:2], eq6[2][-4:-2]),
+                  ReplacementTransform(eq5[2][-2:], eq6[2][-2:]),
+                  run_time=2)
+        self.wait(1)
+
+        eq7 = MathTex(r'\mathbb E[N_H]', font_size=60)
+        eq7.shift(eq6[2][-3].get_center()-eq7[0][1].get_center())
+        self.play(FadeOut(eq6[2][-2]),
+                  FadeIn(eq7[0][2:4]),
+                  ReplacementTransform(eq6[2][-1], eq7[0][-1]),
+                  run_time=2)
+
+        eq8 = MathTex(r'{{=}}(\mathbb E[N_H]+1)\mathbb E[N_H]', font_size=60)
+        eq8.shift(eq6[1].get_center()-eq8[0].get_center())
+        self.wait(1)
+        self.play(ReplacementTransform(eq6[2][:4], eq8[1][1:5]),
+                  ReplacementTransform(eq6[2][6], eq8[1][5]),
+                  ReplacementTransform(eq6[2][4:6], eq8[1][6:8]),
+                  ReplacementTransform(eq6[2][-4:-2], eq8[1][-5:-3]),
+                  ReplacementTransform(eq7[0][-3:], eq8[1][-3:]),
+                  FadeIn(eq8[1][0], eq8[1][8]),
+                  run_time=2)
         self.wait(2)
 
+        eq9 = MathTex(r'{{=}} 2 + 2', font_size=60)
+        eq9.shift(eq6[1].get_center()-eq9[0].get_center())
+        eq9[1][0].move_to(eq8[1][1:6], coor_mask=RIGHT)
+        eq9[1][2].move_to(eq8[1][-5:], coor_mask=RIGHT)
+
+        self.play(FadeOut(eq8[1][1:6], eq8[1][-5:]),
+                  FadeIn(eq9[1][0], eq9[1][2]),
+                  run_time=2)
+        self.wait(1)
+
+        eq10 = MathTex(r'{{=}}3', font_size=60)
+        eq10.shift(eq6[1].get_center()-eq10[0].get_center()).move_to(eq8[1][:9], coor_mask=RIGHT)
+        self.play(FadeOut(eq9[1][0], target_position=eq10[1]),
+                  FadeOut(eq8[1][6:8], target_position=eq10[1]),
+                  FadeIn(eq10[1]),
+                  run_time=2)
+        self.wait(1)
+
+        eq11 = MathTex(r'\mathbb E[N_{HH}]{{=}}6', font_size=60)
+        eq11.shift(eq6[1].get_center()-eq11[1].get_center())
+        self.play(ReplacementTransform(eq6[:2], eq11[:2]),
+                  FadeIn(eq11[2]),
+                  FadeOut(eq8[1][0], eq8[1][8]),
+                  FadeOut(eq10[1], target_position=eq11[2]),
+                  FadeOut(eq9[1][2], target_position=eq11[2]),
+                  run_time=2)
+
+        self.wait(2)
+
+        group = Group(*coins, *last_coins, box, *eqs, br1)
+        g2 = group.copy().to_edge(LEFT)
+        self.play(group.animate.to_edge(LEFT),
+                  eq11.animate.next_to(eqs[1], RIGHT, buff=1),
+                  run_time=2)
+
+
+    def construct(self):
+        self.wait(1)
+        if True:
+            cHT = self.constructHT()
+            self.wait(2)
+        else:
+            cHT = Point().to_edge(UL, buff=2)
+
+        self.constructHH(cHT)
+
+        self.wait(1)
 
 
 if __name__ == "__main__":
-    AdhocHH().construct()
+    with tempconfig({"quality": "low_quality", "preview": True}):
+        AdhocHH().render()
 #    print(SequenceH.sequences(10))
