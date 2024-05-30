@@ -584,7 +584,7 @@ class MartingaleH(Scene):
         t2 = MobjectTable([[Text(r'$0', font_size=40)]],
                           row_labels=[Text('Stake', font_size=40)],
                           include_outer_lines=True,
-                          z_index=2)
+                          z_index=2, fill_color=BLACK, fill_opacity=1)
         t2.to_edge(DL)
         t2.align_to(t1, UP)
 
@@ -624,10 +624,10 @@ class MartingaleH(Scene):
                           FadeIn(eq7[1:]),
                           run_time=0.5)
             else:
+                self.wait(1)
                 wojak_happy.move_to(wojak)
                 self.add(wojak_happy)
                 self.remove(wojak)
-                self.wait(1)
                 coin2 = coin.copy()
                 coin2.shift(RIGHT*0.3).set_z_index(0)
                 coin_win = Group(coin, coin2)
@@ -955,17 +955,26 @@ class Pairs(Scene):
 
 class AdhocHH(Scene):
     def constructHT(self):
+        title = MarkupText(r'<span underline="single">Expected tosses to get HT</span>', color=RED, font_size=40)\
+            .move_to(ORIGIN).to_edge(UP, buff=1.5)
+        self.play(FadeIn(title), run_time=1)
+
         seq_HT = ['TTH', 'HHHT']
         coinsHT = VGroup(*[
             VGroup(*[get_coin(face).scale(0.6) for face in row]).arrange(RIGHT) for row in seq_HT
-        ]).arrange(DOWN, center=False, aligned_edge=LEFT).to_edge(UL, buff=2)
+        ]).arrange(DOWN, center=False, aligned_edge=LEFT).next_to(title, DOWN, buff=1).to_edge(LEFT, buff=1.5)
 
         coins = []
-        for row in coinsHT:
+        explanations = ['wait for first H...', '...wait for next T']
+        for i, row in enumerate(coinsHT):
+            txt = Text(explanations[i], font_size=40, color=RED).next_to(row, RIGHT)\
+                .next_to(coinsHT, RIGHT, buff=1, coor_mask=RIGHT)
+            self.play(FadeIn(txt), run_time=1)
             for coin in row:
                 coins.append(animate_flip(self, coin))
                 self.wait(0.5)
-            self.wait(2)
+            self.wait(1)
+            self.play(FadeOut(txt), run_time=0.5)
 
         box = SurroundingRectangle(coinsHT[0], color=RED, stroke_width=5, corner_radius=0.2)
         self.play(FadeIn(box), run_time=0.5)
@@ -979,7 +988,7 @@ class AdhocHH(Scene):
         self.play(ReplacementTransform(box, box2), run_time=1)
         self.wait(1)
 
-        eq2 = MathTex(r'N^\prime\sim N_T', font_size=60).next_to(coinsHT[1], RIGHT).next_to(coinsHT, RIGHT, coor_mask=RIGHT).shift(RIGHT*0.2)
+        eq2 = MathTex(r'N^\prime_T\sim N_T', font_size=60).next_to(coinsHT[1], RIGHT).next_to(coinsHT, RIGHT, coor_mask=RIGHT).shift(RIGHT*0.2)
         self.play(FadeIn(eq2), run_time=1)
         self.wait(1)
         self.play(FadeOut(box2), run_time=0.5)
@@ -1027,28 +1036,40 @@ class AdhocHH(Scene):
 
         self.wait(1)
         group = Group(*coins, eq1, eq2)
-        self.play(group.animate.to_edge(UL), eq7.animate.next_to(group.copy().to_edge(UL), RIGHT, buff=1.7), run_time=2)
+        self.play(group.animate.to_edge(UL).shift(RIGHT),
+                  eq7.animate.next_to(group.copy().to_edge(UL), RIGHT, buff=1.7),
+                  FadeOut(title),
+                  run_time=2)
 
         return Group(*coins, eq7, eq1, eq2)
 
     def constructHH(self, top_obj):
+        title = MarkupText(r'<span underline="single">Expected tosses to get HH</span>', color=RED, font_size=40)\
+            .move_to(ORIGIN).next_to(top_obj, DOWN)
+        self.play(FadeIn(title), run_time=1)
+
         seq_HH = ['TTHT', 'HT', 'THH']
         coinsHH = VGroup(*[
             VGroup(*[get_coin(face).scale(0.6) for face in row]).arrange(RIGHT) for row in seq_HH
-        ]).arrange(DOWN, center=False, aligned_edge=LEFT).next_to(top_obj, DOWN, buff=0.8).align_to(top_obj, LEFT)
+        ]).arrange(DOWN, center=False, aligned_edge=LEFT).next_to(title, DOWN).align_to(top_obj, LEFT)
         coins = []
         last_coins = []
         boxes = []
         for row in coinsHH:
+            txt = Text('wait for next H...plus one more toss', font_size=40, color=RED).next_to(row, RIGHT)\
+                .next_to(coinsHH, RIGHT, buff=1, coor_mask=RIGHT)
+            self.play(FadeIn(txt[:12]), run_time=0.5)
             for coin in row[:-1]:
                 coins.append(animate_flip(self, coin))
                 self.wait(0.3)
+            self.play(FadeIn(txt[12:]), run_time=0.5)
             coin = row[-1]
             boxes.append(SurroundingRectangle(coin, color=RED, corner_radius=0.2, stroke_width=5))
             self.play(FadeIn(boxes[-1]), run_time=1)
             self.wait(1)
             last_coins.append(animate_flip(self, coin))
             self.wait(1)
+            self.play(FadeOut(txt), run_time=0.5)
 
         txt = r'N_H+1'
         eqs = []
@@ -1068,6 +1089,7 @@ class AdhocHH(Scene):
         self.play(FadeOut(*boxes), run_time=0.5)
         self.wait(1)
         br1 = BraceLabel(box, r'M\sim N_H', label_constructor=mathlabel_ctr, font_size=60)
+        br1.label.shift(UP*0.1)
         self.play(FadeIn(br1))
         self.wait(1)
 
@@ -1196,7 +1218,8 @@ class AdhocHH(Scene):
         group = Group(*coins, *last_coins, box, *eqs, br1)
         g2 = group.copy().to_edge(LEFT)
         self.play(group.animate.to_edge(LEFT),
-                  eq11.animate.next_to(eqs[1], RIGHT, buff=1),
+                  eq11.animate.next_to(eqs[1], RIGHT, buff=0.1),
+                  FadeOut(title),
                   run_time=2)
 
 
@@ -1208,9 +1231,35 @@ class AdhocHH(Scene):
         else:
             cHT = Point().to_edge(UL, buff=2)
 
-        self.constructHH(cHT)
+        if True:
+            self.constructHH(cHT)
 
         self.wait(1)
+
+
+class Abra(Scene):
+    def construct(self):
+        wojak = ImageMobject("wojak.png").scale(0.12)
+        #wojak_happy0 = ImageMobject("wojak_happy.png")
+
+        nw = 21
+
+        wojaks = Group(*[wojak.copy() for _ in range(nw)]).arrange(RIGHT, buff=0.1).to_edge(LEFT, buff=0)
+        wojak_space: np.ndarray = (wojaks[-1].get_center()-wojaks[0].get_center())/(nw-1)
+        wojaks.shift(wojak_space)
+
+        r = Rectangle(width=wojak_space[0], height=wojak_space[0], stroke_opacity=0)
+
+        self.add(wojaks)
+
+        t2 = MobjectTable([[r.copy() for i in range(nw)], [r.copy() for i in range(nw)]],
+                          row_labels=[Text('won', font_size=20), Text('paid', font_size=20)],
+                          include_outer_lines=True,
+                          z_index=2, h_buff=0, v_buff=0)
+
+        t2.next_to(wojaks, UP).align_to(wojaks, LEFT).shift(LEFT * t2.row_labels[0].width)
+
+        self.add(t2)
 
 
 if __name__ == "__main__":
