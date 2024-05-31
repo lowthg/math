@@ -1031,7 +1031,7 @@ class AdhocHH(Scene):
                   FadeOut(eq6[1][2], target_position=eq7[2]),
                   FadeOut(eq6[1][0], target_position=eq7[2]),
                   FadeOut(eq5[2], target_position=eq7[2]),
-                  FadeIn(eq7[2]),
+                  FadeIn(eq7[2], target_position=eq6[1][0]),
                   run_time=2)
 
         self.wait(1)
@@ -1055,14 +1055,16 @@ class AdhocHH(Scene):
         coins = []
         last_coins = []
         boxes = []
+        txt0 = r'wait for first H'
+        n_txt = 13
         for row in coinsHH:
-            txt = Text('wait for next H...plus one more toss', font_size=40, color=RED).next_to(row, RIGHT)\
+            txt = Text(txt0 + '...plus one more toss', font_size=40, color=RED).next_to(row, RIGHT)\
                 .next_to(coinsHH, RIGHT, buff=1, coor_mask=RIGHT)
-            self.play(FadeIn(txt[:12]), run_time=0.5)
+            self.play(FadeIn(txt[:n_txt]), run_time=0.5)
             for coin in row[:-1]:
                 coins.append(animate_flip(self, coin))
                 self.wait(0.3)
-            self.play(FadeIn(txt[12:]), run_time=0.5)
+            self.play(FadeIn(txt[n_txt:]), run_time=0.5)
             coin = row[-1]
             boxes.append(SurroundingRectangle(coin, color=RED, corner_radius=0.2, stroke_width=5))
             self.play(FadeIn(boxes[-1]), run_time=1)
@@ -1070,6 +1072,8 @@ class AdhocHH(Scene):
             last_coins.append(animate_flip(self, coin))
             self.wait(1)
             self.play(FadeOut(txt), run_time=0.5)
+            txt0 = 'wait for next H'
+            n_txt = 12
 
         txt = r'N_H+1'
         eqs = []
@@ -1141,6 +1145,7 @@ class AdhocHH(Scene):
 
         eq5 = MathTex(r'\mathbb E[\mathbb E[N_{HH}\vert M]] {{=}} \mathbb E[\mathbb E[N_H+1]M]', font_size=60)
         eq5.shift(eq2[1].get_center()-eq5[1].get_center()).align_to(eq2, LEFT)
+        eq5.shift(eq5[1].get_center() * LEFT + LEFT)
         self.play(ReplacementTransform(eq2[0][:], eq5[0][2:-1]),
                   ReplacementTransform(eq2[1], eq5[1]),
                   ReplacementTransform(eq4[1][:], eq5[2][2:-1]),
@@ -1207,7 +1212,7 @@ class AdhocHH(Scene):
         eq11 = MathTex(r'\mathbb E[N_{HH}]{{=}}6', font_size=60)
         eq11.shift(eq6[1].get_center()-eq11[1].get_center())
         self.play(ReplacementTransform(eq6[:2], eq11[:2]),
-                  FadeIn(eq11[2]),
+                  FadeIn(eq11[2], target_position=eq10[1]),
                   FadeOut(eq8[1][0], eq8[1][8]),
                   FadeOut(eq10[1], target_position=eq11[2]),
                   FadeOut(eq9[1][2], target_position=eq11[2]),
@@ -1239,8 +1244,10 @@ class AdhocHH(Scene):
 
 class Abra(Scene):
     def construct(self):
-        wojak = ImageMobject("wojak.png").scale(0.12)
+        wojak = ImageMobject("wojak.png", z_index=2).scale(0.12)
         #wojak_happy0 = ImageMobject("wojak_happy.png")
+        wojak_sad = ImageMobject("depressed_wojak.png", z_index=3)
+        wojak_sad.scale(wojak.width/wojak_sad.width)
 
         nw = 21
 
@@ -1250,19 +1257,24 @@ class Abra(Scene):
 
         r = Rectangle(width=wojak_space[0], height=wojak_space[0], stroke_opacity=0)
 
-        self.add(wojaks)
-
         t2 = MobjectTable([[r.copy() for i in range(nw)], [r.copy() for i in range(nw)]],
                           row_labels=[Text('won', font_size=20), Text('paid', font_size=20)],
-                          include_outer_lines=True,
-                          z_index=2, h_buff=0, v_buff=0)
+                          include_outer_lines=True, line_config={'color': RED}, fill_color=BLUE, fill_opacity=1,
+                          z_index=2, h_buff=0, v_buff=0, include_background_rectangle=True, background_rectangle_color=BLUE,
+                          entries_background_color=BLUE, add_background_rectangles_to_entries=True).to_edge(LEFT, buff=0).to_edge(UP, buff=0.1)
 
-        t2.next_to(wojaks, UP).align_to(wojaks, LEFT).shift(LEFT * t2.row_labels[0].width)
+        t2.fill_opacity=1
+        wojaks.next_to(t2, DOWN).align_to(t2, LEFT).shift(RIGHT * t2.row_labels[0].width)
+        w2 = wojak.copy().to_edge(UL, buff=0.2).set_z_index(0)
+        self.add(wojaks, w2, t2)
+        self.wait(1)
+        wojak_sad.move_to(wojaks[0])
+        self.play(FadeIn(wojak_sad), FadeOut(wojaks[0]))
+        self.wait(1)
 
-        self.add(t2)
 
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "preview": True}):
-        AdhocHH().render()
+        Abra().render()
 #    print(SequenceH.sequences(10))
