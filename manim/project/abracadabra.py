@@ -1244,32 +1244,125 @@ class AdhocHH(Scene):
 
 class Abra(Scene):
     def construct(self):
+        detail=False
+        nw = 41
+        target = r'ABRACADABRA'
+        #choice = r'MOZBVZQCFYANXCBUXONLWADTPWIPZMERFMTKXWPTABRACADABRA'
+        #choice = r'MOZBVABRYANABRACADABRA'
+        choices = r'ANABRACADABRA'
+        stake_str = [r'\$1', r'\$26'] + [r'\$26\textsuperscript{{{}}}'.format(i) for i in range(2, 13)]
+        stakes = [Tex(t, font_size=25, z_index=3) for t in stake_str]
+
+        monkey = ImageMobject("Chimpanzee_seated_at_typewriter.jpg").scale(0.6).to_edge(DR, buff=0.1)
         wojak = ImageMobject("wojak.png", z_index=2).scale(0.12)
-        #wojak_happy0 = ImageMobject("wojak_happy.png")
+        wojak_happy = ImageMobject("wojak_happy.png", z_index=3)
         wojak_sad = ImageMobject("depressed_wojak.png", z_index=3)
         wojak_sad.scale(wojak.width/wojak_sad.width)
-
-        nw = 21
+        wojak_happy.scale(wojak.width/wojak_happy.width)
 
         wojaks = Group(*[wojak.copy() for _ in range(nw)]).arrange(RIGHT, buff=0.1).to_edge(LEFT, buff=0)
         wojak_space: np.ndarray = (wojaks[-1].get_center()-wojaks[0].get_center())/(nw-1)
         wojaks.shift(wojak_space)
+        wojaks_arr = list(wojaks)
 
         r = Rectangle(width=wojak_space[0], height=wojak_space[0], stroke_opacity=0)
 
-        t2 = MobjectTable([[r.copy() for i in range(nw)], [r.copy() for i in range(nw)]],
-                          row_labels=[Text('won', font_size=20), Text('paid', font_size=20)],
-                          include_outer_lines=True, line_config={'color': RED}, fill_color=BLUE, fill_opacity=1,
-                          z_index=2, h_buff=0, v_buff=0, include_background_rectangle=True, background_rectangle_color=BLUE,
-                          entries_background_color=BLUE, add_background_rectangles_to_entries=True).to_edge(LEFT, buff=0).to_edge(UP, buff=0.1)
+        t1 = MobjectTable([[r.copy()]], include_outer_lines=True, z_index=3,
+                          h_buff=0, v_buff=0).to_edge(LEFT, buff=0.02).to_edge(UP, buff=0.2)
+        t1[0][0] = Tex(r'{\bf paid}', font_size=25, color='#FF9999').move_to(t1[0][0])
 
-        t2.fill_opacity=1
-        wojaks.next_to(t2, DOWN).align_to(t2, LEFT).shift(RIGHT * t2.row_labels[0].width)
-        w2 = wojak.copy().to_edge(UL, buff=0.2).set_z_index(0)
-        self.add(wojaks, w2, t2)
+        t2 = MobjectTable([[r.copy() for i in range(nw)]],
+                          include_outer_lines=True,
+                          z_index=2, h_buff=0, v_buff=0).next_to(t1, RIGHT, buff=0)
+
+        wojaks.next_to(t2, DOWN).align_to(t2, LEFT)
+        t3 = MobjectTable([[r.copy()], [r.copy()]], include_outer_lines=True, z_index=3, h_buff=0, v_buff=0)\
+            .next_to(wojaks, DOWN).align_to(t1, LEFT)
+        t4 = MobjectTable([[r.copy() for i in range(nw)], [r.copy() for i in range(nw)]],
+                          include_outer_lines=True,
+                          z_index=2, h_buff=0, v_buff=0).next_to(t1, RIGHT, buff=0)\
+            .next_to(t3, RIGHT).align_to(t2, LEFT)
+        t3[0][0] = Tex(r'{\bf stake}', font_size=25, color=GREEN).move_to(t3[0][0])
+        t3[0][1] = Tex(r'{\bf bet}', font_size=25).move_to(t3[0][1])
+        key_space = (t4[0][nw].get_center() - t4[0][0].get_center()) * 1.1
+
+        if detail:
+            wojak_pos = wojaks.get_center()
+            wojaks.shift(wojak_space * LEFT * (nw + 1))
+            self.play(LaggedStart(FadeIn(monkey), FadeIn(Group(t1, t2, t3, t4)), run_time=4, lag_ratio=0.05))
+            self.play(wojaks.animate.move_to(wojak_pos), run_time=5, rate_func=rate_functions.ease_out_quad)
+        else:
+            self.add(monkey, wojaks, t1, t2, t3, t4)
+
         self.wait(1)
-        wojak_sad.move_to(wojaks[0])
-        self.play(FadeIn(wojak_sad), FadeOut(wojaks[0]))
+
+        wojak_state = [None] * nw
+        wojak_bets = [None] * nw
+        wojak_stakes = [None] * nw
+        wojak_betobjs = [None] * nw
+
+        for n in range(len(choices)):
+            print('bet #{}'.format(n+1))
+            # wojak n places bet
+            wojak_state[n] = 0
+            wojak_stakes[n] = stakes[0].copy().move_to(t4[0][n])
+            to_add = [wojak_stakes[n]]
+
+            # make choice
+            for i in range(n+1):
+                if wojak_state[i] is not None:
+                    state: int = wojak_state[i]
+                    wojak_bets[i] = target[state]
+                    wojak_betobjs[i] = Text(wojak_bets[i], font_size=30, font='Courier New', weight=SEMIBOLD, color=BLUE).move_to(t4[0][nw + i])
+                    to_add.append(wojak_betobjs[i])
+
+            if detail:
+                self.play(FadeIn(*to_add), run_time=2)
+            else:
+                self.add(*to_add)
+
+            # key is pressed
+            key = choices[n]
+            key_obj = Text(key, font_size=30, font='Courier New', weight=SEMIBOLD, color=BLUE).move_to(t4[0][nw+n]).shift(key_space)
+            box = SurroundingRectangle(key_obj, color=WHITE, corner_radius=0.1)
+            self.add(box)
+            self.wait(1)
+            self.add(key_obj)
+            self.wait(1)
+            to_remove = []
+            to_add = []
+            for i in range(n+1):
+                if wojak_state[i] is not None:
+                    to_remove.append(wojak_stakes[i])
+                    to_remove.append(wojak_betobjs[i])
+                    if wojak_bets[i] == key:
+                        # wojak is winning!
+                        wojak_state[i] += 1
+                        wojak_stakes[i] = stakes[wojak_state[i]].copy().move_to(t4[0][i])
+                        to_add.append(wojak_stakes[i])
+                        if wojak_state[i] == 1:  # first win
+                            happy = wojak_happy.copy().move_to(wojaks[i])
+                            to_add.append(happy)
+                            to_remove.append(wojaks_arr[i])
+                            wojaks_arr[i] = happy
+                    else:
+                        # wojak has lost!
+                        wojak_state[i] = None
+                        sad = wojak_sad.copy().move_to(wojaks[i])
+                        to_add.append(sad)
+                        to_remove.append(wojaks_arr[i])
+                        wojaks_arr[i] = sad
+
+            # highlight winners
+
+            if detail:
+                self.play(FadeOut(*to_remove), run_time=2)
+            else:
+                self.remove(*to_remove, box)
+                self.add(*to_add)
+            self.wait(0.5)
+
+
         self.wait(1)
 
 
