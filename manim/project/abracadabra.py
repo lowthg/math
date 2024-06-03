@@ -1243,17 +1243,123 @@ class AdhocHH(Scene):
 
 
 class Abra(Scene):
+    def run_game(self, wojaks, choices, t2, t4, stakes, target, wojak_happy, wojak_sad):
+        wojaks_arr = list(wojaks)
+        nw = len(wojaks_arr)
+        key_space = (t4[0][nw].get_center() - t4[0][0].get_center()) * 1.1
+
+        wojak_state = [None] * nw
+        wojak_bets = [None] * nw
+        wojak_stakes = []
+        wojak_betobjs = [None] * nw
+        wojak_winobjs = [None] * nw
+        wojak_paidobjs = []
+        key_objs = []
+        box = None
+
+        for n in range(len(choices)):
+            print('bet #{}'.format(n+1))
+
+            key = choices[n]
+            key_objs.append(Text(key, font_size=30, font='Courier New', weight=SEMIBOLD, color=BLUE)
+                            .move_to(t4[0][nw*2+n]).shift(key_space))
+            if box is None:
+                box = SurroundingRectangle(key_objs[n], color=WHITE, corner_radius=0.1)
+                self.play(FadeIn(box), run_time=0.5)
+            else:
+                self.play(box.animate.move_to(key_objs[n]), run_time=0.5)
+
+            # wojak n places bet
+            pos = wojaks[n].get_center()
+            wojaks[n].move_to(t2[0][n])
+            wojak_state[n] = 0
+            wojak_stakes.append(stakes[0].copy().move_to(t4[0][n]))
+            t2[0][n].set_z_index(3)
+            wojak_paidobjs.append(stakes[0].copy().set_color(RED).move_to(t2[0][n]))
+            self.play(FadeIn(wojak_stakes[n], wojak_paidobjs[n]),
+                      wojaks[n].animate.move_to(pos),
+                      run_time=0.5)
+            t2[0][n].set_z_index(0)
+
+            to_add = []
+
+            # make choice
+            for i in range(n+1):
+                if wojak_state[i] is not None:
+                    state: int = wojak_state[i]
+                    wojak_bets[i] = target[state]
+                    wojak_betobjs[i] = Text(wojak_bets[i], font_size=30, font='Courier New', weight=SEMIBOLD,
+                                            color=BLUE, z_index=5).move_to(t4[0][nw*2 + i])
+                    to_add.append(wojak_betobjs[i])
+
+            self.play(FadeIn(*to_add), run_time=0.5)
+            self.add(*to_add)
+
+            # key is pressed
+            self.wait(1)
+            self.add(key_objs[n])
+            self.wait(0.5)
+            to_remove = []
+            for i in range(n+1):
+                if wojak_state[i] is not None:
+                    to_remove.append(wojak_betobjs[i])
+                    if wojak_bets[i] == key:
+                        # wojak is winning!
+                        t4[0][nw*2+i].set_fill(color=GREEN, opacity=0)
+                        for x, y in [(1, True), (0, True), (1, True), (0, False)]:
+                            t4[0][nw*2+i].set_fill(color=GREEN, opacity=x)
+                            if y:
+                                self.wait(0.2)
+
+                        wojak_state[i] += 1
+                        wojak_stake = stakes[wojak_state[i]].copy().move_to(t4[0][i])
+                        win_obj = MathTex(r'{}'.format(wojak_state[i]), font_size=40, z_index=4).move_to(t4[0][nw + i])
+                        if wojak_state[i] == 1:  # first win
+                            happy = wojak_happy.copy().move_to(wojaks[i])
+                            self.play(FadeIn(happy, win_obj, wojak_stake), FadeOut(wojak_stakes[i]), run_time=0.5)
+                            self.remove(wojaks_arr[i])
+                            wojaks_arr[i] = happy
+                        else:
+                            self.play(FadeIn(win_obj, wojak_stake), FadeOut(wojak_winobjs[i], wojak_stakes[i]), run_time=0.5)
+                        wojak_winobjs[i] = win_obj
+                        wojak_stakes[i] = wojak_stake
+                    else:
+                        # wojak has lost!
+                        wojak_state[i] = None
+                        sad = wojak_sad.copy().move_to(wojaks[i])
+                        t4[0][nw*2 + i].set_fill(opacity=1, color=RED)
+                        out = [wojak_winobjs[i]] if wojak_winobjs[i] is not None else []
+                        self.play(FadeIn(sad), FadeOut(wojaks_arr[i], wojak_stakes[i], *out),
+                                  t4[0][nw*2+i].animate.set_fill(color=GREY, opacity=1),
+                                  t4[0][nw+i].animate.set_fill(color=GREY, opacity=1),
+                                  t4[0][i].animate.set_fill(color=GREY, opacity=1),
+                                  run_time=1)
+                        wojak_stakes[i] = None
+                        wojaks_arr[i] = sad
+
+            # highlight winners
+
+            self.play(FadeOut(*to_remove), run_time=0.5)
+
+        box2 = SurroundingRectangle(Group(*key_objs[-len(target):]), color=GREEN, corner_radius=0.1)
+        self.play(FadeOut(box), FadeIn(box2), run_time=0.5)
+
+        return wojak_paidobjs, wojak_stakes
+
     def construct(self):
-        detail=False
-        nw = 41
+        nw = 22
         target = r'ABRACADABRA'
         #choice = r'MOZBVZQCFYANXCBUXONLWADTPWIPZMERFMTKXWPTABRACADABRA'
         #choice = r'MOZBVABRYANABRACADABRA'
         choices = r'ANABRACADABRA'
-        stake_str = [r'\$1', r'\$26'] + [r'\$26\textsuperscript{{{}}}'.format(i) for i in range(2, 13)]
-        stakes = [Tex(t, font_size=25, z_index=3) for t in stake_str]
+        choices = r'BABRACYABABRACADABRA'
+        #target=r'ABRA'
+        #choices=r'CABRA'
 
-        monkey = ImageMobject("Chimpanzee_seated_at_typewriter.jpg").scale(0.6).to_edge(DR, buff=0.1)
+        stake_str = [r'\$1', r'\$26'] + [r'\$26\textsuperscript{{{}}}'.format(i) for i in range(2, 13)]
+        stakes = [Tex(t, font_size=30, z_index=5) for t in stake_str]
+
+        monkey = ImageMobject("Chimpanzee_seated_at_typewriter.jpg").scale(0.5).to_edge(DR, buff=0.1)
         wojak = ImageMobject("wojak.png", z_index=2).scale(0.12)
         wojak_happy = ImageMobject("wojak_happy.png", z_index=3)
         wojak_sad = ImageMobject("depressed_wojak.png", z_index=3)
@@ -1263,108 +1369,124 @@ class Abra(Scene):
         wojaks = Group(*[wojak.copy() for _ in range(nw)]).arrange(RIGHT, buff=0.1).to_edge(LEFT, buff=0)
         wojak_space: np.ndarray = (wojaks[-1].get_center()-wojaks[0].get_center())/(nw-1)
         wojaks.shift(wojak_space)
-        wojaks_arr = list(wojaks)
 
-        r = Rectangle(width=wojak_space[0], height=wojak_space[0], stroke_opacity=0)
+        r = Rectangle(width=wojak_space[0], height=wojak_space[0], stroke_opacity=0, z_index=3, fill_opacity=1,
+                      fill_color=BLACK)
 
-        t1 = MobjectTable([[r.copy()]], include_outer_lines=True, z_index=3,
+        t1 = MobjectTable([[r.copy()]], include_outer_lines=True,
                           h_buff=0, v_buff=0).to_edge(LEFT, buff=0.02).to_edge(UP, buff=0.2)
         t1[0][0] = Tex(r'{\bf paid}', font_size=25, color='#FF9999').move_to(t1[0][0])
 
         t2 = MobjectTable([[r.copy() for i in range(nw)]],
                           include_outer_lines=True,
-                          z_index=2, h_buff=0, v_buff=0).next_to(t1, RIGHT, buff=0)
+                          h_buff=0, v_buff=0).set_z_index(0).next_to(t1, RIGHT, buff=0)
+        for t in t2[1:]:
+            t.set_z_index(4)
 
         wojaks.next_to(t2, DOWN).align_to(t2, LEFT)
-        t3 = MobjectTable([[r.copy()], [r.copy()]], include_outer_lines=True, z_index=3, h_buff=0, v_buff=0)\
+        t3 = MobjectTable([[r.copy()], [r.copy()], [r.copy()]], include_outer_lines=True, h_buff=0, v_buff=0)\
             .next_to(wojaks, DOWN).align_to(t1, LEFT)
-        t4 = MobjectTable([[r.copy() for i in range(nw)], [r.copy() for i in range(nw)]],
+        t4 = MobjectTable([[r.copy() for i in range(nw)], [r.copy() for i in range(nw)], [r.copy() for i in range(nw)]],
                           include_outer_lines=True,
-                          z_index=2, h_buff=0, v_buff=0).next_to(t1, RIGHT, buff=0)\
-            .next_to(t3, RIGHT).align_to(t2, LEFT)
-        t3[0][0] = Tex(r'{\bf stake}', font_size=25, color=GREEN).move_to(t3[0][0])
-        t3[0][1] = Tex(r'{\bf bet}', font_size=25).move_to(t3[0][1])
-        key_space = (t4[0][nw].get_center() - t4[0][0].get_center()) * 1.1
+                          h_buff=0, v_buff=0).next_to(t1, RIGHT, buff=0)\
+            .next_to(t3, RIGHT).align_to(t2, LEFT).set_z_index(0)
 
-        if detail:
-            wojak_pos = wojaks.get_center()
-            wojaks.shift(wojak_space * LEFT * (nw + 1))
-            self.play(LaggedStart(FadeIn(monkey), FadeIn(Group(t1, t2, t3, t4)), run_time=4, lag_ratio=0.05))
-            self.play(wojaks.animate.move_to(wojak_pos), run_time=5, rate_func=rate_functions.ease_out_quad)
+        t3[0][0] = Tex(r'{\bf stake}', font_size=25, color=GREEN, z_index=4).move_to(t3[0][0])
+        t3[0][1] = Tex(r'{\bf wins}', font_size=25, color=WHITE, z_index=4).move_to(t3[0][1])
+        t3[0][2] = Tex(r'{\bf bet}', font_size=25, z_index=4).move_to(t3[0][2])
+
+        self.play(LaggedStart(FadeIn(monkey), FadeIn(Group(t1, t2, t3, t4)), run_time=4, lag_ratio=0.05))
+
+        desc = Text('Each player stakes $1 on their turn and bets on\n'
+                    'the letter A.\n'
+                    'Any winnings are rolled over to bet on each of the\n'
+                    'remaining letters of ABRACADABRA in turn', font_size=30, line_spacing=0.8)\
+            .align_to(monkey, UP).to_edge(LEFT, buff=0.5).shift(DOWN * 0.2)
+        self.play(FadeIn(desc), run_time=1)
+
+        run_game = False
+        if run_game:
+            wojak_paidobjs, wojak_stakes = self.run_game(wojaks, choices, t2, t4, stakes, target, wojak_happy, wojak_sad)
         else:
-            self.add(monkey, wojaks, t1, t2, t3, t4)
+            m = len(choices)
+            wojak_paidobjs = [stakes[0].copy().set_color(RED).move_to(t2[0][n]) for n in range(m)]
+            wojak_stakes = [None] * m
+            for i in [1, 4, 11]:
+                wojak_stakes[-i] = stakes[i].copy().move_to(t4[0][nw*2+m-i])
+            self.add(*wojak_paidobjs, *[x for x in wojak_stakes if x is not None])
 
+        self.play(FadeOut(desc), run_time=0.5)
+
+        eq1 = MathTex(r'{\rm Total\ paid} {{=}} N', font_size=40).to_edge(LEFT, buff=0.5).align_to(monkey, UP)
+        eq2 = MathTex(r'{{=}} 1', font_size=40)
+        eq2[1].set_opacity(0.5)
+        eq2.shift((eq1[1].get_center()-eq2[0].get_center()))
+        paids = [x[0][1:].copy() for x in wojak_paidobjs]
+        self.play(FadeIn(eq1[:2]), run_time=0.5)
+        self.play(*[ReplacementTransform(x, eq2[1]) for x in paids], FadeIn(eq1[2], target_position=paids[-1]), run_time=2)
+        self.remove(eq2[1])
         self.wait(1)
 
-        wojak_state = [None] * nw
-        wojak_bets = [None] * nw
-        wojak_stakes = [None] * nw
-        wojak_betobjs = [None] * nw
+        eq3 = MathTex(r'{\rm Total\ won} {{=}} 26^{11} {{+}} 26^4 {{+}} 26', font_size=40)\
+            .next_to(eq1, DOWN).align_to(eq1, LEFT)
 
-        for n in range(len(choices)):
-            print('bet #{}'.format(n+1))
-            # wojak n places bet
-            wojak_state[n] = 0
-            wojak_stakes[n] = stakes[0].copy().move_to(t4[0][n])
-            to_add = [wojak_stakes[n]]
+        to_move = [wojak_stakes[-11], wojak_stakes[-4], wojak_stakes[-1]]
+        self.play(FadeIn(eq3[:2]), run_time=0.5)
+        for i in range(3):
+            if i > 0:
+                self.play(FadeIn(eq3[2*i+1]), run_time=0.5)
+            self.play(ReplacementTransform(to_move[i].copy()[0][1:], eq3[2 + 2*i]), run_time=2)
 
-            # make choice
-            for i in range(n+1):
-                if wojak_state[i] is not None:
-                    state: int = wojak_state[i]
-                    wojak_bets[i] = target[state]
-                    wojak_betobjs[i] = Text(wojak_bets[i], font_size=30, font='Courier New', weight=SEMIBOLD, color=BLUE).move_to(t4[0][nw + i])
-                    to_add.append(wojak_betobjs[i])
+        eq5 = MathTex(r'{\rm Total\ profit} {{=}} 26^{11} {{+}} 26^4 {{+}} 26 {{-}} N', font_size=40)\
+            .next_to(eq3, DOWN).align_to(eq1, LEFT)
+        eq4 = MathTex(r'{{=}} {\rm Total\ won} {{-}} {\rm Total\ paid}', font_size=40)
+        eq4.shift(eq5[1].get_center()-eq4[0].get_center())
 
-            if detail:
-                self.play(FadeIn(*to_add), run_time=2)
-            else:
-                self.add(*to_add)
+        self.play(FadeIn(eq5[0:2], eq4[1:]), run_time=0.5)
 
-            # key is pressed
-            key = choices[n]
-            key_obj = Text(key, font_size=30, font='Courier New', weight=SEMIBOLD, color=BLUE).move_to(t4[0][nw+n]).shift(key_space)
-            box = SurroundingRectangle(key_obj, color=WHITE, corner_radius=0.1)
-            self.add(box)
-            self.wait(1)
-            self.add(key_obj)
-            self.wait(1)
-            to_remove = []
-            to_add = []
-            for i in range(n+1):
-                if wojak_state[i] is not None:
-                    to_remove.append(wojak_stakes[i])
-                    to_remove.append(wojak_betobjs[i])
-                    if wojak_bets[i] == key:
-                        # wojak is winning!
-                        wojak_state[i] += 1
-                        wojak_stakes[i] = stakes[wojak_state[i]].copy().move_to(t4[0][i])
-                        to_add.append(wojak_stakes[i])
-                        if wojak_state[i] == 1:  # first win
-                            happy = wojak_happy.copy().move_to(wojaks[i])
-                            to_add.append(happy)
-                            to_remove.append(wojaks_arr[i])
-                            wojaks_arr[i] = happy
-                    else:
-                        # wojak has lost!
-                        wojak_state[i] = None
-                        sad = wojak_sad.copy().move_to(wojaks[i])
-                        to_add.append(sad)
-                        to_remove.append(wojaks_arr[i])
-                        wojaks_arr[i] = sad
+        self.play(eq4[-1].animate.shift((eq5[-2].get_center()-eq4[-2].get_center()) * RIGHT),
+                  ReplacementTransform(eq4[-2], eq5[-2]), run_time=1)
+        self.play(FadeOut(eq4[1]), ReplacementTransform(eq3[2:].copy(), eq5[2:-2]), run_time=2)
+        self.play(FadeOut(eq4[-1]), ReplacementTransform(eq1[2].copy(), eq5[-1]), run_time=2)
+        self.play(FadeOut(eq1, eq3), eq5.animate.move_to(eq1, LEFT), run_time=2)
 
-            # highlight winners
+        eq6 = MathTex(r'\mathbb E[{{ {\rm Total\ profit} }}] {{=}} 0', font_size=40)\
+            .next_to(eq5, DOWN).align_to(eq5, LEFT)
+        eq7 = MathTex(r'\mathbb E[{{26^{11} }} + {{26^4}} + {{26}} - {{N}}] {{=}} 0', font_size=40)\
+            .next_to(eq5, DOWN).align_to(eq5, LEFT)
 
-            if detail:
-                self.play(FadeOut(*to_remove), run_time=2)
-            else:
-                self.remove(*to_remove, box)
-                self.add(*to_add)
-            self.wait(0.5)
-
-
+        txt = Text(r'Fair game!', font_size=40, color=RED).next_to(eq6, RIGHT, buff=1)
+        self.play(LaggedStart(FadeIn(eq6), FadeIn(txt), lag_ratio=0.5), run_time=1)
         self.wait(1)
+        self.play(ReplacementTransform(eq5[2:].copy(), eq7[1:-3]),
+                  ReplacementTransform(eq6[-3:], eq7[-3:]),
+                  ReplacementTransform(eq6[0], eq7[0]),
+                  FadeOut(txt, eq6[1]), run_time=2)
 
+        eq8 = MathTex(r'{{26^{11} }} + {{26^4}} + {{26}}{{-}} \mathbb E[ {{N}}] {{=}} 0', font_size=40)
+        eq9 = MathTex(r'{{26^{11} }} + {{26^4}} + {{26}}{{=}} \mathbb E[ {{N}}]', font_size=40)
+        eq10 = MathTex(r'\mathbb E[ {{N}}] {{=}}{{26^{11} }} + {{26^4}} + {{26}}', font_size=40)
+
+        eq8.shift(eq7[-1].get_center()-eq8[-1].get_center())
+        eq9.shift(eq8[4].get_center()-eq9[4].get_center())
+        eq10.shift(eq9[-4].get_center()-eq10[3].get_center())
+
+
+        self.play(ReplacementTransform(eq7[1:7], eq8[:6]),
+                  ReplacementTransform(eq7[0], eq8[-5]),
+                  ReplacementTransform(eq7[-4:], eq8[-4:]),
+                  run_time=2)
+        self.play(ReplacementTransform(eq8[-2], eq9[-4]),
+                  ReplacementTransform(eq8[-5], eq9[-3]),
+                  ReplacementTransform(eq8[-4:-2], eq9[-2:]),
+                  ReplacementTransform(eq8[:5], eq9[:5]),
+                  FadeOut(eq8[-6], eq8[-1]),
+                  run_time=2)
+        self.play(ReplacementTransform(eq9[:5], eq10[4:]),
+                  ReplacementTransform(eq9[-4], eq10[3]),
+                  ReplacementTransform(eq9[-3:], eq10[:3]),
+                  run_time=2)
+        self.play(FadeOut(eq5), run_time=2)
 
 
 if __name__ == "__main__":
