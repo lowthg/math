@@ -1344,7 +1344,7 @@ class Abra(Scene):
         box2 = SurroundingRectangle(Group(*key_objs[-len(target):]), color=GREEN, corner_radius=0.1)
         self.play(FadeOut(box), FadeIn(box2), run_time=0.5)
 
-        return wojak_paidobjs, wojak_stakes
+        return wojak_paidobjs, wojak_stakes, key_objs, box2
 
     def construct(self):
         nw = 22
@@ -1359,7 +1359,9 @@ class Abra(Scene):
         stake_str = [r'\$1', r'\$26'] + [r'\$26\textsuperscript{{{}}}'.format(i) for i in range(2, 13)]
         stakes = [Tex(t, font_size=30, z_index=5) for t in stake_str]
 
-        monkey = ImageMobject("Chimpanzee_seated_at_typewriter.jpg").scale(0.5).to_edge(DR, buff=0.1)
+        monkey = ImageMobject("Monkey-typing.jpg").to_edge(DR, buff=0.04)
+        monkey.scale(3.7/monkey.height)
+#        monkey = ImageMobject("Chimpanzee_seated_at_typewriter.jpg").scale(0.5).to_edge(DR, buff=0.1)
         wojak = ImageMobject("wojak.png", z_index=2).scale(0.12)
         wojak_happy = ImageMobject("wojak_happy.png", z_index=3)
         wojak_sad = ImageMobject("depressed_wojak.png", z_index=3)
@@ -1400,20 +1402,26 @@ class Abra(Scene):
         desc = Text('Each player stakes $1 on their turn and bets on\n'
                     'the letter A.\n'
                     'Any winnings are rolled over to bet on each of the\n'
-                    'remaining letters of ABRACADABRA in turn', font_size=30, line_spacing=0.8)\
-            .align_to(monkey, UP).to_edge(LEFT, buff=0.5).shift(DOWN * 0.2)
+                    'remaining letters of ABRACADABRA in turn.\n'
+                    'Fair game => each win multiplies the stake by 26.', font_size=30, line_spacing=0.8)\
+            .align_to(monkey, UP).to_edge(LEFT, buff=0.2).shift(DOWN * 0.2)
         self.play(FadeIn(desc), run_time=1)
 
-        run_game = False
+        run_game = True
         if run_game:
-            wojak_paidobjs, wojak_stakes = self.run_game(wojaks, choices, t2, t4, stakes, target, wojak_happy, wojak_sad)
+            wojak_paidobjs, wojak_stakes, key_objs, box = self.run_game(wojaks, choices, t2, t4, stakes, target, wojak_happy, wojak_sad)
         else:
             m = len(choices)
             wojak_paidobjs = [stakes[0].copy().set_color(RED).move_to(t2[0][n]) for n in range(m)]
             wojak_stakes = [None] * m
             for i in [1, 4, 11]:
                 wojak_stakes[-i] = stakes[i].copy().move_to(t4[0][nw*2+m-i])
-            self.add(*wojak_paidobjs, *[x for x in wojak_stakes if x is not None])
+                key_space = (t4[0][nw].get_center() - t4[0][0].get_center()) * 1.1
+            key_objs = [Text(choices[i], font_size=30, font='Courier New', weight=SEMIBOLD, color=BLUE)
+                        .move_to(t4[0][nw*2+i]).shift(key_space) for i in range(len(choices))]
+            box = SurroundingRectangle(Group(*key_objs[-11:]), color=GREEN, corner_radius=0.1)
+            self.add(*wojak_paidobjs, *[x for x in wojak_stakes if x is not None], *key_objs, box)
+
 
         self.play(FadeOut(desc), run_time=0.5)
 
@@ -1430,12 +1438,16 @@ class Abra(Scene):
         eq3 = MathTex(r'{\rm Total\ won} {{=}} 26^{11} {{+}} 26^4 {{+}} 26', font_size=40)\
             .next_to(eq1, DOWN).align_to(eq1, LEFT)
 
-        to_move = [wojak_stakes[-11], wojak_stakes[-4], wojak_stakes[-1]]
+        winners = [-11, -4, -1]
+        to_move = [wojak_stakes[i] for i in winners]
         self.play(FadeIn(eq3[:2]), run_time=0.5)
         for i in range(3):
             if i > 0:
-                self.play(FadeIn(eq3[2*i+1]), run_time=0.5)
+                self.play(FadeIn(eq3[2*i+1]), run_time=0.2)
+                self.play(Transform(box, SurroundingRectangle(Group(*key_objs[winners[i]:]), color=GREEN, corner_radius=0.1)),
+                          run_time=0.8)
             self.play(ReplacementTransform(to_move[i].copy()[0][1:], eq3[2 + 2*i]), run_time=2)
+        self.play(FadeOut(box), run_time=0.2)
 
         eq5 = MathTex(r'{\rm Total\ profit} {{=}} 26^{11} {{+}} 26^4 {{+}} 26 {{-}} N', font_size=40)\
             .next_to(eq3, DOWN).align_to(eq1, LEFT)
@@ -1470,7 +1482,6 @@ class Abra(Scene):
         eq8.shift(eq7[-1].get_center()-eq8[-1].get_center())
         eq9.shift(eq8[4].get_center()-eq9[4].get_center())
         eq10.shift(eq9[-4].get_center()-eq10[3].get_center())
-
 
         self.play(ReplacementTransform(eq7[1:7], eq8[:6]),
                   ReplacementTransform(eq7[0], eq8[-5]),
