@@ -1245,55 +1245,82 @@ class AdhocHH(Scene):
 
 
 class Abra(Scene):
-    _run_game = True
-    _run_math = True
     target = r'ABRACADABRA'
     choices = r'BABRACYABABRACADABRA'
     num_players = 22
+    wojak_scale = 0.12
 
-    def __init__(self, *kwargs):
-        Scene.__init__(self, *kwargs)
+    def __init__(self, *args, **kwargs):
+        Scene.__init__(self, *args, **kwargs)
         self.stakes = [self.get_stake(n) for n in range(len(self.target) + 1)]
+        self.monkey = self.get_monkey()
+        self.paid_objs = []  # Mobject of paid amounts
+        self.stake_objs = []  # Mobject of stake sizes
+        self.key_objs = []  # Mobject of typed keys
+        self.box = None
+        self.text_pos = np.array([0, 0])
 
-    def get_stake(self, n):
+    @staticmethod
+    def get_stake(n):
         if n == 0:
             stake_str = r'\bf\$1'
         elif n == 1:
             stake_str = r'\bf\$26'
-            stake_str = r'\bf\$26\textsuperscript{{{}}}'.format(n)
         else:
             stake_str = r'\bf\$26\textsuperscript{{{}}}'.format(n)
         return Tex(stake_str, font_size=30, z_index=5)
 
-    def run_game(self, wojaks, choices, tables, target, wojak_happy, wojak_sad):
+    @staticmethod
+    def get_key(key):  # get key to display
+        return Text(key, font_size=30, font='Courier New', weight=SEMIBOLD, color=BLUE)
+
+    @staticmethod
+    def get_choice(key):  # get key choice to display
+        return Abra.get_key(key)
+
+    def animate_key(self, keyobj):  # animate display of key
+        self.add(keyobj)
+        return keyobj
+
+    @staticmethod
+    def get_monkey():  # image to display
+        monkey = ImageMobject("Monkey-typing.jpg").to_edge(DR, buff=0.04)
+        return monkey.scale(3.7 / monkey.height)
+
+    def get_text(self):
+        desc = Text('Each player stakes $1 on their turn and bets on\n'
+                    'the letter A.\n'
+                    'Any winnings are rolled over to bet on each of the\n'
+                    'remaining letters of ABRACADABRA in turn.\n'
+                    'Fair game => each win multiplies the stake by 26.', font_size=30, line_spacing=0.8) \
+            .align_to(self.text_pos, UP).to_edge(LEFT, buff=0.2).shift(DOWN * 0.2)
+        return desc
+
+    def run_game(self, wojaks, choices, tables, target, wojak_happy, wojak_sad, key_space):
         stakes = self.stakes
         wojaks_arr = list(wojaks)
         nw = len(wojaks_arr)
         t2 = tables[1]
         t4 = tables[3]
-        key_space = (t4[0][nw].get_center() - t4[0][0].get_center()) * 1.1
 
         wojak_state = [None] * nw
         wojak_bets = [None] * nw
         wojak_stakes = []
         wojak_betobjs = [None] * nw
         wojak_winobjs = [None] * nw
-        wojak_paidobjs = []
-        key_objs = []
         box = None
 
         for n in range(len(choices)):
             print('bet #{}'.format(n+1))
 
             key = choices[n]
-            key_objs.append(Text(key, font_size=30, font='Courier New', weight=SEMIBOLD, color=BLUE)
-                            .move_to(t4[0][nw*2+n]).shift(key_space))
+            self.key_objs.append(self.get_key(key).move_to(t4[0][nw*2+n]).shift(key_space))
             if box is None:
-                box = SurroundingRectangle(key_objs[n], color=WHITE, corner_radius=0.1)
+                box = SurroundingRectangle(self.key_objs[n], color=WHITE, corner_radius=0.1)
 
                 self.play(FadeIn(box), run_time=0.5)
             else:
-                self.play(box.animate.move_to(key_objs[n]), run_time=0.5)
+                self.play(box.animate.move_to(self.key_objs[n]), run_time=0.5)
 
             # wojak n places bet
             pos = wojaks[n].get_center()
@@ -1301,8 +1328,8 @@ class Abra(Scene):
             wojak_state[n] = 0
             wojak_stakes.append(stakes[0].copy().move_to(t4[0][n]))
             t2[0][n].set_z_index(3)
-            wojak_paidobjs.append(stakes[0].copy().set_color(RED).move_to(t2[0][n]))
-            self.play(FadeIn(wojak_stakes[n], wojak_paidobjs[n]),
+            self.paid_objs.append(stakes[0].copy().set_color(RED).move_to(t2[0][n]))
+            self.play(FadeIn(wojak_stakes[n], self.paid_objs[n]),
                       wojaks[n].animate.move_to(pos),
                       run_time=0.5)
             t2[0][n].set_z_index(0)
@@ -1314,8 +1341,7 @@ class Abra(Scene):
                 if wojak_state[i] is not None:
                     state: int = wojak_state[i]
                     wojak_bets[i] = target[state]
-                    wojak_betobjs[i] = Text(wojak_bets[i], font_size=30, font='Courier New', weight=SEMIBOLD,
-                                            color=BLUE, z_index=5).move_to(t4[0][nw*2 + i])
+                    wojak_betobjs[i] = self.get_choice(wojak_bets[i]).move_to(t4[0][nw*2 + i])
                     to_add.append(wojak_betobjs[i])
 
             self.play(FadeIn(*to_add), run_time=0.5)
@@ -1323,7 +1349,7 @@ class Abra(Scene):
 
             # key is pressed
             self.wait(1)
-            self.add(key_objs[n])
+            self.key_objs[n] = self.animate_key(self.key_objs[n])
             self.wait(0.5)
             to_remove = []
             for i in range(n+1):
@@ -1367,23 +1393,19 @@ class Abra(Scene):
 
             self.play(FadeOut(*to_remove), run_time=0.5)
 
-        box2 = SurroundingRectangle(Group(*key_objs[-len(target):]), color=GREEN, corner_radius=0.1)
-        self.play(FadeOut(box), FadeIn(box2), run_time=0.5)
+        self.box = SurroundingRectangle(Group(*self.key_objs[-len(target):]), color=GREEN, corner_radius=0.1)
+        self.play(FadeOut(box), FadeIn(self.box), run_time=0.5)
+        self.stake_objs = wojak_stakes
 
-        return dict_of(wojak_paidobjs, wojak_stakes, key_objs, box=box2)
-
-    def dont_run(self, wojaks, choices, tables, target, wojak_happy, wojak_sad):
+    def dont_run(self, wojaks, choices, tables, target, wojak_happy, wojak_sad, key_space):
         stakes = self.stakes
         nw = self.num_players
         t2 = tables[1]
         t4 = tables[3]
 
         m = len(choices)
-        key_space = (t4[0][nw].get_center() - t4[0][0].get_center()) * 1.1
         add = []
-        wojak_paidobjs = []
         wojak_stakes = [None] * m
-        key_objs = []
         for i in range(len(choices)):
             if target.startswith(choices[i:]):
                 state = m - i
@@ -1394,25 +1416,21 @@ class Abra(Scene):
                 add.append(wojak_sad.copy().move_to(wojaks[i]))
                 t4[0][i::nw].set_fill(color=GREY, opacity=1)
 
-            wojak_paidobjs.append(stakes[0].copy().set_color(RED).move_to(t2[0][i]))
-            key_objs.append(Text(choices[i], font_size=30, font='Courier New', weight=SEMIBOLD, color=BLUE)
-                            .move_to(t4[0][nw * 2 + i]).shift(key_space))
+            self.paid_objs.append(stakes[0].copy().set_color(RED).move_to(t2[0][i]))
+            self.key_objs.append(self.get_key(choices[i]).move_to(t4[0][nw * 2 + i]).shift(key_space))
 
         self.add(*add)
 
-        box = SurroundingRectangle(Group(*key_objs[-len(target):]), color=GREEN, corner_radius=0.1)
-        self.add(*wojak_paidobjs, *[x for x in wojak_stakes if x is not None], *key_objs, box)
+        self.box = SurroundingRectangle(Group(*self.key_objs[-len(target):]), color=GREEN, corner_radius=0.1)
+        self.add(*self.paid_objs, *[x for x in wojak_stakes if x is not None], *self.key_objs, self.box)
+        self.stake_objs = wojak_stakes
 
-        return dict_of(wojak_paidobjs, wojak_stakes, key_objs, box)
-
-    def build(self):
-        wojak = ImageMobject("wojak.png", z_index=2).scale(0.12)
+    def build(self, run_game=False):
+        wojak = ImageMobject("wojak.png", z_index=2).scale(self.wojak_scale)
         wojak_happy = ImageMobject("wojak_happy.png", z_index=3)
         wojak_sad = ImageMobject("depressed_wojak.png", z_index=3)
         wojak_sad.scale(wojak.width / wojak_sad.width)
         wojak_happy.scale(wojak.width / wojak_happy.width)
-        monkey = ImageMobject("Monkey-typing.jpg").to_edge(DR, buff=0.04)
-        monkey.scale(3.7 / monkey.height)
 
         wojaks = Group(*[wojak.copy() for _ in range(self.num_players)]).arrange(RIGHT, buff=0.1).to_edge(LEFT, buff=0)
 
@@ -1446,38 +1464,31 @@ class Abra(Scene):
         t3[0][2] = Tex(r'{\bf bet}', font_size=25, z_index=4).move_to(t3[0][2])
 
         tables = Group(t1, t2, t3, t4)
+        key_space = (t4[0][self.num_players].get_center() - t4[0][0].get_center()) * 1.1
 
-        return dict_of(monkey, tables, wojaks, wojak_happy, wojak_sad)
+        self.text_pos = tables[3][0][self.num_players * 2].get_center() + key_space * 1.5
 
-    def construct(self):
-        monkey, tables, wojaks, wojak_happy, wojak_sad = unpack_keys(self.build())
-        stakes = self.stakes
-
-        if self._run_game:
-            self.play(LaggedStart(FadeIn(monkey), FadeIn(tables), run_time=4, lag_ratio=0.05))
-            desc = Text('Each player stakes $1 on their turn and bets on\n'
-                        'the letter A.\n'
-                        'Any winnings are rolled over to bet on each of the\n'
-                        'remaining letters of ABRACADABRA in turn.\n'
-                        'Fair game => each win multiplies the stake by 26.', font_size=30, line_spacing=0.8) \
-                .align_to(monkey, UP).to_edge(LEFT, buff=0.2).shift(DOWN * 0.2)
+        if run_game:
+            desc = self.get_text()
+            self.play(LaggedStart(FadeIn(*self.monkey), FadeIn(tables), run_time=4, lag_ratio=0.05))
             self.play(FadeIn(desc), run_time=1)
-            wojak_paidobjs, wojak_stakes, key_objs, box = unpack_keys(self.run_game(wojaks, self.choices, tables,
-                                                                                    self.target, wojak_happy,
-                                                                                    wojak_sad))
+            self.run_game(wojaks, self.choices, tables, self.target, wojak_happy, wojak_sad, key_space)
             self.play(FadeOut(desc), run_time=0.5)
         else:
-            self.add(monkey, tables)
-            wojak_paidobjs, wojak_stakes, key_objs, box = unpack_keys(self.dont_run(wojaks, self.choices, tables,
-                                                                                    self.target, wojak_happy,
-                                                                                    wojak_sad))
+            self.add(*self.monkey, tables)
+            self.dont_run(wojaks, self.choices, tables, self.target, wojak_happy, wojak_sad, key_space)
 
-        if self._run_math:
-            eq1 = MathTex(r'{\rm Total\ paid} {{=}} N', font_size=40).to_edge(LEFT, buff=0.5).align_to(monkey, UP)
+    def construct(self):
+        run_game = True
+        run_math = True
+        self.build(run_game=run_game)
+
+        if run_math:
+            eq1 = MathTex(r'{\rm Total\ paid} {{=}} N', font_size=40).to_edge(LEFT, buff=0.5).align_to(self.text_pos, UP)
             eq2 = MathTex(r'{{=}} 1', font_size=40)
             eq2[1].set_opacity(0.5)
             eq2.shift((eq1[1].get_center()-eq2[0].get_center()))
-            paids = [x[0][1:].copy() for x in wojak_paidobjs]
+            paids = [x[0][1:].copy() for x in self.paid_objs]
             self.play(FadeIn(eq1[:2]), run_time=0.5)
             self.play(*[ReplacementTransform(x, eq2[1]) for x in paids], FadeIn(eq1[2], target_position=paids[-1]),
                       run_time=2)
@@ -1488,15 +1499,15 @@ class Abra(Scene):
                 .next_to(eq1, DOWN).align_to(eq1, LEFT)
 
             winners = [-11, -4, -1]
-            to_move = [wojak_stakes[i] for i in winners]
+            to_move = [self.stake_objs[i] for i in winners]
             self.play(FadeIn(eq3[:2]), run_time=0.5)
             for i in range(3):
                 if i > 0:
                     self.play(FadeIn(eq3[2*i+1]), run_time=0.2)
-                    self.play(Transform(box, SurroundingRectangle(Group(*key_objs[winners[i]:]), color=GREEN, corner_radius=0.1)),
-                              run_time=0.8)
+                    self.play(Transform(self.box, SurroundingRectangle(Group(*self.key_objs[winners[i]:]), color=GREEN,
+                                                                       corner_radius=0.1)), run_time=0.8)
                 self.play(ReplacementTransform(to_move[i].copy()[0][1:], eq3[2 + 2*i]), run_time=2)
-            self.play(FadeOut(box), run_time=0.2)
+            self.play(FadeOut(self.box), run_time=0.2)
 
             eq5 = MathTex(r'{\rm Total\ profit} {{=}} 26^{11} {{+}} 26^4 {{+}} 26 {{-}} N', font_size=40)\
                 .next_to(eq3, DOWN).align_to(eq1, LEFT)
@@ -1551,29 +1562,25 @@ class Abra(Scene):
 
 class Abra2(Abra):
     def construct(self):
-        target = r'ABRACADABRA'
-        choices = r'BABRACYABABRACADABRA'
-
-        monkey, tables, stakes, wojaks, wojak_happy, wojak_sad = unpack_keys(self.build())
-        self.add(monkey, tables)
-        wojak_paidobjs, wojak_stakes, key_objs, box = unpack_keys(self.dont_run(wojaks, choices, tables, stakes,
-                                                                                target, wojak_happy, wojak_sad))
+        self.build(run_game=False)
 
         self.wait(1)
-        n = len(choices)
+        n = len(self.choices)
         new_paidobjs = []
         for i in range(n):
-            new_paidobjs.append(MathTex(r'\bf {}'.format(i), font_size=30, z_index=5, color=RED).move_to(tables[1][0][i]))
+            new_paidobjs.append(MathTex(r'\bf {}'.format(i), font_size=30, z_index=5, color=RED)
+                                .move_to(self.paid_objs[i]))
 
-        self.play(FadeOut(*wojak_paidobjs), FadeIn(*new_paidobjs), run_time=2)
+        self.play(FadeOut(*self.paid_objs), FadeIn(*new_paidobjs), run_time=2)
 
-        wojak_paidobjs[0] = MathTex('1', font_size=30, z_index=5, color=PURE_RED).move_to(tables[1][0][0])
-        wojak_paidobjs[1] = MathTex('t', font_size=30, z_index=5, color=PURE_RED).move_to(tables[1][0][1])
+        self.paid_objs[0] = MathTex('1', font_size=30, z_index=5, color=PURE_RED).move_to(self.paid_objs[0])
+        self.paid_objs[1] = MathTex('t', font_size=30, z_index=5, color=PURE_RED).move_to(self.paid_objs[1])
         for i in range(2, n):
-            wojak_paidobjs[i] = MathTex('t^{{{}}}'.format(i), font_size=30, z_index=5, color=RED).move_to(tables[1][0][i])
+            self.paid_objs[i] = MathTex('t^{{{}}}'.format(i), font_size=30, z_index=5, color=RED)\
+                .move_to(self.paid_objs[i])
 
         self.wait(1)
-        self.play(FadeIn(*wojak_paidobjs), FadeOut(*new_paidobjs), run_time=2)
+        self.play(FadeIn(*self.paid_objs), FadeOut(*new_paidobjs), run_time=2)
 
 
 if __name__ == "__main__":
