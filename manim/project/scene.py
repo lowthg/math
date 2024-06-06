@@ -178,3 +178,28 @@ class IndexLabelsMathTex(Scene):
         text[0][3:6].set_color(RED)
         text[0][6].set_color(BLUE)
         self.add(text)
+
+
+class Wife(Scene):
+    def construct(self):
+        wife0 = ImageMobject("wifejak.png")
+        wife_happy0 = ImageMobject("wifejak_happy.png")
+        wife = ImageMobject(wife0.pixel_array[:320,:,:]).to_edge(LEFT, buff=0.04)
+        wife_happy = ImageMobject(wife_happy0.pixel_array[:320,:,:], z_index=2).to_edge(LEFT, buff=0.04)
+        wojak0 = ImageMobject("wojak.png")
+        wojak_happy0 = ImageMobject("wojak_happy.png")
+        wojak = ImageMobject(np.flip(wojak0.pixel_array, 1))
+        scale = wife.height/wojak.height*0.95
+        wojak.scale(scale).next_to(wife, RIGHT)
+        wojak_happy = ImageMobject(np.flip(wojak_happy0.pixel_array, 1)).scale(scale).move_to(wojak)
+        self.add(wife, wojak)
+        self.wait(2)
+        wife.target = wife_happy
+        wojak.target = wojak_happy
+        self.play(MoveToTarget(wife), run_time=2)
+        self.play(MoveToTarget(wojak), run_time=2)
+        wojak.generate_target().set_opacity(0)
+        wife.generate_target().set_opacity(0)
+        self.play(MoveToTarget(wojak, rate_func=lambda t: t * 0.9), run_time=2)
+        self.play(MoveToTarget(wife, rate_func=lambda t: t * 0.9), run_time=2)
+        self.wait(2)
