@@ -6,6 +6,8 @@ from manim import *
 import numpy as np
 import math
 import random
+from sorcery import dict_of, unpack_keys
+
 
 # Global variable with H coin and T coin used throughout
 H = LabeledDot(Text("H", color=BLACK, font='Helvetica', weight=SEMIBOLD), radius=0.35, color=BLUE).scale(1.5)
@@ -1243,9 +1245,11 @@ class AdhocHH(Scene):
 
 
 class Abra(Scene):
-    def run_game(self, wojaks, choices, t2, t4, stakes, target, wojak_happy, wojak_sad):
+    def run_game(self, wojaks, choices, tables, stakes, target, wojak_happy, wojak_sad):
         wojaks_arr = list(wojaks)
         nw = len(wojaks_arr)
+        t2 = tables[1]
+        t4 = tables[3]
         key_space = (t4[0][nw].get_center() - t4[0][0].get_center()) * 1.1
 
         wojak_state = [None] * nw
@@ -1265,6 +1269,7 @@ class Abra(Scene):
                             .move_to(t4[0][nw*2+n]).shift(key_space))
             if box is None:
                 box = SurroundingRectangle(key_objs[n], color=WHITE, corner_radius=0.1)
+
                 self.play(FadeIn(box), run_time=0.5)
             else:
                 self.play(box.animate.move_to(key_objs[n]), run_time=0.5)
@@ -1344,31 +1349,54 @@ class Abra(Scene):
         box2 = SurroundingRectangle(Group(*key_objs[-len(target):]), color=GREEN, corner_radius=0.1)
         self.play(FadeOut(box), FadeIn(box2), run_time=0.5)
 
-        return wojak_paidobjs, wojak_stakes, key_objs, box2
+        return dict_of(wojak_paidobjs, wojak_stakes, key_objs, box=box2)
 
-    def construct(self):
+    def dont_run(self, wojaks, choices, tables, stakes, target, wojak_happy, wojak_sad):
+        nw = len(list(wojaks))
+        t2 = tables[1]
+        t4 = tables[3]
+
+        m = len(choices)
+        key_space = (t4[0][nw].get_center() - t4[0][0].get_center()) * 1.1
+        add = []
+        wojak_paidobjs = []
+        wojak_stakes = [None] * m
+        key_objs = []
+        for i in range(len(choices)):
+            if target.startswith(choices[i:]):
+                state = m - i
+                add.append(wojak_happy.copy().move_to(wojaks[i]))
+                add.append(MathTex(r'{}'.format(state), font_size=40, z_index=4).move_to(t4[0][nw + i]))
+                wojak_stakes[i] = stakes[state].copy().move_to(t4[0][i])
+            else:
+                add.append(wojak_sad.copy().move_to(wojaks[i]))
+                t4[0][i::nw].set_fill(color=GREY, opacity=1)
+
+            wojak_paidobjs.append(stakes[0].copy().set_color(RED).move_to(t2[0][i]))
+            key_objs.append(Text(choices[i], font_size=30, font='Courier New', weight=SEMIBOLD, color=BLUE)
+                            .move_to(t4[0][nw * 2 + i]).shift(key_space))
+
+        self.add(*add)
+
+        box = SurroundingRectangle(Group(*key_objs[-len(target):]), color=GREEN, corner_radius=0.1)
+        self.add(*wojak_paidobjs, *[x for x in wojak_stakes if x is not None], *key_objs, box)
+
+        return dict_of(wojak_paidobjs, wojak_stakes, key_objs, box)
+
+    def build(self):
         nw = 22
-        target = r'ABRACADABRA'
-        #choice = r'MOZBVZQCFYANXCBUXONLWADTPWIPZMERFMTKXWPTABRACADABRA'
-        #choice = r'MOZBVABRYANABRACADABRA'
-        choices = r'ANABRACADABRA'
-        choices = r'BABRACYABABRACADABRA'
-        #target=r'ABRA'
-        #choices=r'CABRA'
-
-        stake_str = [r'\$1', r'\$26'] + [r'\$26\textsuperscript{{{}}}'.format(i) for i in range(2, 13)]
-        stakes = [Tex(t, font_size=30, z_index=5) for t in stake_str]
-
-        monkey = ImageMobject("Monkey-typing.jpg").to_edge(DR, buff=0.04)
-        monkey.scale(3.7/monkey.height)
-#        monkey = ImageMobject("Chimpanzee_seated_at_typewriter.jpg").scale(0.5).to_edge(DR, buff=0.1)
         wojak = ImageMobject("wojak.png", z_index=2).scale(0.12)
         wojak_happy = ImageMobject("wojak_happy.png", z_index=3)
         wojak_sad = ImageMobject("depressed_wojak.png", z_index=3)
-        wojak_sad.scale(wojak.width/wojak_sad.width)
-        wojak_happy.scale(wojak.width/wojak_happy.width)
+        wojak_sad.scale(wojak.width / wojak_sad.width)
+        wojak_happy.scale(wojak.width / wojak_happy.width)
+        monkey = ImageMobject("Monkey-typing.jpg").to_edge(DR, buff=0.04)
+        monkey.scale(3.7 / monkey.height)
 
         wojaks = Group(*[wojak.copy() for _ in range(nw)]).arrange(RIGHT, buff=0.1).to_edge(LEFT, buff=0)
+        stake_str = [r'\bf\$1', r'\bf\$26'] + [r'\bf\$26\textsuperscript{{{}}}'.format(i) for i in range(2, 13)]
+        stakes = [Tex(t, font_size=30, z_index=5) for t in stake_str]
+
         wojak_space: np.ndarray = (wojaks[-1].get_center()-wojaks[0].get_center())/(nw-1)
         wojaks.shift(wojak_space)
 
@@ -1397,7 +1425,18 @@ class Abra(Scene):
         t3[0][1] = Tex(r'{\bf wins}', font_size=25, color=WHITE, z_index=4).move_to(t3[0][1])
         t3[0][2] = Tex(r'{\bf bet}', font_size=25, z_index=4).move_to(t3[0][2])
 
-        self.play(LaggedStart(FadeIn(monkey), FadeIn(Group(t1, t2, t3, t4)), run_time=4, lag_ratio=0.05))
+        tables = Group(t1, t2, t3, t4)
+
+        return dict_of(nw, monkey, tables, stakes, wojaks, wojak_happy, wojak_sad)
+
+    def construct(self):
+        target = r'ABRACADABRA'
+        choices = r'BABRACYABABRACADABRA'
+        run_game = False
+
+        nw, monkey, tables, stakes, wojaks, wojak_happy, wojak_sad = unpack_keys(self.build())
+
+        self.play(LaggedStart(FadeIn(monkey), FadeIn(tables), run_time=4, lag_ratio=0.05))
 
         desc = Text('Each player stakes $1 on their turn and bets on\n'
                     'the letter A.\n'
@@ -1407,21 +1446,12 @@ class Abra(Scene):
             .align_to(monkey, UP).to_edge(LEFT, buff=0.2).shift(DOWN * 0.2)
         self.play(FadeIn(desc), run_time=1)
 
-        run_game = True
         if run_game:
-            wojak_paidobjs, wojak_stakes, key_objs, box = self.run_game(wojaks, choices, t2, t4, stakes, target, wojak_happy, wojak_sad)
+            wojak_paidobjs, wojak_stakes, key_objs, box = unpack_keys(self.run_game(wojaks, choices, tables, stakes,
+                                                                                    target, wojak_happy, wojak_sad))
         else:
-            m = len(choices)
-            wojak_paidobjs = [stakes[0].copy().set_color(RED).move_to(t2[0][n]) for n in range(m)]
-            wojak_stakes = [None] * m
-            for i in [1, 4, 11]:
-                wojak_stakes[-i] = stakes[i].copy().move_to(t4[0][nw*2+m-i])
-                key_space = (t4[0][nw].get_center() - t4[0][0].get_center()) * 1.1
-            key_objs = [Text(choices[i], font_size=30, font='Courier New', weight=SEMIBOLD, color=BLUE)
-                        .move_to(t4[0][nw*2+i]).shift(key_space) for i in range(len(choices))]
-            box = SurroundingRectangle(Group(*key_objs[-11:]), color=GREEN, corner_radius=0.1)
-            self.add(*wojak_paidobjs, *[x for x in wojak_stakes if x is not None], *key_objs, box)
-
+            wojak_paidobjs, wojak_stakes, key_objs, box = unpack_keys(self.dont_run(wojaks, choices, tables, stakes,
+                                                                                    target, wojak_happy, wojak_sad))
 
         self.play(FadeOut(desc), run_time=0.5)
 
@@ -1498,6 +1528,33 @@ class Abra(Scene):
                   ReplacementTransform(eq9[-3:], eq10[:3]),
                   run_time=2)
         self.play(FadeOut(eq5), run_time=2)
+
+
+class Abra2(Abra):
+    def construct(self):
+        target = r'ABRACADABRA'
+        choices = r'BABRACYABABRACADABRA'
+
+        nw, monkey, tables, stakes, wojaks, wojak_happy, wojak_sad = unpack_keys(self.build())
+        self.add(monkey, tables)
+        wojak_paidobjs, wojak_stakes, key_objs, box = unpack_keys(self.dont_run(wojaks, choices, tables, stakes,
+                                                                                target, wojak_happy, wojak_sad))
+
+        self.wait(1)
+        n = len(choices)
+        new_paidobjs = []
+        for i in range(n):
+            new_paidobjs.append(MathTex(r'\bf {}'.format(i), font_size=30, z_index=5, color=RED).move_to(tables[1][0][i]))
+
+        self.play(FadeOut(*wojak_paidobjs), FadeIn(*new_paidobjs), run_time=2)
+
+        wojak_paidobjs[0] = MathTex('1', font_size=30, z_index=5, color=PURE_RED).move_to(tables[1][0][0])
+        wojak_paidobjs[1] = MathTex('t', font_size=30, z_index=5, color=PURE_RED).move_to(tables[1][0][1])
+        for i in range(2, n):
+            wojak_paidobjs[i] = MathTex('t^{{{}}}'.format(i), font_size=30, z_index=5, color=RED).move_to(tables[1][0][i])
+
+        self.wait(1)
+        self.play(FadeIn(*wojak_paidobjs), FadeOut(*new_paidobjs), run_time=2)
 
 
 if __name__ == "__main__":
