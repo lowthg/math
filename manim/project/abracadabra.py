@@ -1249,6 +1249,7 @@ class Abra(Scene):
     choices = r'BABRACYABABRACADABRA'
     num_players = 22
     wojak_scale = 0.12
+    table_shift = [0, 0, 0]
 
     def __init__(self, *args, **kwargs):
         Scene.__init__(self, *args, **kwargs)
@@ -1262,13 +1263,14 @@ class Abra(Scene):
 
     @staticmethod
     def get_stake(n):
+        font_size = 30 if n < 10 else 27
         if n == 0:
             stake_str = r'\bf\$1'
         elif n == 1:
             stake_str = r'\bf\$26'
         else:
-            stake_str = r'\bf\$26\textsuperscript{{{}}}'.format(n)
-        return Tex(stake_str, font_size=30, z_index=5)
+            stake_str = r'\bf\$26\textsuperscript{{{}}}\ '.format(n)
+        return MathTex(stake_str, font_size=font_size, z_index=5)
 
     @staticmethod
     def get_key(key):  # get key to display
@@ -1437,12 +1439,12 @@ class Abra(Scene):
         wojak_space: np.ndarray = (wojaks[-1].get_center()-wojaks[0].get_center())/(self.num_players-1)
         wojaks.shift(wojak_space)
 
-        r = Rectangle(width=wojak_space[0], height=wojak_space[0], stroke_opacity=0, z_index=3, fill_opacity=1,
+        r = Rectangle(width=wojak_space[0], height=wojak_space[0], stroke_opacity=0, z_index=0, fill_opacity=1,
                       fill_color=BLACK)
 
         t1 = MobjectTable([[r.copy()]], include_outer_lines=True,
-                          h_buff=0, v_buff=0).to_edge(LEFT, buff=0.02).to_edge(UP, buff=0.2)
-        t1[0][0] = Tex(r'{\bf paid}', font_size=25, color='#FF9999').move_to(t1[0][0])
+                          h_buff=0, v_buff=0).to_edge(LEFT, buff=0.02).to_edge(UP, buff=0.2).shift(np.array(self.table_shift))
+        t1[0][0] = MathTex(r'\bf paid', font_size=25, color=RED).move_to(t1[0][0])
 
         t2 = MobjectTable([[r.copy() for i in range(self.num_players)]],
                           include_outer_lines=True,
@@ -1459,9 +1461,9 @@ class Abra(Scene):
                           h_buff=0, v_buff=0).next_to(t1, RIGHT, buff=0)\
             .next_to(t3, RIGHT).align_to(t2, LEFT).set_z_index(0)
 
-        t3[0][0] = Tex(r'{\bf stake}', font_size=25, color=GREEN, z_index=4).move_to(t3[0][0])
-        t3[0][1] = Tex(r'{\bf wins}', font_size=25, color=WHITE, z_index=4).move_to(t3[0][1])
-        t3[0][2] = Tex(r'{\bf bet}', font_size=25, z_index=4).move_to(t3[0][2])
+        t3[0][0] = MathTex(r'\bf\rm stake', font_size=25, color=GREEN, z_index=4).move_to(t3[0][0])
+        t3[0][1] = MathTex(r'\bf\rm wins', font_size=25, color=WHITE, z_index=4).move_to(t3[0][1])
+        t3[0][2] = MathTex(r'\bf\rm bet', font_size=25, z_index=4).move_to(t3[0][2])
 
         tables = Group(t1, t2, t3, t4)
         key_space = (t4[0][self.num_players].get_center() - t4[0][0].get_center()) * 1.1
@@ -1470,12 +1472,17 @@ class Abra(Scene):
 
         if run_game:
             desc = self.get_text()
-            self.play(LaggedStart(FadeIn(*self.monkey), FadeIn(tables), run_time=4, lag_ratio=0.05))
+            if self.monkey is None:
+                self.play(FadeIn(tables), run_time=3)
+            else:
+                self.play(LaggedStart(FadeIn(*self.monkey), FadeIn(tables), run_time=4, lag_ratio=0.05))
             self.play(FadeIn(desc), run_time=1)
             self.run_game(wojaks, self.choices, tables, self.target, wojak_happy, wojak_sad, key_space)
             self.play(FadeOut(desc), run_time=0.5)
         else:
-            self.add(*self.monkey, tables)
+            if self.monkey is not None:
+                self.add(*self.monkey)
+            self.add(tables)
             self.dont_run(wojaks, self.choices, tables, self.target, wojak_happy, wojak_sad, key_space)
 
     def construct(self):
@@ -1560,7 +1567,7 @@ class Abra(Scene):
             self.play(FadeOut(eq5), run_time=2)
 
 
-class Abra2(Abra):
+class AbraGF(Abra):
     def construct(self):
         self.build(run_game=False)
 
@@ -1568,19 +1575,62 @@ class Abra2(Abra):
         n = len(self.choices)
         new_paidobjs = []
         for i in range(n):
-            new_paidobjs.append(MathTex(r'\bf {}'.format(i), font_size=30, z_index=5, color=RED)
+            new_paidobjs.append(MathTex(r'\bf \${}'.format(i), font_size=30, z_index=5, color=RED)
                                 .move_to(self.paid_objs[i]))
 
         self.play(FadeOut(*self.paid_objs), FadeIn(*new_paidobjs), run_time=2)
 
-        self.paid_objs[0] = MathTex('1', font_size=30, z_index=5, color=PURE_RED).move_to(self.paid_objs[0])
-        self.paid_objs[1] = MathTex('t', font_size=30, z_index=5, color=PURE_RED).move_to(self.paid_objs[1])
+        self.paid_objs[0] = MathTex(r'\bf 1', font_size=30, z_index=5, color=RED).move_to(self.paid_objs[0])
+        self.paid_objs[1] = MathTex(r'\bf t', font_size=30, z_index=5, color=RED).move_to(self.paid_objs[1])
         for i in range(2, n):
-            self.paid_objs[i] = MathTex('t^{{{}}}'.format(i), font_size=30, z_index=5, color=RED)\
+            self.paid_objs[i] = MathTex(r'\bf t^{{{}}}'.format(i), font_size=30, z_index=5, color=RED)\
                 .move_to(self.paid_objs[i])
 
         self.wait(1)
         self.play(FadeIn(*self.paid_objs), FadeOut(*new_paidobjs), run_time=2)
+
+
+class AbraHT(Abra):
+    target = r'HT'
+    choices = r'THHT'
+    num_players = 22
+    wojak_scale = 0.12
+    table_shift = [1, 0, 0]
+
+    @staticmethod
+    def get_stake(n):
+        stake_str = r'\bf\${}'.format(2**n)
+        return MathTex(stake_str, font_size=30, z_index=5)
+
+    @staticmethod
+    def get_key(key):
+        return get_coin(key).scale(0.4)
+
+    def animate_key(self, keyobj):
+        return animate_flip(self, keyobj)
+
+    @staticmethod
+    def get_choice(key):  # get key to display
+        if key == 'T':
+            color = YELLOW
+        else:
+            color = BLUE
+        return Text(key, font_size=30, font='Courier New', weight=SEMIBOLD, color=color)
+
+    @staticmethod
+    def get_monkey():
+        return None
+
+
+    def construct(self):
+        run_game = False
+        run_math = True
+        self.build(run_game=run_game)
+
+
+class AbraHH(AbraHT):
+    target = r'HH'
+    choices = r'THTHH'
 
 
 if __name__ == "__main__":
