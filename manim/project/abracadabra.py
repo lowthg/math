@@ -1269,7 +1269,7 @@ class Abra(Scene):
         elif n == 1:
             stake_str = r'\bf\$26'
         else:
-            stake_str = r'\bf\$26\textsuperscript{{{}}}\ '.format(n)
+            stake_str = r'\bf\$26^{{{}}}'.format(n)
         return MathTex(stake_str, font_size=font_size, z_index=5)
 
     @staticmethod
@@ -1485,86 +1485,111 @@ class Abra(Scene):
             self.add(tables)
             self.dont_run(wojaks, self.choices, tables, self.target, wojak_happy, wojak_sad, key_space)
 
+    @staticmethod
+    def stake_math(obj):
+        tex_str = obj.tex_string.replace(r'\bf', '')
+        font_size = obj.font_size
+        if tex_str.startswith(r'\$'):
+            j = 1
+            tex_str = tex_str[2:]
+        else:
+            j = 0
+        won_obj = MathTex(tex_str, font_size=font_size).move_to(obj[0][j:])
+
+        return won_obj, tex_str
+
+    def run_math(self):
+        won = []
+        winners = []
+        won_objs = []
+        for i, obj in enumerate(self.stake_objs):
+            if obj is not None:
+                won_obj, tex_str = self.stake_math(obj)
+                won.append(tex_str)
+                won_objs.append(won_obj)
+                winners.append(i)
+
+        n_win = len(won)
+        eq1 = MathTex(r'{\rm Total\ paid} {{=}} N', font_size=40).to_edge(LEFT, buff=0.5).align_to(self.text_pos, UP)
+
+        eq2 = MathTex(r'{{=}} 1', font_size=40)
+        eq2[1].set_opacity(0.5)
+        eq2.shift((eq1[1].get_center() - eq2[0].get_center()))
+        paids = [x[0][1:].copy() for x in self.paid_objs]
+        self.play(FadeIn(eq1[:2]), run_time=0.5)
+        self.play(*[ReplacementTransform(x, eq2[1]) for x in paids], FadeIn(eq1[2], target_position=paids[-1]),
+                  run_time=2)
+        self.remove(eq2[1])
+        self.wait(1)
+
+        won_rhs = '{{+}}'.join(won)
+        eq3 = MathTex(r'{\rm Total\ won} {{=}} ' + won_rhs, font_size=40) \
+            .next_to(eq1, DOWN).align_to(eq1, LEFT)
+
+        self.play(FadeIn(eq3[:2]), run_time=0.5)
+        for i in range(n_win):
+            if i > 0:
+                self.play(FadeIn(eq3[2 * i + 1]), run_time=0.2)
+                self.play(Transform(self.box, SurroundingRectangle(Group(*self.key_objs[winners[i]:]), color=GREEN,
+                                                                   corner_radius=0.1)), run_time=0.8)
+            self.play(ReplacementTransform(won_objs[i][0], eq3[2 + 2 * i]), run_time=2)
+        self.play(FadeOut(self.box), run_time=0.2)
+
+        return
+
+        eq5 = MathTex(r'{\rm Total\ profit} {{=}} 26^{11} {{+}} 26^4 {{+}} 26 {{-}} N', font_size=40) \
+            .next_to(eq3, DOWN).align_to(eq1, LEFT)
+        eq4 = MathTex(r'{{=}} {\rm Total\ won} {{-}} {\rm Total\ paid}', font_size=40)
+        eq4.shift(eq5[1].get_center() - eq4[0].get_center())
+
+        self.play(FadeIn(eq5[0:2], eq4[1:]), run_time=0.5)
+
+        self.play(eq4[-1].animate.shift((eq5[-2].get_center() - eq4[-2].get_center()) * RIGHT),
+                  ReplacementTransform(eq4[-2], eq5[-2]), run_time=1)
+        self.play(FadeOut(eq4[1]), ReplacementTransform(eq3[2:].copy(), eq5[2:-2]), run_time=2)
+        self.play(FadeOut(eq4[-1]), ReplacementTransform(eq1[2].copy(), eq5[-1]), run_time=2)
+        self.play(FadeOut(eq1, eq3), eq5.animate.move_to(eq1, LEFT), run_time=2)
+
+        eq6 = MathTex(r'\mathbb E[{{ {\rm Total\ profit} }}] {{=}} 0', font_size=40) \
+            .next_to(eq5, DOWN).align_to(eq5, LEFT)
+        eq7 = MathTex(r'\mathbb E[{{26^{11} }} + {{26^4}} + {{26}} - {{N}}] {{=}} 0', font_size=40) \
+            .next_to(eq5, DOWN).align_to(eq5, LEFT)
+
+        txt = Text(r'Fair game!', font_size=40, color=RED).next_to(eq6, RIGHT, buff=1)
+        self.play(LaggedStart(FadeIn(eq6), FadeIn(txt), lag_ratio=0.5), run_time=1)
+        self.wait(1)
+        self.play(ReplacementTransform(eq5[2:].copy(), eq7[1:-3]),
+                  ReplacementTransform(eq6[-3:], eq7[-3:]),
+                  ReplacementTransform(eq6[0], eq7[0]),
+                  FadeOut(txt, eq6[1]), run_time=2)
+
+        eq8 = MathTex(r'{{26^{11} }} + {{26^4}} + {{26}}{{-}} \mathbb E[ {{N}}] {{=}} 0', font_size=40)
+        eq9 = MathTex(r'{{26^{11} }} + {{26^4}} + {{26}}{{=}} \mathbb E[ {{N}}]', font_size=40)
+        eq10 = MathTex(r'\mathbb E[ {{N}}] {{=}}{{26^{11} }} + {{26^4}} + {{26}}', font_size=40)
+
+        eq8.shift(eq7[-1].get_center() - eq8[-1].get_center())
+        eq9.shift(eq8[4].get_center() - eq9[4].get_center())
+        eq10.shift(eq9[-4].get_center() - eq10[3].get_center())
+
+        self.play(ReplacementTransform(eq7[1:7], eq8[:6]),
+                  ReplacementTransform(eq7[0], eq8[-5]),
+                  ReplacementTransform(eq7[-4:], eq8[-4:]),
+                  run_time=2)
+        self.play(ReplacementTransform(eq8[-2], eq9[-4]),
+                  ReplacementTransform(eq8[-5], eq9[-3]),
+                  ReplacementTransform(eq8[-4:-2], eq9[-2:]),
+                  ReplacementTransform(eq8[:5], eq9[:5]),
+                  FadeOut(eq8[-6], eq8[-1]),
+                  run_time=2)
+        self.play(ReplacementTransform(eq9[:5], eq10[4:]),
+                  ReplacementTransform(eq9[-4], eq10[3]),
+                  ReplacementTransform(eq9[-3:], eq10[:3]),
+                  run_time=2)
+        self.play(FadeOut(eq5), run_time=2)
+
     def construct(self):
-        run_game = True
-        run_math = True
-        self.build(run_game=run_game)
-
-        if run_math:
-            eq1 = MathTex(r'{\rm Total\ paid} {{=}} N', font_size=40).to_edge(LEFT, buff=0.5).align_to(self.text_pos, UP)
-            eq2 = MathTex(r'{{=}} 1', font_size=40)
-            eq2[1].set_opacity(0.5)
-            eq2.shift((eq1[1].get_center()-eq2[0].get_center()))
-            paids = [x[0][1:].copy() for x in self.paid_objs]
-            self.play(FadeIn(eq1[:2]), run_time=0.5)
-            self.play(*[ReplacementTransform(x, eq2[1]) for x in paids], FadeIn(eq1[2], target_position=paids[-1]),
-                      run_time=2)
-            self.remove(eq2[1])
-            self.wait(1)
-
-            eq3 = MathTex(r'{\rm Total\ won} {{=}} 26^{11} {{+}} 26^4 {{+}} 26', font_size=40)\
-                .next_to(eq1, DOWN).align_to(eq1, LEFT)
-
-            winners = [-11, -4, -1]
-            to_move = [self.stake_objs[i] for i in winners]
-            self.play(FadeIn(eq3[:2]), run_time=0.5)
-            for i in range(3):
-                if i > 0:
-                    self.play(FadeIn(eq3[2*i+1]), run_time=0.2)
-                    self.play(Transform(self.box, SurroundingRectangle(Group(*self.key_objs[winners[i]:]), color=GREEN,
-                                                                       corner_radius=0.1)), run_time=0.8)
-                self.play(ReplacementTransform(to_move[i].copy()[0][1:], eq3[2 + 2*i]), run_time=2)
-            self.play(FadeOut(self.box), run_time=0.2)
-
-            eq5 = MathTex(r'{\rm Total\ profit} {{=}} 26^{11} {{+}} 26^4 {{+}} 26 {{-}} N', font_size=40)\
-                .next_to(eq3, DOWN).align_to(eq1, LEFT)
-            eq4 = MathTex(r'{{=}} {\rm Total\ won} {{-}} {\rm Total\ paid}', font_size=40)
-            eq4.shift(eq5[1].get_center()-eq4[0].get_center())
-
-            self.play(FadeIn(eq5[0:2], eq4[1:]), run_time=0.5)
-
-            self.play(eq4[-1].animate.shift((eq5[-2].get_center()-eq4[-2].get_center()) * RIGHT),
-                      ReplacementTransform(eq4[-2], eq5[-2]), run_time=1)
-            self.play(FadeOut(eq4[1]), ReplacementTransform(eq3[2:].copy(), eq5[2:-2]), run_time=2)
-            self.play(FadeOut(eq4[-1]), ReplacementTransform(eq1[2].copy(), eq5[-1]), run_time=2)
-            self.play(FadeOut(eq1, eq3), eq5.animate.move_to(eq1, LEFT), run_time=2)
-
-            eq6 = MathTex(r'\mathbb E[{{ {\rm Total\ profit} }}] {{=}} 0', font_size=40)\
-                .next_to(eq5, DOWN).align_to(eq5, LEFT)
-            eq7 = MathTex(r'\mathbb E[{{26^{11} }} + {{26^4}} + {{26}} - {{N}}] {{=}} 0', font_size=40)\
-                .next_to(eq5, DOWN).align_to(eq5, LEFT)
-
-            txt = Text(r'Fair game!', font_size=40, color=RED).next_to(eq6, RIGHT, buff=1)
-            self.play(LaggedStart(FadeIn(eq6), FadeIn(txt), lag_ratio=0.5), run_time=1)
-            self.wait(1)
-            self.play(ReplacementTransform(eq5[2:].copy(), eq7[1:-3]),
-                      ReplacementTransform(eq6[-3:], eq7[-3:]),
-                      ReplacementTransform(eq6[0], eq7[0]),
-                      FadeOut(txt, eq6[1]), run_time=2)
-
-            eq8 = MathTex(r'{{26^{11} }} + {{26^4}} + {{26}}{{-}} \mathbb E[ {{N}}] {{=}} 0', font_size=40)
-            eq9 = MathTex(r'{{26^{11} }} + {{26^4}} + {{26}}{{=}} \mathbb E[ {{N}}]', font_size=40)
-            eq10 = MathTex(r'\mathbb E[ {{N}}] {{=}}{{26^{11} }} + {{26^4}} + {{26}}', font_size=40)
-
-            eq8.shift(eq7[-1].get_center()-eq8[-1].get_center())
-            eq9.shift(eq8[4].get_center()-eq9[4].get_center())
-            eq10.shift(eq9[-4].get_center()-eq10[3].get_center())
-
-            self.play(ReplacementTransform(eq7[1:7], eq8[:6]),
-                      ReplacementTransform(eq7[0], eq8[-5]),
-                      ReplacementTransform(eq7[-4:], eq8[-4:]),
-                      run_time=2)
-            self.play(ReplacementTransform(eq8[-2], eq9[-4]),
-                      ReplacementTransform(eq8[-5], eq9[-3]),
-                      ReplacementTransform(eq8[-4:-2], eq9[-2:]),
-                      ReplacementTransform(eq8[:5], eq9[:5]),
-                      FadeOut(eq8[-6], eq8[-1]),
-                      run_time=2)
-            self.play(ReplacementTransform(eq9[:5], eq10[4:]),
-                      ReplacementTransform(eq9[-4], eq10[3]),
-                      ReplacementTransform(eq9[-3:], eq10[:3]),
-                      run_time=2)
-            self.play(FadeOut(eq5), run_time=2)
+        self.build(run_game=False)
+        self.run_math()
 
 
 class AbraGF(Abra):
