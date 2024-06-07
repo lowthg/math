@@ -1535,6 +1535,29 @@ class Abra(Scene):
             self.play(ReplacementTransform(won_objs[i][0], eq3[2 + 2 * i]), run_time=2)
         self.play(FadeOut(self.box), run_time=0.2)
 
+        eq4 = MathTex(r'{\rm Total\ profit} {{=}} {\rm Total\ won} {{-}} {\rm Total\ paid}', font_size=40) \
+            .next_to(eq3, DOWN).align_to(eq1, LEFT)
+        self.play(FadeIn(eq4), run_time=0.5)
+        self.wait(1)
+
+        eq5 = MathTex(r'\mathbb E[{{ {\rm Total\ profit} }}] {{=}} 0', font_size=40) \
+            .next_to(eq4, DOWN).align_to(eq4, LEFT)
+        eq6 = MathTex(r'\mathbb E[{{ {\rm Total\ won} }}-{{ {\rm Total\ paid} }} ] {{=}} 0',
+                      font_size=40).align_to(eq5, LEFT)
+        eq6.shift((eq5[-1].get_center()-eq6[-1].get_center()) * UP)
+
+        txt = Text(r'Fair game!', font_size=40, color=RED).next_to(eq5, RIGHT, buff=1)
+        self.play(LaggedStart(FadeIn(eq5), FadeIn(txt), lag_ratio=0.5), run_time=2)
+
+        self.play(ReplacementTransform(eq5[0], eq6[0]),
+                  ReplacementTransform(eq5[-3:], eq6[-3:]),
+                  eq5[1].animate.move_to(eq6[2], coor_mask=1),
+                  FadeOut(txt),
+                  run_time=2)
+        self.play(ReplacementTransform(eq4[2:].copy(), eq6[1:4]),
+                  FadeOut(eq5[1]),
+                  run_time=2)
+
         return
 
         eq5 = MathTex(r'{\rm Total\ profit} {{=}} 26^{11} {{+}} 26^4 {{+}} 26 {{-}} N', font_size=40) \
