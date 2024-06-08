@@ -1498,7 +1498,7 @@ class Abra(Scene):
 
         return won_obj, tex_str
 
-    def run_math(self):
+    def run_math(self, do_fair_game=True):
         won = []
         winners = []
         won_objs = []
@@ -1537,40 +1537,39 @@ class Abra(Scene):
 
         eq4 = MathTex(r'{\rm Total\ profit} {{=}} {\rm Total\ won} {{-}} {\rm Total\ paid}', font_size=40) \
             .next_to(eq3, DOWN).align_to(eq1, LEFT)
-        self.play(FadeIn(eq4), run_time=1)
-        self.wait(1)
-
-        eq5 = MathTex(r'\mathbb E[{{ {\rm Total\ profit} }}] {{=}} 0', font_size=40) \
-            .next_to(eq4, DOWN).align_to(eq4, LEFT)
-        eq6 = MathTex(r'\mathbb E[{{ {\rm Total\ won} }}-{{ {\rm Total\ paid} }} ] {{=}} 0',
-                      font_size=40).align_to(eq5, LEFT)
-        eq6.shift((eq5[-1].get_center()-eq6[-1].get_center()) * UP)
-        eq7 = MathTex(r'\mathbb E[{{ {\rm Total\ won} }}]{{-}}\mathbb E[{{ {\rm Total\ paid} }} ] {{=}} 0',
-                      font_size=40).move_to(eq6, LEFT)
         eq8 = MathTex(r'\mathbb E[{{ {\rm Total\ paid} }}] {{=}} \mathbb E[{{ {\rm Total\ won} }}]',
-                      font_size=40).move_to(eq6, LEFT)
+                      font_size=40).next_to(eq4, DOWN).align_to(eq4, LEFT)
+        txt = Text(r'Fair game!', font_size=40, color=RED).next_to(eq8, DOWN).align_to(eq8, LEFT)
 
-        txt = Text(r'Fair game!', font_size=40, color=RED).next_to(eq8, DOWN, buff=0).shift(RIGHT)
-        self.play(LaggedStart(FadeIn(eq5), FadeIn(txt), lag_ratio=0.5), run_time=2)
+        if do_fair_game:
+            self.play(FadeIn(eq4), run_time=1)
+            self.wait(1)
 
-        self.play(ReplacementTransform(eq5[0], eq6[0]),
-                  ReplacementTransform(eq5[-3:], eq6[-3:]),
-                  eq5[1].animate.move_to(eq6[2], coor_mask=1),
-                  run_time=2)
-        self.play(ReplacementTransform(eq4[2:].copy(), eq6[1:4]),
-                  FadeOut(eq5[1]),
-                  run_time=2)
+            eq5 = MathTex(r'\mathbb E[{{ {\rm Total\ profit} }}] {{=}} 0', font_size=40) \
+                .move_to(eq8, LEFT)
+            eq6 = MathTex(r'\mathbb E[{{ {\rm Total\ won} }}-{{ {\rm Total\ paid} }} ] {{=}} 0',
+                          font_size=40).move_to(eq8, LEFT)
+#            eq6.shift((eq5[-1].get_center()-eq6[-1].get_center()) * UP)
+            eq7 = MathTex(r'\mathbb E[{{ {\rm Total\ won} }}]{{-}}\mathbb E[{{ {\rm Total\ paid} }} ] {{=}} 0',
+                          font_size=40).move_to(eq8, LEFT)
 
-        self.play(ReplacementTransform(eq6[0:2], eq7[0:2]),
-                  ReplacementTransform(eq6[2], eq7[3]),
-                  ReplacementTransform(eq6[3:], eq7[5:]),
-                  FadeIn(eq7[2], eq7[4]),
-                  run_time=2)
-        self.play(ReplacementTransform(eq7[4:8], eq8[:4]),
-                  ReplacementTransform(eq7[:3], eq8[-3:]),
-                  FadeOut(eq7[3], target_position=eq8[3]),
-                  FadeOut(eq7[-1]),
-                  run_time=2)
+            self.play(LaggedStart(FadeIn(eq5), FadeIn(txt), lag_ratio=0.5), run_time=2)
+
+            self.play(ReplacementTransform(eq5[-3:] + eq5[0], eq6[-3:] + eq6[0]),
+                      eq5[1].animate.move_to(eq6[2], coor_mask=1),
+                      run_time=2)
+            self.play(ReplacementTransform(eq4[2:].copy(), eq6[1:4]),
+                      FadeOut(eq5[1]),
+                      run_time=2)
+
+            self.play(ReplacementTransform(eq6[0:2] + eq6[2] + eq6[3:], eq7[0:2] + eq7[3] + eq7[5:]),
+                      FadeIn(eq7[2], eq7[4]),
+                      run_time=2)
+            self.play(ReplacementTransform(eq7[4:8] + eq7[:3], eq8[:4] + eq8[-3:]),
+                      FadeOut(eq7[3], target_position=eq8[3]),
+                      FadeOut(eq7[-1]),
+                      run_time=2)
+            self.play(FadeOut(eq4), run_time=2)
 
         return
 
