@@ -1293,8 +1293,8 @@ class Abra(Scene):
         desc = Text('Each player stakes $1 on their turn and bets on\n'
                     'the letter A.\n'
                     'Any winnings are rolled over to bet on each of the\n'
-                    'remaining letters of ABRACADABRA in turn.\n'
-                    'Fair game => each win multiplies the stake by 26.', font_size=30, line_spacing=0.8) \
+                    'remaining letters of ABRACADABsRA in turn.\n'
+                    'Fair game => each win multiplies the stake by 26.', font_size=27, line_spacing=0.8) \
             .align_to(self.text_pos, UP).to_edge(LEFT, buff=0.2).shift(DOWN * 0.2)
         return desc
 
