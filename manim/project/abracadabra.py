@@ -33,7 +33,6 @@ def get_coin(face='H'):
         return T.copy()
     raise Exception('invalid argument {}'.format(face))
 
-
 def set_new_location(A, B):
     A.set_x(B.get_x())
     A.set_y(B.get_y())
@@ -1250,6 +1249,11 @@ class Abra(Scene):
     num_players = 22
     wojak_scale = 0.12
     table_shift = [0, 0, 0]
+    final_rhs = None
+    play_game = True
+    math_shift = ORIGIN
+    do_fair_game = False
+    buff = 0
 
     def __init__(self, *args, **kwargs):
         Scene.__init__(self, *args, **kwargs)
@@ -1260,6 +1264,7 @@ class Abra(Scene):
         self.key_objs = []  # Mobject of typed keys
         self.box = None
         self.text_pos = np.array([0, 0])
+
 
     @staticmethod
     def get_stake(n):
@@ -1280,9 +1285,10 @@ class Abra(Scene):
     def get_choice(key):  # get key choice to display
         return Abra.get_key(key)
 
-    def animate_key(self, keyobj):  # animate display of key
-        self.add(keyobj)
-        return keyobj
+    def animate_key(self, key, pos):  # animate display of key
+        obj = self.get_key(key).move_to(pos)
+        self.add(obj)
+        return obj
 
     @staticmethod
     def get_monkey():  # image to display
@@ -1351,7 +1357,7 @@ class Abra(Scene):
 
             # key is pressed
             self.wait(1)
-            self.key_objs[n] = self.animate_key(self.key_objs[n])
+            self.key_objs[n] = self.animate_key(key, self.key_objs[n])
             self.wait(0.5)
             to_remove = []
             for i in range(n+1):
@@ -1427,14 +1433,15 @@ class Abra(Scene):
         self.add(*self.paid_objs, *[x for x in wojak_stakes if x is not None], *self.key_objs, self.box)
         self.stake_objs = wojak_stakes
 
-    def build(self, run_game=False):
+    def build(self):
         wojak = ImageMobject("wojak.png", z_index=2).scale(self.wojak_scale)
         wojak_happy = ImageMobject("wojak_happy.png", z_index=3)
         wojak_sad = ImageMobject("depressed_wojak.png", z_index=3)
         wojak_sad.scale(wojak.width / wojak_sad.width)
         wojak_happy.scale(wojak.width / wojak_happy.width)
 
-        wojaks = Group(*[wojak.copy() for _ in range(self.num_players)]).arrange(RIGHT, buff=0.1).to_edge(LEFT, buff=0)
+        wojaks = Group(*[wojak.copy() for _ in range(self.num_players)]).arrange(RIGHT, buff=0.1)\
+            .to_edge(LEFT, buff=self.buff)
 
         wojak_space: np.ndarray = (wojaks[-1].get_center()-wojaks[0].get_center())/(self.num_players-1)
         wojaks.shift(wojak_space)
@@ -1470,7 +1477,7 @@ class Abra(Scene):
 
         self.text_pos = tables[3][0][self.num_players * 2].get_center() + key_space * 1.5
 
-        if run_game:
+        if self.play_game:
             desc = self.get_text()
             if self.monkey is None:
                 self.play(FadeIn(tables), run_time=3)
@@ -1498,7 +1505,7 @@ class Abra(Scene):
 
         return won_obj, tex_str
 
-    def run_math(self, do_fair_game=False, shift=ORIGIN):
+    def run_math(self):
         won = []
         winners = []
         won_objs = []
@@ -1511,7 +1518,7 @@ class Abra(Scene):
 
         n_win = len(won)
         eq1 = MathTex(r'{\rm Total\ paid} {{=}} N', font_size=40).to_edge(LEFT, buff=0.5)\
-            .align_to(self.text_pos, UP).shift(shift)
+            .align_to(self.text_pos, UP).shift(self.math_shift)
 
         eq2 = MathTex(r'{{=}} 1', font_size=40)
         eq2[1].set_opacity(0.5)
@@ -1542,7 +1549,7 @@ class Abra(Scene):
                       font_size=40).next_to(eq4, DOWN).align_to(eq4, LEFT)
         txt = Text(r'Fair game!', font_size=35, color=RED).next_to(eq8, RIGHT)
 
-        if do_fair_game:
+        if self.do_fair_game:
             self.play(FadeIn(eq4), run_time=1)
             self.wait(1)
 
@@ -1579,7 +1586,7 @@ class Abra(Scene):
         eq9 = MathTex(r'\mathbb E[ {{N}} ] {{=}}{{\mathbb E[}}' + won_rhs + '{{]}}', font_size=40).move_to(eq8, LEFT)
         eq10 = eq1[-1].copy().move_to(eq8[1])
         self.play(FadeOut(eq8[1], txt),
-                  ReplacementTransform(eq1[-1], eq10),
+                  ReplacementTransform(eq1[-1].copy(), eq10),
                   run_time=2)
         self.play(ReplacementTransform(eq8[0:1] + eq10 + eq8[2:5],
                                        eq9[0:1] + eq9[1] + eq9[2:5]),
@@ -1590,19 +1597,34 @@ class Abra(Scene):
 
         self.play(FadeOut(eq9[4], eq8[-1]), run_time=1)
 
-        eq11 = MathTex(r'\mathbb E[ {{N}} ] {{=}}' + won_rhs, font_size=40).move_to(eq9, LEFT).shift(RIGHT)
-        rec = SurroundingRectangle(eq11, color=BLUE, corner_radius=0.2, stroke_width=4)
-        self.play(ReplacementTransform(eq9[:4] + eq9[5:-1], eq11[:4] + eq11[4:]),
-                  FadeIn(rec, target_position=eq9.get_center()), run_time=2)
+        final_rhs = won_rhs if self.final_rhs is None else self.final_rhs
+        eq11 = MathTex(r'\mathbb E[ {{N}} ] {{=}}' + final_rhs, font_size=40).move_to(eq9, LEFT).shift(RIGHT)
+        rec = SurroundingRectangle(eq11, color=BLUE, corner_radius=0.1, stroke_width=4)
+        if self.final_rhs is None:
+            self.play(ReplacementTransform(eq9[:4] + eq9[5:-1], eq11[:4] + eq11[4:]),
+                      FadeIn(rec, target_position=eq9.get_center()), run_time=2)
+        else:
+            self.play(ReplacementTransform(eq9[:4], eq11[:4]),
+                      FadeIn(eq11[4:], target_position=eq9[5:-1].get_center()),
+                      FadeOut(eq9[5:-1], target_position=eq11[4:].get_center()),
+                              FadeIn(rec, target_position=eq9.get_center()), run_time=2)
 
     def construct(self):
-        self.build(run_game=True)
+        self.build()
         self.run_math()
 
 
+class Abra2(Abra):
+    target = r'AB'
+    choices = r'BAB'
+    play_game = True
+
+    def run_math(self):
+        pass
+
 class AbraGF(Abra):
     def construct(self):
-        self.build(run_game=False)
+        self.build()
 
         self.wait(1)
         n = len(self.choices)
@@ -1629,6 +1651,13 @@ class AbraHT(Abra):
     num_players = 22
     wojak_scale = 0.12
     table_shift = [1, 0, 0]
+    play_game = True
+    buff = 1
+    do_fair_game = True
+    math_shift = RIGHT + DOWN * 0.2
+
+    def run_math(self):
+        pass
 
     @staticmethod
     def get_stake(n):
@@ -1639,8 +1668,9 @@ class AbraHT(Abra):
     def get_key(key):
         return get_coin(key).scale(0.4)
 
-    def animate_key(self, keyobj):
-        return animate_flip(self, keyobj)
+    def animate_key(self, key, pos):
+        obj = self.get_key(key).move_to(pos)
+        return animate_flip(self, obj)
 
     @staticmethod
     def get_choice(key):  # get key to display
@@ -1655,15 +1685,12 @@ class AbraHT(Abra):
         return None
 
 
-    def construct(self):
-        run_game = False
-        run_math = True
-        self.build(run_game=run_game)
-
-
 class AbraHH(AbraHT):
     target = r'HH'
     choices = r'THTHH'
+    final_rhs = r'6'
+    play_game = False
+    do_fair_game = True
 
 
 if __name__ == "__main__":
