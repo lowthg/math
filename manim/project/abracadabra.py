@@ -70,6 +70,75 @@ def animate_flip(scene: Scene, coin, rate=0.1, nflips=1):
     return coin
 
 
+_dice_faces = None
+
+
+def get_dice_faces():
+    global _dice_faces
+    if _dice_faces is None:
+        blank = RoundedRectangle(width=2, height=2, fill_color=WHITE, fill_opacity=1, corner_radius=0.2, stroke_color=GREY)
+        dot = Dot(radius=0.22, color=BLACK, z_index=1)
+        x = RIGHT * 0.54
+        y = UP * 0.54
+
+        _dice_faces = []
+
+        for dots in [
+            [ORIGIN],
+            [-x - y, x + y],
+            [-x - y, ORIGIN, x + y],
+            [-x - y, -x + y, x + y, x - y],
+            [-x - y, -x + y, x + y, x - y, ORIGIN],
+            [-x - y, -x, -x + y, x - y, x, x + y]
+        ]:
+            _dice_faces.append(VGroup(blank.copy(), *[dot.copy().move_to(s) for s in dots]))
+    return _dice_faces
+
+
+def animate_roll(scene, key, pos=ORIGIN, scale=0.3):
+    if isinstance(pos, Mobject):
+        pos = pos.get_center()
+    key = int(key) - 1
+    rows = [
+        [1, 5, 6, 2],
+        [2, 4, 5, 3], ##
+        [3, 1, 4, 6],  ##
+        [4, 2, 3, 5], #
+        [5, 6, 2, 1], #
+        [6, 5, 1, 2],  ##
+    ]
+
+    faces = get_dice_faces()
+    f_row = [faces[i-1] for i in rows[key]]
+
+    flag = False
+    for i in range(10, -1, -1):
+        t = -i * i * 0.045
+        c = math.cos(t) * scale
+        s = math.sin(t) * scale
+        arr = [f_row[0].copy().apply_matrix([[c, 0], [0, scale]]).move_to(pos + RIGHT * s),
+               f_row[1].copy().apply_matrix([[s, 0], [0, scale]]).move_to(pos + LEFT * c),
+               f_row[2].copy().apply_matrix([[-c, 0], [0, scale]]).move_to(pos + LEFT * s),
+               f_row[3].copy().apply_matrix([[-s, 0], [0, scale]]).move_to(pos + RIGHT * c)]
+        if c < 0:
+            arr[0].set_opacity(0)
+        else:
+            arr[2].set_opacity(0)
+        if s < 0:
+            arr[1].set_opacity(0)
+        else:
+            arr[3].set_opacity(0)
+        if flag:
+            for j in range(4):
+                f[j].target = arr[j]
+            scene.play(*[MoveToTarget(f[j]) for j in range(4)], rate_func=rate_functions.linear, run_time=0.05 * (1 + t / 10))
+        else:
+            f = arr
+            flag = True
+
+    scene.remove(*f[1:])
+    return f[0]
+
 class MonkeyType(Scene):
     """
     Intro - Monkey typing the infinite monkey theorem
@@ -1656,9 +1725,6 @@ class AbraHT(Abra):
     do_fair_game = True
     math_shift = RIGHT + DOWN * 0.2
 
-    def run_math(self):
-        pass
-
     @staticmethod
     def get_stake(n):
         stake_str = r'\bf\${}'.format(2**n)
@@ -1691,6 +1757,41 @@ class AbraHH(AbraHT):
     final_rhs = r'6'
     play_game = False
     do_fair_game = True
+
+
+class Abra66(Abra):
+    target = r'66'
+    choices = r'365266'
+    num_players = 22
+    wojak_scale = 0.12
+    table_shift = [1, 0, 0]
+    play_game = True
+    buff = 1
+    do_fair_game = True
+    math_shift = RIGHT + DOWN * 0.2
+
+    def run_math(self):
+        pass
+
+    @staticmethod
+    def get_stake(n):
+        stake_str = r'\bf\${}'.format(6**n)
+        return MathTex(stake_str, font_size=30, z_index=5)
+
+    @staticmethod
+    def get_key(key):
+        return get_dice_faces()[int(key)-1].copy().scale(0.25)
+
+    def animate_key(self, key, pos):
+        return animate_roll(self, key, pos, scale=0.25)
+
+    @staticmethod
+    def get_choice(key):  # get key to display
+        return Text(key, font_size=30, font='Courier New', weight=SEMIBOLD, color=BLUE)
+
+    @staticmethod
+    def get_monkey():
+        return None
 
 
 if __name__ == "__main__":
