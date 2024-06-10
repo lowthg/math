@@ -95,7 +95,7 @@ def get_dice_faces():
     return _dice_faces
 
 
-def animate_roll(scene, key, pos=ORIGIN, scale=0.3):
+def animate_roll(scene, key, pos=ORIGIN, scale=0.3, right=False, slide=True):
     if isinstance(pos, Mobject):
         pos = pos.get_center()
     key = int(key) - 1
@@ -116,10 +116,22 @@ def animate_roll(scene, key, pos=ORIGIN, scale=0.3):
         t = -i * i * 0.045
         c = math.cos(t) * scale
         s = math.sin(t) * scale
-        arr = [f_row[0].copy().apply_matrix([[c, 0], [0, scale]]).move_to(pos + RIGHT * s),
-               f_row[1].copy().apply_matrix([[s, 0], [0, scale]]).move_to(pos + LEFT * c),
-               f_row[2].copy().apply_matrix([[-c, 0], [0, scale]]).move_to(pos + LEFT * s),
-               f_row[3].copy().apply_matrix([[-s, 0], [0, scale]]).move_to(pos + RIGHT * c)]
+        if slide:
+            d0 = math.floor(2*t/math.pi)
+            d = (d0 + math.sin(t - math.pi * d0/2)) * scale * 2
+        else:
+            d = 0
+        if right:
+            arr = [f_row[0].copy().apply_matrix([[c, 0], [0, scale]]).move_to(pos + RIGHT * (s+d)),
+                   f_row[1].copy().apply_matrix([[s, 0], [0, scale]]).move_to(pos + LEFT * (c-d)),
+                   f_row[2].copy().apply_matrix([[-c, 0], [0, scale]]).move_to(pos + LEFT * (s-d)),
+                   f_row[3].copy().apply_matrix([[-s, 0], [0, scale]]).move_to(pos + RIGHT * (c+d))]
+        else:
+            arr = [f_row[0].copy().apply_matrix([[scale, 0], [0, c]]).move_to(pos + UP * (s+d)),
+                   f_row[1].copy().apply_matrix([[scale, 0], [0, s]]).move_to(pos + DOWN * (c-d)),
+                   f_row[2].copy().apply_matrix([[scale, 0], [0, -c]]).move_to(pos + DOWN * (s-d)),
+                   f_row[3].copy().apply_matrix([[scale, 0], [0, -s]]).move_to(pos + UP * (c+d))]
+
         if c < 0:
             arr[0].set_opacity(0)
         else:
@@ -1761,7 +1773,7 @@ class AbraHH(AbraHT):
 
 class Abra66(Abra):
     target = r'66'
-    choices = r'365266'
+    choices = r'462365266'
     num_players = 22
     wojak_scale = 0.12
     table_shift = [1, 0, 0]
@@ -1769,9 +1781,14 @@ class Abra66(Abra):
     buff = 1
     do_fair_game = True
     math_shift = RIGHT + DOWN * 0.2
+    final_rhs = r'42'
 
-    def run_math(self):
-        pass
+    def get_text(self):
+        desc = Text('Each player stakes $1 on their turn and bets on 6.\n'
+                    'Any winnings are rolled over to bet on 6 on the following roll.\n'
+                    'Fair game => each win multiplies the stake by 6.', font_size=27, line_spacing=0.8) \
+            .align_to(self.text_pos, UP).to_edge(LEFT, buff=1).shift(DOWN * 0.5)
+        return desc
 
     @staticmethod
     def get_stake(n):
@@ -1783,7 +1800,7 @@ class Abra66(Abra):
         return get_dice_faces()[int(key)-1].copy().scale(0.25)
 
     def animate_key(self, key, pos):
-        return animate_roll(self, key, pos, scale=0.25)
+        return animate_roll(self, key, pos, scale=0.25, right=False)
 
     @staticmethod
     def get_choice(key):  # get key to display
@@ -1791,7 +1808,20 @@ class Abra66(Abra):
 
     @staticmethod
     def get_monkey():
-        return None
+        dice = ImageMobject("dice.jpg").to_edge(DR, buff=0.04)
+        return dice.scale(4/dice.height)
+
+
+class Abra6(Abra66):
+    target = r'6'
+    choices = r'46'
+    wojak_scale = 0.12
+    table_shift = [1, 0, 0]
+    play_game = True
+    buff = 1
+
+    def run_math(self):
+        pass
 
 
 if __name__ == "__main__":
