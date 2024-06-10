@@ -1825,12 +1825,11 @@ class Abra6(Abra66):
 
 
 class AliceBob(AbraHT):
-    targetA = 'HT'
-    targetB = 'TT'
+    target = ['HT', 'TT']
     choicesA = r'THHT'
     choicesB = r'TT'
-    play_game = False
-    num_players = 10
+    play_game = True
+    num_players = 11
     wojak_space = 0.67
 
     def __init__(self, *args, **kwargs):
@@ -1879,6 +1878,10 @@ class AliceBob(AbraHT):
                           h_buff=0, v_buff=0).next_to(t2, RIGHT, buff=0.2)
         t3[0][0] = t1[0][1].copy().move_to(t3[0][0])
         t3[0][1] = t1[0][0].copy().move_to(t3[0][1])
+        for t in t1[1:]:
+            t.set_z_index(4)
+        for t in t3[1:]:
+            t.set_z_index(4)
 
         txt1 = MathTex(r'\bf bet', font_size=25, color=BLUE).move_to(t2[0][1])
         txt2 = txt1.copy().move_to(t2[0][3])
@@ -1888,37 +1891,136 @@ class AliceBob(AbraHT):
         for i in range(self.num_players):
             wifes.append(wife.copy().move_to(t2[0][5*(i+1)]))
             wojaks.append(wojak.copy().move_to(t2[0][5 * (i + 1) +4 ]))
-        self.add(t1, t3, txt1, txt2, *wifes, *wojaks)
+        self.add(t1, t3, txt1, txt2)
+        self.text_pos = t3[0][1].get_right()
 
+        self.run_game(wojak, wife, t1, t2, t3, wojak_happy, wife_happy)
 
         return
 
+    def run_game(self, wojak, wife, t1, t2, t3, wojak_happy, wife_happy):
+        stakes = self.stakes
 
+        wojak_state = []
+        wojak_bets = []
+        wojak_stakes = []
+        wojak_betobjs = []
+        wojak_winobjs = [None]
+        box = None
+        wojaks = []
 
+        to_add = []
+        game_data = []
 
-        t2 = MobjectTable([[r.copy() for i in range(self.num_players)]],
-                          include_outer_lines=True,
-                          h_buff=0, v_buff=0).set_z_index(0).next_to(t1, RIGHT, buff=0)
-        for t in t2[1:]:
-            t.set_z_index(4)
+        for n in range(len(self.choices)):
+            print('bet #{}'.format(n + 1))
 
-        wojaks.next_to(t2, DOWN).align_to(t2, LEFT)
-        t3 = MobjectTable([[r.copy()], [r.copy()], [r.copy()]], include_outer_lines=True, h_buff=0, v_buff=0)\
-            .next_to(wojaks, DOWN).align_to(t1, LEFT)
-        t4 = MobjectTable([[r.copy() for i in range(self.num_players)], [r.copy() for i in range(self.num_players)],
-                           [r.copy() for i in range(self.num_players)]],
-                          include_outer_lines=True,
-                          h_buff=0, v_buff=0).next_to(t1, RIGHT, buff=0)\
-            .next_to(t3, RIGHT).align_to(t2, LEFT).set_z_index(0)
+            key = self.choices[n]
+            self.key_objs.append(self.get_key(key).move_to(t2[0][7 + 5*n]))
 
-        t3[0][0] = MathTex(r'\bf\rm stake', font_size=25, color=GREEN, z_index=4).move_to(t3[0][0])
-        t3[0][1] = MathTex(r'\bf\rm wins', font_size=25, color=WHITE, z_index=4).move_to(t3[0][1])
-        t3[0][2] = MathTex(r'\bf\rm bet', font_size=25, z_index=4).move_to(t3[0][2])
+            if box is None:
+                box = SurroundingRectangle(self.key_objs[n], color=WHITE, corner_radius=0.1)
 
-        tables = Group(t1, t2, t3, t4)
-        key_space = (t4[0][self.num_players].get_center() - t4[0][0].get_center()) * 1.1
+                self.play(FadeIn(box), run_time=0.5)
+            else:
+                self.play(box.animate.move_to(self.key_objs[n]), run_time=0.5)
 
-        self.text_pos = tables[3][0][self.num_players * 2].get_center() + key_space * 1.5
+            game_data.append([
+                {
+                    'state': 0,
+                    'stake cell': t1[0][3 + 2 * n],
+                    'wojak': wife.copy(),
+                    'cell': t2[0][5 + 5 * n],
+                    'bet cell': t2[0][6 + 5*n]
+                },
+                {
+                    'state': 0,
+                    'stake cell': t3[0][2 + 2 * n],
+                    'wojak': wojak.copy(),
+                    'cell': t2[0][9 + 5 * n],
+                    'bet cell': t2[0][8 + 5 * n]
+                }
+            ])
+
+            # wojak n places bet
+            for data in game_data[n]:
+                data['stake cell'].set_z_index(3)
+                data['stake'] = self.stakes[0].copy().move_to(data['stake cell'])
+                data['wojak'].move_to(data['stake cell'])
+                if self.play_game:
+                    self.play(FadeIn(data['stake']), data['wojak'].animate.move_to(data['cell']),
+                              run_time=0.5)
+                else:
+                    data['wojak'].animate.move_to(data['cell'])
+                data['stake cell'].set_z_index(0)
+
+            to_add = []
+            # make choice
+            for i in range(n + 1):
+                for j, data in enumerate(game_data[i]):
+                    state = data['state']
+                    if state is not None:
+                        data['bet'] = self.target[j][state]
+                        data['betobj'] = self.get_choice(data['bet']).move_to(data['bet cell'])
+                        to_add.append(data['betobj'])
+
+            self.play(FadeIn(*to_add), run_time=0.5)
+
+            self.wait(1)
+            return
+
+            # key is pressed
+            self.wait(1)
+            self.key_objs[n] = self.animate_key(key, self.key_objs[n])
+            self.wait(0.5)
+            to_remove = []
+            for i in range(n + 1):
+                if wojak_state[i] is not None:
+                    to_remove.append(wojak_betobjs[i])
+                    if wojak_bets[i] == key:
+                        # wojak is winning!
+                        t4[0][nw * 2 + i].set_fill(color=GREEN, opacity=0)
+                        for x, y in [(1, True), (0, True), (1, True), (0, False)]:
+                            t4[0][nw * 2 + i].set_fill(color=GREEN, opacity=x)
+                            if y:
+                                self.wait(0.2)
+
+                        wojak_state[i] += 1
+                        wojak_stake = stakes[wojak_state[i]].copy().move_to(t4[0][i])
+                        win_obj = MathTex(r'{}'.format(wojak_state[i]), font_size=40, z_index=4).move_to(
+                            t4[0][nw + i])
+                        if wojak_state[i] == 1:  # first win
+                            happy = wojak_happy.copy().move_to(wojaks[i])
+                            self.play(FadeIn(happy, win_obj, wojak_stake), FadeOut(wojak_stakes[i]), run_time=0.5)
+                            self.remove(wojaks_arr[i])
+                            wojaks_arr[i] = happy
+                        else:
+                            self.play(FadeIn(win_obj, wojak_stake), FadeOut(wojak_winobjs[i], wojak_stakes[i]),
+                                      run_time=0.5)
+                        wojak_winobjs[i] = win_obj
+                        wojak_stakes[i] = wojak_stake
+                    else:
+                        # wojak has lost!
+                        wojak_state[i] = None
+                        sad = wojak_sad.copy().move_to(wojaks[i])
+                        t4[0][nw * 2 + i].set_fill(opacity=1, color=RED)
+                        out = [wojak_winobjs[i]] if wojak_winobjs[i] is not None else []
+                        self.play(FadeIn(sad), FadeOut(wojaks_arr[i], wojak_stakes[i], *out),
+                                  t4[0][nw * 2 + i].animate.set_fill(color=GREY, opacity=1),
+                                  t4[0][nw + i].animate.set_fill(color=GREY, opacity=1),
+                                  t4[0][i].animate.set_fill(color=GREY, opacity=1),
+                                  run_time=1)
+                        wojak_stakes[i] = None
+                        wojaks_arr[i] = sad
+
+            # highlight winners
+
+            self.play(FadeOut(*to_remove), run_time=0.5)
+
+        self.box = SurroundingRectangle(Group(*self.key_objs[-len(target):]), color=GREEN, corner_radius=0.1)
+        self.play(FadeOut(box), FadeIn(self.box), run_time=0.5)
+        self.stake_objs = wojak_stakes
+
 
     def construct(self):
         self.build()
