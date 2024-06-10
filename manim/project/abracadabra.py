@@ -1698,7 +1698,7 @@ class Abra(Scene):
 class Abra2(Abra):
     target = r'AB'
     choices = r'BAB'
-    play_game = True
+    play_game = False
 
     def run_math(self):
         pass
@@ -1822,6 +1822,106 @@ class Abra6(Abra66):
 
     def run_math(self):
         pass
+
+
+class AliceBob(AbraHT):
+    targetA = 'HT'
+    targetB = 'TT'
+    choicesA = r'THHT'
+    choicesB = r'TT'
+    play_game = False
+    num_players = 10
+    wojak_space = 0.67
+
+    def __init__(self, *args, **kwargs):
+        AbraHT.__init__(self, *args, **kwargs)
+        self.stake_objsA = []  # Mobject of stake sizes
+        self.stake_objsB = []  # Mobject of stake sizes
+        self.key_objs = []  # Mobject of typed keys
+        self.box = None
+        self.text_pos = np.array([0, 0])
+
+    def run_math(self):
+        pass
+
+    def build(self):
+        wojak0 = ImageMobject("wojak.png")
+        wojak_happy0 = ImageMobject("wojak_happy.png")
+
+        wojak = ImageMobject(np.flip(wojak0.pixel_array, 1), z_index=2).scale(self.wojak_scale)
+        wojak_happy = ImageMobject(np.flip(wojak_happy0.pixel_array, 1), z_index=3)
+        wojak_happy.scale(wojak.width / wojak_happy.width)
+
+        wife0 = ImageMobject("wifejak.png")
+        wife_happy0 = ImageMobject("wifejak_happy.png")
+        wife = ImageMobject(wife0.pixel_array[:320, :, :], z_index=2)
+        wife_happy = ImageMobject(wife_happy0.pixel_array[:320, :, :], z_index=3)
+
+        wife_scale = self.wojak_scale/(wife.height/wojak0.height*1)
+        wife.scale(wife_scale)
+        wife_happy.scale(wife_scale)
+
+        r = Rectangle(width=self.wojak_space, height=self.wojak_space, stroke_opacity=0, z_index=0, fill_opacity=1,
+                      fill_color=BLACK)
+
+        t1 = MobjectTable([[r.copy(), r.copy()] for _ in range(self.num_players + 1)],
+                          include_outer_lines=True,
+                          h_buff=0, v_buff=0).set_z_index(0).to_edge(UL, buff=0.1)
+        t1[0][0] = MathTex(r'\bf\rm wins', font_size=25, color=WHITE, z_index=4).move_to(t1[0][0])
+        t1[0][1] = MathTex(r'\bf\rm stake', font_size=25, color=GREEN, z_index=4).move_to(t1[0][1])
+
+        t2 = MobjectTable([[r.copy(), r.copy(), r.copy(), r.copy(), r.copy()] for _ in range(self.num_players + 1)],
+                          include_outer_lines=True,
+                          h_buff=0, v_buff=0).next_to(t1, RIGHT, buff=0.2)
+
+        t3 = MobjectTable([[r.copy(), r.copy()] for _ in range(self.num_players + 1)],
+                          include_outer_lines=True,
+                          h_buff=0, v_buff=0).next_to(t2, RIGHT, buff=0.2)
+        t3[0][0] = t1[0][1].copy().move_to(t3[0][0])
+        t3[0][1] = t1[0][0].copy().move_to(t3[0][1])
+
+        txt1 = MathTex(r'\bf bet', font_size=25, color=BLUE).move_to(t2[0][1])
+        txt2 = txt1.copy().move_to(t2[0][3])
+
+        wifes = []
+        wojaks = []
+        for i in range(self.num_players):
+            wifes.append(wife.copy().move_to(t2[0][5*(i+1)]))
+            wojaks.append(wojak.copy().move_to(t2[0][5 * (i + 1) +4 ]))
+        self.add(t1, t3, txt1, txt2, *wifes, *wojaks)
+
+
+        return
+
+
+
+
+        t2 = MobjectTable([[r.copy() for i in range(self.num_players)]],
+                          include_outer_lines=True,
+                          h_buff=0, v_buff=0).set_z_index(0).next_to(t1, RIGHT, buff=0)
+        for t in t2[1:]:
+            t.set_z_index(4)
+
+        wojaks.next_to(t2, DOWN).align_to(t2, LEFT)
+        t3 = MobjectTable([[r.copy()], [r.copy()], [r.copy()]], include_outer_lines=True, h_buff=0, v_buff=0)\
+            .next_to(wojaks, DOWN).align_to(t1, LEFT)
+        t4 = MobjectTable([[r.copy() for i in range(self.num_players)], [r.copy() for i in range(self.num_players)],
+                           [r.copy() for i in range(self.num_players)]],
+                          include_outer_lines=True,
+                          h_buff=0, v_buff=0).next_to(t1, RIGHT, buff=0)\
+            .next_to(t3, RIGHT).align_to(t2, LEFT).set_z_index(0)
+
+        t3[0][0] = MathTex(r'\bf\rm stake', font_size=25, color=GREEN, z_index=4).move_to(t3[0][0])
+        t3[0][1] = MathTex(r'\bf\rm wins', font_size=25, color=WHITE, z_index=4).move_to(t3[0][1])
+        t3[0][2] = MathTex(r'\bf\rm bet', font_size=25, z_index=4).move_to(t3[0][2])
+
+        tables = Group(t1, t2, t3, t4)
+        key_space = (t4[0][self.num_players].get_center() - t4[0][0].get_center()) * 1.1
+
+        self.text_pos = tables[3][0][self.num_players * 2].get_center() + key_space * 1.5
+
+    def construct(self):
+        self.build()
 
 
 if __name__ == "__main__":
