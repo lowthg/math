@@ -1877,7 +1877,7 @@ class AliceBob(AbraHT):
 
         t1 = MobjectTable([[r.copy(), r.copy()] for _ in range(self.num_players + 1)],
                           include_outer_lines=True,
-                          h_buff=0, v_buff=0).set_z_index(0).next_to(title, DOWN, buff=0.1).to_edge(LEFT)
+                          h_buff=0, v_buff=0).set_z_index(0).next_to(title, DOWN, buff=0.1).to_edge(LEFT, buff=0.25)
         t1[0][0] = MathTex(r'\bf\rm wins', font_size=25, color=WHITE, z_index=4).move_to(t1[0][0])
         t1[0][1] = MathTex(r'\bf\rm stake', font_size=25, color=GREEN, z_index=4).move_to(t1[0][1])
 
@@ -1937,8 +1937,9 @@ class AliceBob(AbraHT):
                         win_strs.append(tex_str)
                         win_objs.append(win_obj)
 
-                eq1_str = r'{\rm ' + names[i] + '\'s\\ winnings} = W_' + names[i][0] + ' {{=}}' + ' {{+}} '.join(win_strs)
-                eq1 = MathTex(eq1_str, font_size=40).next_to(txt, DOWN).align_to(txt1, LEFT).shift(RIGHT * 0.5)
+                eq1_str = r'{\rm ' + names[i] + r"'s\ winnings} = W_{" + names[i][0] + r'\vert ' + names[winner][0] +\
+                          r'} {{=}} ' + r' {{+}} '.join(win_strs)
+                eq1 = MathTex(eq1_str, font_size=40).next_to(txt, DOWN).align_to(txt1, LEFT).shift(RIGHT * 0.25)
                 winning_eqs[winner][i] = (eq1, win_strs)
                 self.play(FadeIn(eq1[:2]), run_time=2)
                 for j in range(len(win_objs)):
@@ -1980,11 +1981,11 @@ class AliceBob(AbraHT):
                     for eq in eq[0][2:]:
                         anim.append(FadeOut(eq, target_position=eq_new[-1]))
                     self.play(*anim, FadeIn(eq_new[-1]), run_time=2)
-                    eqs[i] =(eq_new, eqsum)
+                    eqs[i] = (eq_new, eqsum)
                 elif len(eq[1]) == 1:
-                    eq[1] = eq[1]
+                    eqs[i] = (eq[0], eq[1][0])
                 else:
-                    eq[1] = '0'
+                    eq[1] = (None, '0')
 
         start = txt_pos
         end = txt_pos * UP + RIGHT * (config['frame_x_radius'] - 0.2)
@@ -2009,7 +2010,8 @@ class AliceBob(AbraHT):
         eq2_1.shift(eq2[-2].get_center()-eq2_1[-2].get_center())
         eq2_1[1].move_to(eq2[1], coor_mask=1)
         eq2_1[3].move_to(eq2[3], coor_mask=1)
-        self.play(FadeOut(eq2[1]), FadeIn(eq2_1[1]), run_time=2)
+        eq3_1 = MathTex(r"W_A = {\rm Alice's\ winnings},\\ W_B = {\rm Bob's\ winnings}",font_size=40).next_to(eq3, DOWN)
+        self.play(FadeOut(eq2[1]), FadeIn(eq2_1[1], eq3_1), run_time=2)
         self.play(FadeOut(eq2[3]), FadeIn(eq2_1[3]), run_time=2)
         l1 = Line(LEFT * 0.4, RIGHT * 0.4, color=BLUE, stroke_width=10, z_index=1).move_to(eq2_1[1][-1]).rotate(0.6)
         l2 = l1.copy().move_to(eq2_1[3][-2])
@@ -2027,6 +2029,9 @@ class AliceBob(AbraHT):
                       r"\\ & \mathbb E[{{W_A}} - {{W_B}}\vert B]{{\mathbb P(B)}} {{=}} 0",
                       font_size=40).next_to(eq4, DOWN).align_to(eq4, UP)
         self.wait(1)
+        eq6_1 = MathTex(r'&A = {\rm Alice\ wins},\\ &B = {\rm Bob\ wins}', font_size=40).next_to(eq5, DOWN)
+        self.play(FadeIn(eq6_1), FadeOut(eq3_1), run_time=1)
+
         cond_A = eq5[4][:-1] + eq5[5] + eq5[6]
         from_A = cond_A.get_center() - eq5[4][-1].get_center() + eq4[4][-1].get_center()
         cond_B = eq5[11][:-1] + eq5[12]
@@ -2038,23 +2043,89 @@ class AliceBob(AbraHT):
                   run_time=3)
         self.wait(1)
 
-        eq6 = MathTex(r"\mathbb E[{{W_A}} - {{W_B}}\vert A]{{\mathbb P(A)}}{{ = }} \mathbb E[{{W_B}} - {{W_A}}\vert B]{{\mathbb P(B)}}", font_size=40)
+        eq6 = MathTex(r"\mathbb E[{{W_A}} - {{W_B}}\vert A]{{\mathbb P(A)}}{{ = }} "
+                      r"\mathbb E[{{W_B}} - {{W_A}}\vert B]{{\mathbb P(B)}}", font_size=40)
         eq6.shift(eq5[0].get_center()-eq6[0].get_center())
         eq6[6:].shift(eq5[7][0].get_center() - eq6[7][0].get_center())
-        eq6_1 = MathTex(r'A = {\rm Alice\ wins},\ B = {\rm Bob\ wins}', font_size=40).next_to(eq6, DOWN)
-        self.play(FadeIn(eq6_1), run_time=1)
-        self.play(ReplacementTransform(eq5[:6] + eq5[-2] + eq5[7] + eq5[8] + eq5[9] + eq5[10] + eq5[11:13], eq6[:6] + eq6[6] + eq6[7] + eq6[10] + eq6[9] + eq6[8] + eq6[11:13]),
+        self.play(ReplacementTransform(eq5[:6] + eq5[-2] + eq5[7] + eq5[8] + eq5[9] + eq5[10] + eq5[11:13],
+                                       eq6[:6] + eq6[6] + eq6[7] + eq6[10] + eq6[9] + eq6[8] + eq6[11:13]),
                   FadeOut(eq5[6], eq5[-1]),
                   run_time=2)
+        self.wait(1)
+
+        eq7 = MathTex(r"({{W_{A\vert A} }} - {{W_{B\vert A} }}) {{\mathbb P(A)}}{{=}} "
+                      r"({{W_{B\vert B} }} - {{W_{A\vert B} }}) {{\mathbb P(B)}}", font_size=40)
+        eq7.shift(eq6[5].get_center() - eq7[5].get_center())
+        eq7[6:].shift(eq6[6].get_center()-eq7[6].get_center())
+        eq7_1 = eq7[0][0].copy().align_to(eq6[0][-1], RIGHT)
+        self.play(ReplacementTransform(eq6[1][:] + eq6[4][:2] + eq6[2] + eq6[3][:] + eq6[4][:2].copy() + eq6[5:7],
+                                       eq7[1][:-2] + eq7[1][-2:] + eq7[2] + eq7[3][:-2] + eq7[3][-2:] + eq7[5:7]),
+                  ReplacementTransform(eq6[8][:] + eq6[11][:2] + eq6[9] + eq6[10][:] + eq6[11][:2].copy() + eq6[12],
+                                       eq7[8][:-2] + eq7[8][-2:] + eq7[9] + eq7[10][:-2] + eq7[10][-2:] + eq7[12]),
+                  FadeOut(eq6[0], eq6[4][-1], eq6[7], eq6[11][-1]),
+                  FadeIn(eq7[0], eq7[4], eq7[7], eq7[11]),
+                  run_time=2)
+
+        self.play(FadeOut(eq6_1), run_time=1)
+
+        eq8 = MathTex(r'\mathbb P(A) {{=}} \frac{W_{B\vert B}-W_{A\vert B}}{W_{A\vert A}-W_{B\vert A}}'
+                      r'{{\mathbb P(B)}}', font_size=40)
+        eq8.shift(eq7[6].get_center()-eq8[1].get_center())
+        self.play(ReplacementTransform(eq7[8][:] + eq7[9][0] + eq7[10][:], eq8[2][:4] + eq8[2][4] + eq8[2][5:9]),
+                  ReplacementTransform(eq7[1][:] + eq7[2][0] + eq7[3][:], eq8[2][10:14] + eq8[2][14] + eq8[2][15:19]),
+                  ReplacementTransform(eq7[12:] + eq7[6], eq8[3:4] + eq8[1]),
+                  FadeIn(eq8[2][9]),
+                  FadeOut(eq7[7], eq7[11], eq7[0], eq7[4]),
+                  eq7[5].animate.next_to(eq8[2], UP, coor_mask=UP, buff=0),
+                  run_time=2)
+        self.play(ReplacementTransform(eq7[5], eq8[0]), run_time=2)
+
+        self.wait(1)
+
         eqAA = winning_eqs[0][0]
-        eqAB = winning_eqs[0][1]
-        eqBA = winning_eqs[1][0]
+        eqBA = winning_eqs[0][1]
+        eqAB = winning_eqs[1][0]
         eqBB = winning_eqs[1][1]
-        eq6 = MathTex(r"\mathbb E[{{" + eqAA[1] + r"}} - {{" + eqAB[1] +
-                      r"}}\vert A]{{\mathbb P(A)}}{{ = }} \mathbb E[{{" + eqBA[1] + "}} - {{W_A}}\vert B]{{\mathbb P(B)}}", font_size=40)
+
+        eqBB1 = eqBB[0][-1][:].copy()
+        eqAB1 = eqAB[0][-1][:].copy()
+        eqAA1 = eqAA[0][-1][:].copy()
+        eqBA1 = eqBA[0][-1][:].copy()
+        self.play(eqBB1.animate.move_to(eq8[2][:4]), FadeOut(eq8[2][:4]), run_time=2)
+        self.play(eqAB1.animate.move_to(eq8[2][5:9]), FadeOut(eq8[2][5:9]), run_time=2)
+        self.play(eqAA1.animate.move_to(eq8[2][10:14]), FadeOut(eq8[2][10:14]), run_time=2)
+        self.play(eqBA1.animate.move_to(eq8[2][15:19]), FadeOut(eq8[2][15:19]), run_time=2)
+
+        eq10 = MathTex(r'\mathbb P(A) {{=}} \frac{40}{32} {{\mathbb P(B)}}', font_size=40)
+        eq10.shift(eq8[1].get_center()-eq10[1].get_center())
+        self.play(FadeOut(eqBB1, target_position=eq10[2][:2]),
+                  FadeOut(eqAB1, target_position=eq10[2][:2]),
+                  FadeOut(eq8[2][4], target_position=eq10[2][:2]),
+                  FadeIn(eq10[2][:2]),
+                  ReplacementTransform(eq8[2][9], eq10[2][2]),
+                  FadeOut(eqAA1, target_position=eq10[2][-2:]),
+                  FadeOut(eqBA1, target_position=eq10[2][-2:]),
+                  FadeOut(eq8[2][14], target_position=eq10[2][-2:]),
+                  FadeIn(eq10[2][-2:]),
+                  ReplacementTransform(eq8[3], eq10[3]),
+                  run_time=2)
+        eq11 = MathTex(r'\mathbb P(A) {{=}} \frac{5}{4} {{\mathbb P(B)}}  > \mathbb P(B)', font_size=40)
+        eq11.shift(eq8[1].get_center()-eq11[1].get_center())
+        self.play(FadeOut(eq10[2][:2], eq10[2][-2:]),
+                  FadeIn(eq11[2][0], eq11[2][-1]),
+                  ReplacementTransform(eq10[2][2], eq11[2][1]),
+                  ReplacementTransform(eq10[-1], eq11[-2]),
+                  run_time=2)
+        self.play(FadeIn(eq11[-1]), run_time=1)
+        self.wait(1)
+
+        eq12 = MathTex(r'\Rightarrow {{\mathbb P(A)}}=\frac{5}{9},\ \mathbb P(B)=\frac{4}{9}', font_size=40).next_to(eq11, DOWN)
+        eq12.shift((eq11[0].get_left()-eq12[1].get_left())*RIGHT)
+        self.play(FadeIn(eq12), run_time=1)
+        self.wait(1)
 
 
-        return
+
 
     def run_game2(self, wojak, wife, t1, t2, t3, wojak_happy, wife_happy, choices):
         stakes = self.stakes
