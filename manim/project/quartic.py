@@ -121,7 +121,20 @@ class Quartic(Scene):
                   FadeIn(fq3[1]),
                   run_time=2)
 
+    def special(self):
+        eq1 = self.divx2('a', 'b', 'c', 'd', 'e')
+        eq2 = MathTex(r'y=bx+\frac{d}{x}').next_to(eq1, DOWN)[0]
+        self.play(FadeIn(eq2), run_time=2)
+        eq1_1=MathTex(r'y')[0].move_to(eq1[2][3])
+        self.play(FadeOut(eq1[2]),
+                  FadeIn(eq1_1),
+                  run_time=2)
+        eq3 = MathTex(r'y^2=b^2x^2+\frac{d^2}{x^2}+2bd').next_to(eq2, DOWN)[0]
+        eq3.shift((eq2[1].get_center()-eq3[2].get_center())*RIGHT)
+        self.play(FadeIn(eq3), run_time=2)
+
+
 
     def construct(self):
         MathTex.set_default(font_size=40)
-        self.symmetric()
+        self.special()
