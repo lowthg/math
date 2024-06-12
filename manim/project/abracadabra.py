@@ -1828,8 +1828,8 @@ class Abra6(Abra66):
 
 class AliceBob(AbraHT):
     target = [r'HTTTH', r'HTHTH']
-    choices = [r'HTHHHTTTH', r'HHTHTH' ]
-    play_game = False
+    choices = [r'HTHHTTTH', r'HHTHTH' ]
+    play_game = True
     num_players = 10
     wojak_space = 0.67
 
@@ -1922,9 +1922,8 @@ class AliceBob(AbraHT):
             win_name = names[winner]
             txt1 = Tex('{} wins!!'.format(win_name), font_size=40).move_to(txt_pos, UL).shift(DOWN * 0.1)
             txt2 = Tex('{} wins:'.format(win_name), font_size=40).move_to(txt_pos, UL).shift(DOWN * 0.1)
-            to_fade = [FadeOut(desc)] if desc is not None else []
-            self.play(FadeIn(txt1), *to_fade, run_time=1)
-            desc = None
+            self.play(desc.animate.to_edge(DOWN) if ichoice == 0 else FadeOut(desc), run_time=1)
+            self.play(FadeIn(txt1), run_time=1)
 
             txt = txt1
 
@@ -2025,9 +2024,12 @@ class AliceBob(AbraHT):
                   FadeOut(eq3),
                   run_time=2)
 
-        eq5 = MathTex(r"\mathbb E[{{W_A}} -& {{W_B}}\vert A]{{\mathbb P(A) }}{{ +}}"
-                      r"\\ & \mathbb E[{{W_A}} - {{W_B}}\vert B]{{\mathbb P(B)}} {{=}} 0",
-                      font_size=40).next_to(eq4, DOWN).align_to(eq4, UP)
+        eq5 = MathTex(r"\mathbb E[{{W_A}} - {{W_B}}\vert A]{{\mathbb P(A) }}{{ +}}"
+                      r" \mathbb E[{{W_A}} - {{W_B}}\vert B]{{\mathbb P(B)}} {{=}} 0",
+                      font_size=40)
+        eq5[7:].next_to(eq5[:7], DOWN, coor_mask=UP, buff=0.208).align_to(eq5[2], LEFT)
+        eq5.next_to(eq4, DOWN).align_to(eq4, UP)
+
         self.wait(1)
         eq6_1 = MathTex(r'&A = {\rm Alice\ wins},\\ &B = {\rm Bob\ wins}', font_size=40).next_to(eq5, DOWN)
         self.play(FadeIn(eq6_1), FadeOut(eq3_1), run_time=1)
