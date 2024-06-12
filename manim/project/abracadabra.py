@@ -1962,8 +1962,8 @@ class AliceBob(AbraHT):
                             to_remove.append(data['wins'])
                             to_remove.append(data['stake'])
                         else:
-                            to_anim.append(data['win cell'].animate.set_fill(color=BLACK, opacity=0))
-                            to_anim.append(data['stake cell'].animate.set_fill(color=BLACK, opacity=0))
+                            to_anim.append(data['win cell'].animate.set_fill(color=BLACK))
+                            to_anim.append(data['stake cell'].animate.set_fill(color=BLACK))
 
                 self.play(FadeOut(*self.key_objs, *to_remove, txt1[0][-2:], txt1[-2:]), FadeIn(txt2[-1]), *to_anim, run_time=3)
                 self.key_objs = []
@@ -1984,7 +1984,7 @@ class AliceBob(AbraHT):
                 elif len(eq[1]) == 1:
                     eqs[i] = (eq[0], eq[1][0])
                 else:
-                    eq[1] = (None, '0')
+                    eqs[i] = (eq[0], '0')
 
         start = txt_pos
         end = txt_pos * UP + RIGHT * (config['frame_x_radius'] - 0.2)
