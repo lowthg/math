@@ -211,6 +211,9 @@ class Quartic(Scene):
 
         self.play(FadeOut(eq4[:7], eq5[0], eq4[9:12], eq4[15], eq4[18:21], eq7[0], eq5[-7:-5], eq5[-4:-1]), run_time=1)
 
+        eq11 = MathTex(r'yx=bx^2+d')[0]
+        eq11.shift(eq2[1].get_center()-eq11[2].get_center())
+
 
 
 
