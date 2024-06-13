@@ -123,6 +123,9 @@ class Quartic(Scene):
 
     def special(self):
         eq1 = self.divx2('a', 'b', 'c', 'd', 'e').set_z_index(1)
+        eq10 = MathTex(r'ay^2+by+bc-2ad=0')[0]
+        eq10.shift(eq1[5][0].get_center()-eq10[-2].get_center())
+
         eq2 = MathTex(r'y=bx+\frac{d}{x}').next_to(eq1, DOWN)[0]
         eq1_1=MathTex(r'y')[0].move_to(eq1[2][3])
         self.play(ReplacementTransform(eq1[2][1:-1], eq2[2:]), run_time=2)
@@ -147,16 +150,15 @@ class Quartic(Scene):
                   FadeIn(eq4[3], eq4[-3]),
                   run_time=2)
 
-        eq5 = MathTex(r'ax^2+\frac{2abd}{b^2}')[0]
+        eq5 = MathTex(r'ax^2+\frac{2abd}{b^2}')[0].set_z_index(1)
         eq5[:3].shift(eq4[9].get_center()-eq5[1].get_center())
         eq5[3:].shift(eq4[-7].get_center()-eq5[3].get_center())
         self.play(FadeIn(eq4[0], eq4[12], eq5[0], eq5[-6]),
                   ReplacementTransform(eq4[-5:] + eq4[-6], eq5[-5:] + eq5[-7]),
                   run_time=2)
 
-        eq6 = MathTex(r'{{ {\rm Assumption:\ } }} e = \frac{ad^2}{b^2}').next_to(eq4, DOWN)
+        eq6 = MathTex(r'{{ {\rm Assumption:\ } }} e = \frac{ad^2}{b^2}').next_to(eq4, DOWN).align_to(eq10, LEFT)
         eq6[0].set_color(RED)
-        eq6.shift((eq4[6].get_center()-eq6[1][1].get_center())*RIGHT)
         self.play(FadeIn(eq6[0]), run_time=1)
         self.play(LaggedStart(ReplacementTransform(eq1[0][5].copy(), eq6[1][0]), FadeIn(eq6[1][1]), lag_ratio=0.5), run_time=2)
         self.play(ReplacementTransform(eq4[12:18].copy(), eq6[1][2:]), run_time=2)
@@ -171,15 +173,44 @@ class Quartic(Scene):
         self.play(FadeIn(l1, l2), run_time=1)
         self.play(FadeOut(l1, l2, eq5[-5], eq5[-1]), run_time=2)
 
-        eq8 = MathTex(r'\frac{a}{b}y^2-\frac{2ad}{b}+')[0]
+        eq8 = MathTex(r'\frac{a}{b}y^2-\frac{2ad}{b}+')[0].set_z_index(1)
         eq8.shift(eq1[1][0].get_center()-eq8[-1].get_center())
         rect4 = SurroundingRectangle(eq8[:-1], stroke_opacity=0, fill_opacity=1, color=color, corner_radius=0.1)
         self.play(FadeOut(eq1[0][1:-1]),
                   ReplacementTransform(rect1, rect4),
                   ReplacementTransform((eq4[1:3] + eq4[0] + eq4[3:5] + eq5[-4:-1] + eq5[-7:-5]).copy(),
-                                       eq8[3:5] + eq8[0] + eq8[1:3] + eq8[-4:] + eq8[-6:-2]),
+                                       eq8[3:5] + eq8[0] + eq8[1:3] + eq8[-4:-1] + eq8[-6:-4]),
                   FadeIn(eq8[-7], target_position=eq4[-7]),
                   run_time=3)
+        self.play(FadeOut(rect4, rect3), run_time=1)
+
+        eq9 = MathTex(r'ay^2-2ad+by+bc=0')[0]
+        eq9[0].shift(eq8[3].get_center()-eq9[1].get_center())
+        eq9[8].shift(eq1_1[0].get_center()-eq9[9].get_center())
+        eq9[-5:-3].shift(eq1[4][0].get_center()-eq9[-3].get_center())
+        eq9[4:7].shift(eq8[5].get_center()-eq9[3].get_center())
+        self.play(ReplacementTransform(eq8[0], eq9[0]),
+                  ReplacementTransform(eq8[2], eq9[8]),
+                  ReplacementTransform(eq8[6:9], eq9[4:7]),
+                  ReplacementTransform(eq8[-2], eq9[-4]),
+                  ReplacementTransform(eq1[3][0], eq9[-5]),
+                  FadeOut(eq8[1], eq8[-3]),
+                  run_time=2)
+
+        self.play(ReplacementTransform(eq1[4][0], eq10[8]),
+                  ReplacementTransform(eq9[-5], eq10[6]),
+                  ReplacementTransform(eq1_1[0], eq10[5]),
+                  ReplacementTransform(eq9[4:7], eq10[10:13]),
+                  ReplacementTransform(eq9[-4], eq10[7]),
+                  ReplacementTransform(eq8[5], eq10[9]),
+                  ReplacementTransform(eq9[8], eq10[4]),
+                  ReplacementTransform(eq1[1][0], eq10[3]),
+                  ReplacementTransform(eq8[3:5], eq10[1:3]),
+                  ReplacementTransform(eq9[0], eq10[0]),
+                  run_time=2)
+
+        self.play(FadeOut(eq4[:7], eq5[0], eq4[9:12], eq4[15], eq4[18:21], eq7[0], eq5[-7:-5], eq5[-4:-1]), run_time=1)
+
 
 
 
