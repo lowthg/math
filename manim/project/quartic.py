@@ -2,9 +2,9 @@ from manim import *
 
 
 class Quartic(Scene):
-    def divx2(self, a, b, c, d, e):
+    def divx2(self, a, b, c, d, e, pos=UP * config.frame_y_radius + DOWN):
         coeff = {'a': a, 'b': b, 'c': c, 'd': d, 'e': e}
-        eq1 = MathTex(r'{a}x^4+{b}x^3+{c}x^2+{d}x+{e}=0'.format(**coeff))[0]
+        eq1 = MathTex(r'{a}x^4+{b}x^3+{c}x^2+{d}x+{e}=0'.format(**coeff))[0].next_to(pos, DOWN)
         eq2 = MathTex(r'\frac{{1}}{{x^2}}({a}x^4+{b}x^3+{c}x^2+{d}x+{e})=0'.format(**coeff))[0]
         eq2.shift(eq1[-2].get_center()-eq2[-2].get_center())
         eq3_1 = MathTex(r'\frac{{1}}{{x^2}}(\frac{{{a}x^4}}{{x^2}}+\frac{{{b}x^3}}{{x^2}}+\frac{{{c}x^2}}{{x^2}}'
@@ -122,16 +122,66 @@ class Quartic(Scene):
                   run_time=2)
 
     def special(self):
-        eq1 = self.divx2('a', 'b', 'c', 'd', 'e')
+        eq1 = self.divx2('a', 'b', 'c', 'd', 'e').set_z_index(1)
         eq2 = MathTex(r'y=bx+\frac{d}{x}').next_to(eq1, DOWN)[0]
-        self.play(FadeIn(eq2), run_time=2)
         eq1_1=MathTex(r'y')[0].move_to(eq1[2][3])
-        self.play(FadeOut(eq1[2]),
-                  FadeIn(eq1_1),
-                  run_time=2)
-        eq3 = MathTex(r'y^2=b^2x^2+\frac{d^2}{x^2}+2bd').next_to(eq2, DOWN)[0]
+        self.play(ReplacementTransform(eq1[2][1:-1], eq2[2:]), run_time=2)
+        self.play(FadeIn(eq2[:2], eq1_1), FadeOut(eq1[2][0], eq1[2][-1]), run_time=2)
+        eq3 = MathTex(r'y^2=b^2x^2+\frac{d^2}{x^2}+2bd').next_to(eq2, DOWN).set_z_index(1)[0]
         eq3.shift((eq2[1].get_center()-eq3[2].get_center())*RIGHT)
         self.play(FadeIn(eq3), run_time=2)
+        color='#3f9c28'
+
+        eq4 = MathTex(r'\frac{ay^2}{b^2}=b^2x^2+\frac{ad^2}{b^2x^2}+\frac{2bd}{b^2}').next_to(eq2, DOWN).set_z_index(1)[0]
+        eq4.shift(eq3[2].get_center()-eq4[6].get_center())
+
+        rect1 = SurroundingRectangle(eq1[0][1:-1], stroke_opacity=0, fill_opacity=1, color=color, corner_radius=0.1)
+        rect2 = SurroundingRectangle(eq3[3:13], stroke_opacity=0, fill_opacity=1, color=color, corner_radius=0.1)
+        rect3 = SurroundingRectangle(eq4[7:20], stroke_opacity=0, fill_opacity=1, color=color, corner_radius=0.1)
+        self.play(FadeIn(rect1, rect2), FadeOut(eq1[0][0], eq1[0][-1]), run_time=2)
+        self.play(ReplacementTransform(eq3[3:5] + eq3[:2] + eq3[11:17] + eq3[8:11] + eq3[2] + eq3[5:8],
+                                       eq4[4:6] + eq4[1:3] + eq4[18:24] + eq4[13:16] + eq4[6] + eq4[9:12]),
+                  ReplacementTransform(eq3[3:5].copy(), eq4[16:18]),
+                  ReplacementTransform(eq3[3:5].copy(), eq4[-2:]),
+                  ReplacementTransform(rect2, rect3),
+                  FadeIn(eq4[3], eq4[-3]),
+                  run_time=2)
+
+        eq5 = MathTex(r'ax^2+\frac{2abd}{b^2}')[0]
+        eq5[:3].shift(eq4[9].get_center()-eq5[1].get_center())
+        eq5[3:].shift(eq4[-7].get_center()-eq5[3].get_center())
+        self.play(FadeIn(eq4[0], eq4[12], eq5[0], eq5[-6]),
+                  ReplacementTransform(eq4[-5:] + eq4[-6], eq5[-5:] + eq5[-7]),
+                  run_time=2)
+
+        eq6 = MathTex(r'{{ {\rm Assumption:\ } }} e = \frac{ad^2}{b^2}').next_to(eq4, DOWN)
+        eq6[0].set_color(RED)
+        eq6.shift((eq4[6].get_center()-eq6[1][1].get_center())*RIGHT)
+        self.play(FadeIn(eq6[0]), run_time=1)
+        self.play(LaggedStart(ReplacementTransform(eq1[0][5].copy(), eq6[1][0]), FadeIn(eq6[1][1]), lag_ratio=0.5), run_time=2)
+        self.play(ReplacementTransform(eq4[12:18].copy(), eq6[1][2:]), run_time=2)
+
+        eq7 = MathTex(r'\frac{e}{b^2x^2}')[0]
+        eq7.shift(eq4[15].get_center()-eq7[1].get_center())
+        self.play(FadeOut(eq4[12:15], eq4[16:18]), ReplacementTransform(eq6[1][0].copy(), eq7[0]), run_time=2)
+
+        l1 = Line(LEFT*0.2, RIGHT*0.2, color=BLUE, stroke_width=10).move_to(eq5[-5]).rotate(0.8)
+        l2 = Line(LEFT*0.15, RIGHT*0.15, color=BLUE, stroke_width=8).move_to(eq5[-1]).rotate(0.8)
+
+        self.play(FadeIn(l1, l2), run_time=1)
+        self.play(FadeOut(l1, l2, eq5[-5], eq5[-1]), run_time=2)
+
+        eq8 = MathTex(r'\frac{a}{b}y^2-\frac{2ad}{b}+')[0]
+        eq8.shift(eq1[1][0].get_center()-eq8[-1].get_center())
+        rect4 = SurroundingRectangle(eq8[:-1], stroke_opacity=0, fill_opacity=1, color=color, corner_radius=0.1)
+        self.play(FadeOut(eq1[0][1:-1]),
+                  ReplacementTransform(rect1, rect4),
+                  ReplacementTransform((eq4[1:3] + eq4[0] + eq4[3:5] + eq5[-4:-1] + eq5[-7:-5]).copy(),
+                                       eq8[3:5] + eq8[0] + eq8[1:3] + eq8[-4:] + eq8[-6:-2]),
+                  FadeIn(eq8[-7], target_position=eq4[-7]),
+                  run_time=3)
+
+
 
 
 
