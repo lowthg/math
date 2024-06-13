@@ -211,14 +211,35 @@ class Quartic(Scene):
 
         self.play(FadeOut(eq4[:7], eq5[0], eq4[9:12], eq4[15], eq4[18:21], eq7[0], eq5[-7:-5], eq5[-4:-1]), run_time=1)
 
-        eq11 = MathTex(r'yx=bx^2+d')[0]
-        eq11.shift(eq2[1].get_center()-eq11[2].get_center())
+        eq11 = MathTex(r'=bx-y+\frac{d}{x}=0')[0]
+        eq11.shift(eq2[-1].get_center()-eq11[-3].get_center())
+        self.play(ReplacementTransform(eq2[2:4]+eq2[4:] + eq2[0],
+                                       eq11[1:3] + eq11[5:-2] + eq11[4]),
+                  FadeIn(eq11[3], target_position=eq11.get_left()),
+                  FadeOut(eq2[1], target_position=eq11[0]),
+                  FadeIn(eq11[-2:]),
+                  run_time=2)
 
+        eq12 = MathTex(r'bx^2-yx+d=0')[0]
+        eq12.shift(eq11[-2].get_center()-eq12[-2].get_center())
+        self.play(ReplacementTransform(eq11[1:3] + eq11[3:5] + eq11[5:7] + eq11[-2:] + eq11[8],
+                                       eq12[:2] + eq12[3:5] + eq12[6:8] + eq12[-2:] + eq12[5]),
+                  ReplacementTransform(eq11[-3].copy(), eq12[1]),
+                  FadeIn(eq12[2]),
+                  FadeOut(eq11[-4]),
+                  run_time=2)
 
-
-
-
+        eq13 = MathTex(r'ad^2=b^2e')[0]
+        eq13.shift(eq6[1][1].get_center()-eq13[3].get_center()).align_to(eq6[1], LEFT)
+        self.play(eq6[1][0].animate.move_to(eq13[4], coor_mask=RIGHT),
+                  eq6[1][1].animate.move_to(eq13[3], coor_mask=RIGHT),
+                  eq6[1][2:].animate.move_to(eq13[:3], coor_mask=RIGHT),
+                  run_time=2)
+        self.play(ReplacementTransform(eq6[1][2:5] + eq6[1][6:] + eq6[1][1] + eq6[1][0],
+                                       eq13[:3] + eq13[4:6] + eq13[3] + eq13[6]),
+                  FadeOut(eq6[1][5]),
+                  run_time=2)
 
     def construct(self):
         MathTex.set_default(font_size=40)
-        self.special()
+        self.symmetric()
