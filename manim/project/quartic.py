@@ -325,7 +325,9 @@ class Quartic(Scene):
                                        eq3[6][:] + eq3[5][0] + eq3[7][0] + eq3[8][0] + eq3[9][:]),
                   run_time=2)
 
-        eq4 = MathTex(r'ay^4+\tilde by^3 + \tilde cy^2 + \tilde dy + \tilde e=0').next_to(eq3, DOWN).align_to(eq3, RIGHT)[0]
+        eq4 = MathTex(r'ay^4+\tilde by^3 + \tilde cy^2 + \tilde dy + \tilde e=0')\
+            .next_to(eq3, DOWN).align_to(eq3, RIGHT)[0]
+        eq4_1 = eq4.copy()
         eq4[:3].align_to(eq3[0][3], RIGHT)
         eq4[3:8].align_to(eq3[2][3], RIGHT)
         eq4[8:13].align_to(eq3[4][3], RIGHT)
@@ -379,10 +381,10 @@ class Quartic(Scene):
                   FadeIn(eq7[12]),
                   run_time=2)
         self.play(ReplacementTransform((eq3[6][0]).copy(), eq7[17]), FadeIn(eq7[16]), run_time=2)
-        self.play((eq4[:] + eq7 + eq3[0][1:] + eq3[2][1:] + eq3[4][1:] + eq3[6][1:]).animate.set_color(WHITE), run_time=1)
+        self.play((eq4[16:17] + eq7 + eq3[0][1:] + eq3[2][1:] + eq3[4][1:] + eq3[6][1:]).animate.set_color(WHITE), run_time=1)
 
         (eq8[3:6] + eq8[7:10] + eq8[11:14] + eq8[15:17] + eq8[18]).set_color(GREEN)
-        self.play(FadeIn(eq4[17:19]), eq3[8][0].animate.set_color(GREEN), run_time=1)
+        self.play(FadeIn(eq4[17:20]), eq3[8][0].animate.set_color(GREEN), run_time=1)
         self.play(FadeIn(eq8[:3]), (eq3[0][21:23]+eq3[2][15:17]+eq3[4][9:11]+eq3[6][4]).animate.set_color(GREEN),
                   run_time=1)
         self.play(ReplacementTransform((eq3[0][:1]+eq3[0][21:23]).copy(), eq8[3:4] + eq8[4:6]), run_time=2)
@@ -393,10 +395,12 @@ class Quartic(Scene):
         self.play(ReplacementTransform((eq3[6][:1] + eq3[6][4]).copy(), eq8[15:16] + eq8[16]),
                   FadeIn(eq8[14]), run_time=2)
         self.play(ReplacementTransform(eq3[8][0].copy(), eq8[18]), FadeIn(eq8[17]), run_time=2)
-        self.play((eq4[:19] + eq8).animate.set_color(WHITE), FadeIn(eq4[21:]), run_time=1)
+        self.play(eq8.animate.set_color(WHITE), FadeIn(eq4[20:]), run_time=1)
 
-        self.play(LaggedStart(FadeOut(eq3), Group(eq4, eq5, eq6, eq7, eq8).animate.to_edge(UP, buff=1),
+        self.play(LaggedStart(FadeOut(eq3), Group(eq4, eq5, eq6, eq7, eq8).animate.to_edge(UP, buff=0.5),
                               lag_ratio=0.2), run_time=1)
+        eq4_1.move_to(eq4, LEFT)
+        self.play(ReplacementTransform(eq4, eq4_1), run_time=2)
 
         self.wait(2)
 
