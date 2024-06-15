@@ -1,5 +1,6 @@
 from manim import *
-
+import cv2
+import math
 
 class CreateCircle(Scene):
     def construct(self):
@@ -203,3 +204,131 @@ class Wife(Scene):
         self.play(MoveToTarget(wojak, rate_func=lambda t: t * 0.9), run_time=2)
         self.play(MoveToTarget(wife, rate_func=lambda t: t * 0.9), run_time=2)
         self.wait(2)
+
+
+_dice_faces = None
+
+
+def get_dice_faces():
+    global _dice_faces
+    if _dice_faces is None:
+        blank = RoundedRectangle(width=2, height=2, fill_color=WHITE, fill_opacity=1, corner_radius=0.2, stroke_color=GREY)
+        dot = Dot(radius=0.22, color=BLACK, z_index=1)
+        x = RIGHT * 0.54
+        y = UP * 0.54
+
+        _dice_faces = []
+
+        for dots in [
+            [ORIGIN],
+            [-x - y, x + y],
+            [-x - y, ORIGIN, x + y],
+            [-x - y, -x + y, x + y, x - y],
+            [-x - y, -x + y, x + y, x - y, ORIGIN],
+            [-x - y, -x, -x + y, x - y, x, x + y]
+        ]:
+            _dice_faces.append(VGroup(blank.copy(), *[dot.copy().move_to(s) for s in dots]))
+    return _dice_faces
+
+
+def animate_roll(scene, key, pos=ORIGIN, scale=0.3):
+    key = int(key) - 1
+    rows = [
+        [1, 5, 6, 2],
+        [2, 4, 5, 3], ##
+        [3, 1, 4, 6],  ##
+        [4, 2, 3, 5], #
+        [5, 6, 2, 1], #
+        [6, 5, 1, 2],  ##
+    ]
+
+    faces = get_dice_faces()
+    f_row = [faces[i-1] for i in rows[key]]
+
+    flag = False
+    for i in range(10, -1, -1):
+        t = -i * i * 0.045
+        c = math.cos(t) * scale
+        s = math.sin(t) * scale
+#        arr = [f_row[i].copy().apply_matrix([[x, 0], [0, scale]]).move_to(pos + RIGHT * y) for i, x, y in [(0, c, s), (1, s, -c), (2, -c, -s), (3, -s, c)]]
+        arr = [f_row[0].copy().apply_matrix([[c, 0], [0, scale]]).move_to(pos + RIGHT * s),
+               f_row[1].copy().apply_matrix([[s, 0], [0, scale]]).move_to(pos + LEFT * c),
+               f_row[2].copy().apply_matrix([[-c, 0], [0, scale]]).move_to(pos + LEFT * s),
+               f_row[3].copy().apply_matrix([[-s, 0], [0, scale]]).move_to(pos + RIGHT * c)]
+        if c < 0:
+            arr[0].set_opacity(0)
+        else:
+            arr[2].set_opacity(0)
+        if s < 0:
+            arr[1].set_opacity(0)
+        else:
+            arr[3].set_opacity(0)
+        if flag:
+            for j in range(4):
+                f[j].target = arr[j]
+            scene.play(*[MoveToTarget(f[j]) for j in range(4)], rate_func=rate_functions.linear, run_time=0.05 * (1 + t / 10))
+        else:
+            f = arr
+            flag = True
+
+    scene.remove(*f[1:])
+    return f_row[0]
+
+class Dice(Scene):
+    def construct(self):
+        faces = VGroup(*get_dice_faces())
+        faces.arrange(RIGHT).to_edge(UL)
+        self.add(faces)
+        """
+        rotate angle t about x=z=0
+        
+
+        rotate angle t about x=-y, z=0
+        (c+1)/2 (c-1)/2  rs
+        (c-1)/2 (c+1)/2 rs
+          -s     0      c
+        
+        """
+
+
+        self.wait(0.1)
+
+        for i in range(1, 7):
+            animate_roll(self, i)
+            self.wait(0.5)
+
+class Test(Scene):
+    def construct(self):
+        eq4 = MathTex(r'x=2').to_edge(UP, buff=1)
+        eq5 = MathTex(r"\mathbb E[{{W_A}} -& {{W_B}}\vert A]{{\mathbb P(A) }}{{ +}}"
+                      r"\\ & \mathbb E[{{W_A}} - {{W_B}}\vert B]{{\mathbb P(B)}} {{=}} 0",
+                      font_size=40).next_to(eq4, DOWN).align_to(eq4, UP)
+
+        eq5 = MathTex(r"\mathbb E[{{W_A}} - {{W_B}}\vert A]{{\mathbb P(A) }}{{ +}}"
+                      r" \mathbb E[{{W_A}} - {{W_B}}\vert B]{{\mathbb P(B)}} {{=}} 0",
+                      font_size=40)
+        eq5[7:].next_to(eq5[:7], DOWN, coor_mask=UP, buff=0.208).align_to(eq5[2], LEFT)
+        eq5.next_to(eq4, DOWN).align_to(eq4, UP)
+
+
+        self.add(eq5)
+        self.wait(1)
+        eq6 = MathTex(r"\mathbb E[{{W_A}} - {{W_B}}\vert A]{{\mathbb P(A)}}{{ = }} "
+                      r"\mathbb E[{{W_B}} - {{W_A}}\vert B]{{\mathbb P(B)}}", font_size=40)
+        eq6.shift(eq5[0].get_center()-eq6[0].get_center())
+        eq6[6:].shift(eq5[7][0].get_center() - eq6[7][0].get_center())
+        self.play(ReplacementTransform(eq5[:6] + eq5[-2] + eq5[7] + eq5[8] + eq5[9] + eq5[10] + eq5[11:13],
+                                       eq6[:6] + eq6[6] + eq6[7] + eq6[10] + eq6[9] + eq6[8] + eq6[11:13]),
+                  FadeOut(eq5[6], eq5[-1]),
+                  run_time=2)
+        self.wait(1)
+
+
+
+
+
+if __name__ == "__main__":
+    with tempconfig({"quality": "low_quality", "preview": True}):
+        Dice().render()
+
+

@@ -83,7 +83,7 @@ class Quartic(Scene):
         fq1 = MathTex(r'-y=x+\frac1x=0').next_to(eq2, DOWN)[0]
         fq2 = MathTex(r'0=x-y+\frac1x=0').next_to(eq2, DOWN)[0]
         fq2.shift((eq2[-2][0].get_center()-fq2[-2].get_center())*RIGHT)
-        fq1.shift(fq2[1].get_center()-fq1[2].get_center())
+        fq1.shift((eq2[-2][0].get_center()-fq1[-2].get_center())*RIGHT)
         self.play(FadeIn(fq1[1:-2]), run_time=2)
 
         eq3_1 = MathTex(r'ay^{2} {{=}} y {{1 - 2a}}')
@@ -106,11 +106,12 @@ class Quartic(Scene):
                                        eq4[8:11] + eq4[7:8] + eq4[6] + eq4[5] + eq4[4] + eq4[3] + eq4[2] + eq4[1] + eq4[0]),
                   run_time=2)
 
-        self.play(ReplacementTransform(fq1[2:4] + fq1[4:8] + fq1[1], fq2[1:3] + fq2[5:9] + fq2[4]),
+        self.play(ReplacementTransform(fq1[4:8] + fq1[3] + fq1[1],
+                                       fq2[5:9] + fq2[2] + fq2[4]),
                   FadeIn(fq2[3], target_position=fq1[0]),
-                  FadeIn(fq2[0]),
+                  FadeIn(fq2[-2:]),
+                  FadeOut(fq1[2], target_position=fq2[3]),
                   run_time=2)
-        self.play(ReplacementTransform(fq2[0], fq2[-1]), ReplacementTransform(fq2[1], fq2[-2]), run_time=2)
         fq3 = MathTex(r'x^2-yx+1=0')[0]
         fq3.shift(fq2[-2].get_center()-fq3[-2].get_center())
         self.play(ReplacementTransform(fq2[-2:] + fq2[2] + fq2[3:5] + fq2[5:7],
@@ -240,6 +241,166 @@ class Quartic(Scene):
                   FadeOut(eq6[1][5]),
                   run_time=2)
 
+    def change_var1(self):
+        eq1 = MathTex('ax^4 + bx^3 + cx^2+dx+e=0').to_edge(UP)[0]
+        eq2 = MathTex(r'a(y+k)^4+b(y+k)^3+c(y+k)^2+d(y+k)+e=0').to_edge(UP)[0]
+        self.play(FadeIn(eq1), run_time=2)
+        self.play(ReplacementTransform(eq1[2:5] + eq1[6:9] + eq1[10:13] + eq1[14:] + eq1[0],
+                                       eq2[6:9] + eq2[14:17] + eq2[22:25] + eq2[30:] + eq2[0]),
+                  FadeIn(eq2[1:6], target_position=eq1[1]),
+                  FadeIn(eq2[9:14], target_position=eq1[5]),
+                  FadeIn(eq2[17:22], target_position=eq1[9]),
+                  FadeIn(eq2[25:30], target_position=eq1[13]),
+                  FadeOut(eq1[1], target_position=eq2[1:6]),
+                  FadeOut(eq1[5], target_position=eq2[9:14]),
+                  FadeOut(eq1[9], target_position=eq2[17:22]),
+                  FadeOut(eq1[13], target_position=eq2[25:30]),
+                  run_time=2)
+        eq3 = MathTex(r'{{a(y^4+4ky^3+6k^2y^2+4k^3y+k^4)}}+{{b(y^3+3ky^2+3k^2y+k^3)}}'
+                      r'+{{c(y^2+2ky+k^2)}}+{{d(y+k)}}+{{e}}=0').move_to(eq1, LEFT)
+
+        eq3[1:].next_to(eq3[0], DOWN)
+        eq3[3:].next_to(eq3[:3], DOWN)
+        eq3[5:].next_to(eq3[:5], DOWN)
+        eq3[7:].next_to(eq3[:7], DOWN)
+        eq3[2][14:].shift((eq3[0][-3].get_right()-eq3[2][15].get_right())*RIGHT)
+        eq3[2][9:14].align_to(eq3[0][-5], RIGHT)
+        eq3[2][4:9].align_to(eq3[0][-10], RIGHT)
+        (eq3[2][:4] + eq3[1]).align_to(eq3[0][8], RIGHT)
+        eq3[4][8:].shift((eq3[2][-3].get_right()-eq3[4][9].get_right())*RIGHT)
+        eq3[4][4:8].align_to(eq3[2][-5], RIGHT)
+        (eq3[4][:4] + eq3[3]).align_to(eq3[2][8], RIGHT)
+        eq3[6][3:].shift((eq3[4][-3].get_right()-eq3[6][4].get_right())*RIGHT)
+        (eq3[6][:3] + eq3[5]).align_to(eq3[4][7], RIGHT)
+        eq3[7:].shift((eq3[6][-2].get_right()-eq3[8][0].get_right())*RIGHT)
+
+
+        eq2_1, eq2_2 = eq2[:7], eq2[7:]
+        eq2_1.generate_target()
+        eq2_1.target[5:7].shift((eq3[0][-1].get_center()-eq2[5].get_center())*RIGHT)
+        eq2_1.target[:2].shift((eq3[0][1].get_center()-eq2[1].get_center())*RIGHT)
+        eq2_1.target[2:5].shift((eq3[0][2:-1].get_center()-eq2[2:5].get_center()))
+
+        self.play(LaggedStart(eq2_2.animate.shift(eq3[1][0].get_center()-eq2_2[0].get_center()),
+                              MoveToTarget(eq2_1),
+                              lag_ratio=0.2),
+                  run_time=2)
+
+        self.play(FadeOut(eq2[2:5], eq2[6]), FadeIn(eq3[0][2:-1]),
+                  ReplacementTransform(eq2[:2] + eq2[5], eq3[0][:2] + eq3[0][-1]), run_time=2)
+
+
+        eq2_1, eq2_2 = eq2[7:15], eq2[15:]
+        eq2_1.generate_target()
+        eq2_1.target[:3].shift((eq3[2][1].get_center()-eq2[9].get_center())*RIGHT)
+        eq2_1.target[6:].shift((eq3[2][-1].get_center()-eq2[13].get_center())*RIGHT)
+        eq2_1.target[3:6].shift((eq3[2][2:-1].get_center()-eq2[10:13].get_center())*RIGHT)
+
+        self.play(LaggedStart(eq2_2.animate.shift(eq3[3][0].get_center()-eq2_2[0].get_center()),
+                              MoveToTarget(eq2_1),
+                              lag_ratio=0.2),
+                  run_time=2)
+
+        self.play(FadeOut(eq2[10:13], eq2[14]), FadeIn(eq3[2][2:-1]),
+                  ReplacementTransform(eq2[8:10] + eq2[7] + eq2[13], eq3[2][:2] + eq3[1][0] + eq3[2][-1]),
+                  run_time=2)
+
+
+        eq2_1 = eq2[15:23]
+        eq2_1.generate_target()
+        eq2_1.target[:3].shift((eq3[4][1].get_center()-eq2[17].get_center())*RIGHT)
+        eq2_1.target[3:6].shift((eq3[4][2:-1].get_center()-eq2[18:21].get_center())*RIGHT)
+        eq2_1.target[6:].shift((eq3[4][-1].get_center()-eq2[21].get_center())*RIGHT)
+
+        self.play(LaggedStart(eq2[23:].animate.shift(eq3[5][0].get_center()-eq2[23].get_center()),
+                              MoveToTarget(eq2_1),
+                              lag_ratio=0.2),
+                  run_time=2)
+
+        self.play(FadeOut(eq2[18:21], eq2[22]), FadeIn(eq3[4][2:-1]),
+                  ReplacementTransform(eq2[16:18] + eq2[15] + eq2[21], eq3[4][:2] + eq3[3][0] + eq3[4][-1]),
+                  run_time=2)
+
+        self.play(ReplacementTransform(eq2[24:30] + eq2[23] + eq2[30] + eq2[31] + eq2[32:],
+                                       eq3[6][:] + eq3[5][0] + eq3[7][0] + eq3[8][0] + eq3[9][:]),
+                  run_time=2)
+
+        eq4 = MathTex(r'ay^4+\tilde by^3 + \tilde cy^2 + \tilde dy + \tilde e=0').next_to(eq3, DOWN).align_to(eq3, RIGHT)[0]
+        eq4[:3].align_to(eq3[0][3], RIGHT)
+        eq4[3:8].align_to(eq3[2][3], RIGHT)
+        eq4[8:13].align_to(eq3[4][3], RIGHT)
+        eq4[13:17].align_to(eq3[6][2], RIGHT)
+        eq4[17:20].align_to(eq3[8][0], RIGHT)
+        eq5 = MathTex(r'\tilde b = 4ak+b').next_to(eq4, DOWN).align_to(eq4, LEFT)[0]
+        eq6 = MathTex(r'\tilde c = 6ak^2+3bk+c').next_to(eq5, DOWN).align_to(eq5, LEFT)[0]
+        eq7 = MathTex(r'\tilde d = 4ak^3+3bk^2+2ck+d').next_to(eq6, DOWN).align_to(eq5, LEFT)[0]
+        eq8 = MathTex(r'\tilde e = ak^4 + bk^3 + ck^2 + dk+e').next_to(eq7, DOWN).align_to(eq5, LEFT)[0]
+
+        self.play(FadeIn(eq4[1:3]), run_time=1)
+        self.play(ReplacementTransform(eq3[0][0].copy(), eq4[0]), run_time=2)
+
+        self.play(FadeIn(eq4[3:8], eq5[:3]), run_time=1)
+        self.play(ReplacementTransform(eq3[0][:1] + eq3[0][5] + eq3[0][6],
+                                       eq5[4:5] + eq5[3] + eq5[5]),
+                  run_time=2)
+        self.play(ReplacementTransform(eq3[2][0], eq5[7]), FadeIn(eq5[6]),
+                  run_time=2)
+
+        self.play(FadeIn(eq4), run_time=1)
+
+        self.play(FadeIn(eq5, eq6, eq7, eq8))
+
+
+    def change_var(self):
+        eq1 = MathTex('ax^4 + bx^3 + cx^2+dx+e=0').to_edge(UL)[0]
+        eq2 = MathTex('x=y+k').next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq3 = MathTex('f(x)=ax^4 + bx^3 + cx^2+dx+e').next_to(eq2, DOWN).align_to(eq2, LEFT)
+        eq4 = MathTex(r'f(y+k) {{=}} f(k) {{+}} f^\prime(k)y+\frac12f^{(2)}(k)y^2+\frac16f^{(3)}(k)y^3+\frac1{24}f^{(4)}(k)y^4').next_to(eq3, DOWN).align_to(eq3, LEFT)
+        eq5 = MathTex(r'\tilde a = \frac1{24}f^{(4)}(k)').next_to(eq4, DOWN).align_to(eq4, LEFT)
+        eq6 = MathTex(r'\tilde b = \frac1{6}f^{(3)}(k)').next_to(eq5, DOWN).align_to(eq4, LEFT)
+
+
+        self.add(eq1, eq2, eq3, eq4)
+        eq9 = MathTex(r'\tilde e = f(k)').next_to(eq4, DOWN).align_to(eq4, LEFT)[0]
+        self.play(FadeIn(eq9), run_time=1)
+        eq9_1 = eq9[:2].copy()
+        self.play(eq9_1.animate.shift(eq4[1][0].get_center()-eq9[2].get_center()).move_to(eq4[2][:4], coor_mask=RIGHT),
+                  FadeOut(eq4[2][:4]),
+                  run_time=2)
+        eq9_2 = MathTex(r'= ak^4+bk^3+ck^2+dk+e')[0]
+        eq9_2.shift(eq9[2].get_center()-eq9_2[0].get_center())
+        self.play(FadeOut(eq9[3:]), FadeIn(eq9_2[1:]), run_time=2)
+        eq8 = MathTex(r'\tilde d = f^\prime(k)').next_to(eq9, DOWN).align_to(eq4, LEFT)[0]
+        self.play(FadeIn(eq8), run_time=1)
+        eq8_1 = eq8[:2].copy()
+        self.play(eq8_1.animate.shift(eq4[1][0].get_center()-eq8[2].get_center()).align_to(eq4[4][:5], RIGHT),
+                  FadeOut(eq4[4][:5]),
+                  run_time=2)
+        eq8_2 = MathTex(r'=4ak^3+3bk^2+2ck+d')[0]
+        eq8_2.shift(eq8[2].get_center()-eq8_2[0].get_center())
+        eq8_3 = MathTex(r'=()^\prime')[0]
+        eq8_3.shift(eq8[2].get_center()-eq8_3[0].get_center())
+        eq8_3[2:].shift(RIGHT * eq9_2[1:].width)
+        eq8_4 = eq9_2[1:].copy()
+        self.play(FadeOut(eq8[3:]),
+                  FadeIn(eq8_3[1:]),
+                  eq8_4.animate.shift(eq8_3[1].get_right()-eq9_2[1].get_left()),
+                  run_time=2)
+        self.play(FadeOut(eq8_3[1:]),
+                  ReplacementTransform(eq8_4[:2] + eq8_4[2] + eq8_4[3] + eq8_4[4:6] + eq8_4[6] + eq8_4[7],
+                                       eq8_2[2:4] + eq8_2[1] + eq8_2[5] + eq8_2[7:9] + eq8_2[6] + eq8_2[10]),
+                  ReplacementTransform(eq8_4[8:10] + eq8_4[10] + eq8_4[11:13],
+                                       eq8_2[12:14] + eq8_2[11] + eq8_2[14:]),
+                  FadeIn(eq8_2[4], target_position=eq8_4[2]),
+                  FadeIn(eq8_2[9], target_position=eq8_4[6]),
+                  FadeOut(eq8_4[13:]),
+                  run_time=2)
+
+        eq7 = MathTex(r'\tilde c = \frac1{2}f^{(2)}(k)').next_to(eq8, DOWN).align_to(eq4, LEFT)
+        self.play(FadeIn(eq7), run_time=1)
+
+        self.wait(1)
+
     def construct(self):
         MathTex.set_default(font_size=40)
-        self.symmetric()
+        self.change_var1()
