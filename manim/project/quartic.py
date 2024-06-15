@@ -336,15 +336,69 @@ class Quartic(Scene):
         eq7 = MathTex(r'\tilde d = 4ak^3+3bk^2+2ck+d').next_to(eq6, DOWN).align_to(eq5, LEFT)[0]
         eq8 = MathTex(r'\tilde e = ak^4 + bk^3 + ck^2 + dk+e').next_to(eq7, DOWN).align_to(eq5, LEFT)[0]
 
-        self.play(FadeIn(eq4[1:3]), run_time=1)
+        eq4[1:3].set_color(BLUE)
+        eq4[0].set_color(GREEN)
+        self.play(eq3[0][2:4].animate.set_color(BLUE), FadeIn(eq4[1:3]), run_time=1)
+        self.play(eq3[0][0].animate.set_color(GREEN), run_time=1)
         self.play(ReplacementTransform(eq3[0][0].copy(), eq4[0]), run_time=2)
+        self.play((eq4[1:3] + eq3[0][2:4] + eq4[0]).animate.set_color(WHITE), run_time=1)
 
-        self.play(FadeIn(eq4[3:8], eq5[:3]), run_time=1)
-        self.play(ReplacementTransform(eq3[0][:1] + eq3[0][5] + eq3[0][6],
-                                       eq5[4:5] + eq5[3] + eq5[5]),
+        eq4[6:8].set_color(BLUE)
+        (eq5[3:6] + eq5[7]).set_color(GREEN)
+        self.play((eq3[0][7:9] + eq3[2][2:4]).animate.set_color(BLUE), FadeIn(eq4[3:8]),  run_time=1)
+        self.play(FadeIn(eq5[:3]), (eq3[0][5:7] + eq3[2][0]).animate.set_color(GREEN), run_time=1)
+        self.play(ReplacementTransform((eq3[0][:1] + eq3[0][5] + eq3[0][6]).copy(), eq5[4:5] + eq5[3] + eq5[5]),
                   run_time=2)
-        self.play(ReplacementTransform(eq3[2][0], eq5[7]), FadeIn(eq5[6]),
+        self.play(ReplacementTransform(eq3[2][0].copy(), eq5[7]), FadeIn(eq5[6]), run_time=2)
+        self.play((eq4[6:8] + eq5[3:] + eq3[0][5:7] + eq3[0][7:9] + eq3[2][2:4]).animate.set_color(WHITE), run_time=1)
+
+        eq4[11:13].set_color(BLUE)
+        (eq6[3:7] + eq6[8:11] + eq6[12]).set_color(GREEN)
+        self.play((eq3[0][13:15] + eq3[2][7:9] + eq3[4][2:4]).animate.set_color(BLUE), FadeIn(eq4[8:13]), run_time=1)
+        self.play(FadeIn(eq6[:3]), (eq3[0][10:13] + eq3[2][5:7] + eq3[4][0]).animate.set_color(GREEN), run_time=1)
+        self.play(ReplacementTransform((eq3[0][0:1] + eq3[0][10] + eq3[0][11:13]).copy(), eq6[4:5] + eq6[3] + eq6[5:7]),
                   run_time=2)
+        self.play(ReplacementTransform((eq3[2][:1] + eq3[2][5] + eq3[2][6]).copy(), eq6[9:10] + eq6[8] + eq6[10]),
+                  FadeIn(eq6[7]),
+                  run_time=2)
+        self.play(ReplacementTransform(eq3[4][0].copy(), eq6[12]), FadeIn(eq6[11]), run_time=2)
+        self.play((eq4[11:13] + eq6 + eq3[0][1:] + eq3[2][1:] + eq3[4][1:]).animate.set_color(WHITE), run_time=1)
+
+        eq4[16].set_color(BLUE)
+        (eq7[3:7] + eq7[8:12] + eq7[13:16] + eq7[17]).set_color(GREEN)
+        self.play((eq3[0][19:20] + eq3[2][13] + eq3[4][7] + eq3[6][2]).animate.set_color(BLUE), FadeIn(eq4[13:17]),
+                  run_time=1)
+        self.play(FadeIn(eq7[:3]), (eq3[0][16:19]+eq3[2][10:13]+eq3[4][5:7]+eq3[6][0]).animate.set_color(GREEN),
+                  run_time=1)
+        self.play(ReplacementTransform((eq3[0][:1]+eq3[0][16]+eq3[0][17:19]).copy(), eq7[4:5]+eq7[3]+eq7[5:7]),
+                  run_time=2)
+        self.play(ReplacementTransform((eq3[2][:1]+eq3[2][10]+eq3[2][11:13]).copy(), eq7[9:10]+eq7[8]+eq7[10:12]),
+                  FadeIn(eq7[7]),
+                  run_time=2)
+        self.play(ReplacementTransform((eq3[4][:1]+eq3[4][5]+eq3[4][6]).copy(), eq7[14:15]+eq7[13]+eq7[15]),
+                  FadeIn(eq7[12]),
+                  run_time=2)
+        self.play(ReplacementTransform((eq3[6][0]).copy(), eq7[17]), FadeIn(eq7[16]), run_time=2)
+        self.play((eq4[:] + eq7 + eq3[0][1:] + eq3[2][1:] + eq3[4][1:] + eq3[6][1:]).animate.set_color(WHITE), run_time=1)
+
+        (eq8[3:6] + eq8[7:10] + eq8[11:14] + eq8[15:17] + eq8[18]).set_color(GREEN)
+        self.play(FadeIn(eq4[17:19]), eq3[8][0].animate.set_color(GREEN), run_time=1)
+        self.play(FadeIn(eq8[:3]), (eq3[0][21:23]+eq3[2][15:17]+eq3[4][9:11]+eq3[6][4]).animate.set_color(GREEN),
+                  run_time=1)
+        self.play(ReplacementTransform((eq3[0][:1]+eq3[0][21:23]).copy(), eq8[3:4] + eq8[4:6]), run_time=2)
+        self.play(ReplacementTransform((eq3[2][:1]+eq3[2][15:17]).copy(), eq8[7:8] + eq8[8:10]), FadeIn(eq8[6]),
+                  run_time=2)
+        self.play(ReplacementTransform((eq3[4][:1]+eq3[4][9:11]).copy(), eq8[11:12] + eq8[12:14]),
+                  FadeIn(eq8[10]), run_time=2)
+        self.play(ReplacementTransform((eq3[6][:1] + eq3[6][4]).copy(), eq8[15:16] + eq8[16]),
+                  FadeIn(eq8[14]), run_time=2)
+        self.play(ReplacementTransform(eq3[8][0].copy(), eq8[18]), FadeIn(eq8[17]), run_time=2)
+        self.play((eq4[:19] + eq8).animate.set_color(WHITE), FadeIn(eq4[21:]), run_time=1)
+
+        self.play(LaggedStart(FadeOut(eq3), Group(eq4, eq5, eq6, eq7, eq8).animate.to_edge(UP, buff=1),
+                              lag_ratio=0.2), run_time=1)
+
+        self.wait(2)
 
         self.play(FadeIn(eq4), run_time=1)
 
