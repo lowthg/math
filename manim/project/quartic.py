@@ -400,9 +400,6 @@ class Quartic(Scene):
 
         self.wait(2)
 
-        self.play(FadeIn(eq4), run_time=1)
-
-        self.play(FadeIn(eq5, eq6, eq7, eq8))
 
 
     def change_var(self):
