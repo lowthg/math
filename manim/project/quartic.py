@@ -122,6 +122,8 @@ class Quartic(Scene):
                   FadeIn(fq3[1]),
                   run_time=2)
 
+        self.play(FadeOut(fq3, eq4, eq2[-1], eq2[-2]))
+
     def special(self):
         eq1 = self.divx2('a', 'b', 'c', 'd', 'e').set_z_index(1)
         eq10 = MathTex(r'ay^2+by+bc-2ad=0')[0]
@@ -241,6 +243,15 @@ class Quartic(Scene):
                   FadeOut(eq6[1][5]),
                   run_time=2)
 
+    def coeffs(self):
+        return VGroup(
+            MathTex(r'\tilde b = 4ak+b')[0],
+            MathTex(r'\tilde c = 6ak^2+3bk+c')[0],
+            MathTex(r'\tilde d = 4ak^3+3bk^2+2ck+d')[0],
+            MathTex(r'\tilde e = ak^4 + bk^3 + ck^2 + dk+e')[0]
+        ).arrange(direction=DOWN, center=False, aligned_edge=LEFT)
+
+
     def change_var1(self):
         eq1 = MathTex('ax^4 + bx^3 + cx^2+dx+e=0').to_edge(UP)[0]
         eq2 = MathTex(r'a(y+k)^4+b(y+k)^3+c(y+k)^2+d(y+k)+e=0').to_edge(UP)[0]
@@ -333,10 +344,7 @@ class Quartic(Scene):
         eq4[8:13].align_to(eq3[4][3], RIGHT)
         eq4[13:17].align_to(eq3[6][2], RIGHT)
         eq4[17:20].align_to(eq3[8][0], RIGHT)
-        eq5 = MathTex(r'\tilde b = 4ak+b').next_to(eq4, DOWN).align_to(eq4, LEFT)[0]
-        eq6 = MathTex(r'\tilde c = 6ak^2+3bk+c').next_to(eq5, DOWN).align_to(eq5, LEFT)[0]
-        eq7 = MathTex(r'\tilde d = 4ak^3+3bk^2+2ck+d').next_to(eq6, DOWN).align_to(eq5, LEFT)[0]
-        eq8 = MathTex(r'\tilde e = ak^4 + bk^3 + ck^2 + dk+e').next_to(eq7, DOWN).align_to(eq5, LEFT)[0]
+        [eq5, eq6, eq7, eq8] = self.coeffs().next_to(eq4, DOWN).align_to(eq4, LEFT)[:]
 
         eq4[1:3].set_color(BLUE)
         eq4[0].set_color(GREEN)
@@ -402,9 +410,61 @@ class Quartic(Scene):
         eq4_1.move_to(eq4, LEFT)
         self.play(ReplacementTransform(eq4, eq4_1), run_time=2)
 
-        self.wait(2)
+        return [eq4_1, eq5, eq6, eq7, eq8]
 
 
+    def adbe_sub(self):
+        eq1 = MathTex(r'a\tilde d^2=\tilde b^2\tilde e').to_edge(UL, buff=0.5).shift(RIGHT)[0]
+        coeffs = self.coeffs().next_to(eq1, DOWN).align_to(eq1, LEFT)
+
+        self.play(FadeIn(eq1), run_time=1)
+        self.play(FadeIn(coeffs), run_time=1)
+
+        b = MathTex('=(' + coeffs[0].tex_string.split('=')[1] + ')^2e')[0]\
+            .next_to(eq1[4], index_of_submobject_to_align=0, direction=ORIGIN)
+        self.play(eq1[8:].animate.move_to(b[-1], coor_mask=RIGHT),
+                  eq1[5:7].animate.move_to(b[2:-3], coor_mask=RIGHT),
+                  ReplacementTransform(eq1[7], b[-2]),
+                  FadeIn(b[1], b[-3]),
+                  run_time=2)
+        self.play(ReplacementTransform(coeffs[0][3:], b[2:-3]), FadeOut(eq1[5:7]), run_time=2)
+
+        self.play(FadeOut(coeffs[0][:3]), Group(*coeffs[1:]).animate.next_to(eq1, DOWN, coor_mask=UP), run_time=1)
+        self.play(FadeOut(coeffs[1]), Group(*coeffs[2:]).animate.next_to(eq1, DOWN, coor_mask=UP), run_time=1)
+
+        d = MathTex(r'a(' + coeffs[2].tex_string.split('=')[1] + ')^2=')[0]\
+            .next_to(eq1[0], index_of_submobject_to_align=0, direction=ORIGIN)
+        self.play((eq1[4:5] + eq1[8:]+b[1:-1]).animate.next_to(d[-1], submobject_to_align=eq1[4], direction=ORIGIN, coor_mask=RIGHT),
+                  eq1[1:3].animate.next_to(d[2:-3], direction=ORIGIN, coor_mask=RIGHT),
+                  FadeIn(d[1], d[-3]),
+                  ReplacementTransform(eq1[3], d[-2]),
+                  run_time=2)
+        self.play(ReplacementTransform(coeffs[2][3:], d[2:-3]), FadeOut(eq1[1:3]), run_time=2)
+
+        self.play(FadeOut(coeffs[2][:3]), coeffs[3].animate.next_to(eq1, DOWN, coor_mask=UP), run_time=1)
+
+        e = MathTex(r'(b)^2(' + coeffs[3].tex_string.split('=')[1] + ')')[0]
+        e.next_to(b[-3], direction=ORIGIN, submobject_to_align=e[2])
+
+        self.play(FadeIn(e[4], e[-1]),
+                  eq1[8:].animate.next_to(e[5:-1], direction=ORIGIN, coor_mask=RIGHT), run_time=2)
+        self.play(ReplacementTransform(coeffs[3][3:], e[5:-1]), FadeOut(eq1[8:]), run_time=1)
+        self.play(FadeOut(coeffs[3][:3]),
+#                  Group(eq1[0], eq1[4], b[1:-1], d[1:-1], e[4:]).animate.move_to(ORIGIN, coor_mask=RIGHT),
+                  run_time=1)
+        self.play(e[4:].animate.next_to(d[1:-1], DOWN, coor_mask=UP).shift(LEFT))
+
+        b2 = MathTex(r'(16a^2k^2+8abk+b^2)^2')[0]
+        b2.next_to(b[1], submobject_to_align=b2[0], direction=ORIGIN)
+        self.play(ReplacementTransform(b[1:2] + b[-3] + b[-2], b2[:1] + b2[-2] + b2[-1]),
+                  b[2:-3].animate.move_to(b2[1:-2], coor_mask=RIGHT),
+                  run_time=1)
+        self.play(FadeOut(b[2:-3], b2[-1]), FadeIn(b2[1:-2]), run_time=2)
+
+        return eq1[0], d[1:-1], eq1[4], b2[:-1], e[4:]
+
+    def solve(self):
+        a, d, eq, b, e = self.adbe_sub()
 
     def change_var(self):
         eq1 = MathTex('ax^4 + bx^3 + cx^2+dx+e=0').to_edge(UL)[0]
@@ -458,4 +518,13 @@ class Quartic(Scene):
 
     def construct(self):
         MathTex.set_default(font_size=40)
-        self.change_var1()
+        self.play(FadeOut(*self.change_var1()))
+        self.symmetric()
+#        self.special()
+#        self.solve()
+        self.wait(1)
+
+
+if __name__ == "__main__":
+    with tempconfig({"quality": "low_quality", "preview": True}):
+        Quartic().render()
