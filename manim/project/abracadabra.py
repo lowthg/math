@@ -1705,27 +1705,80 @@ class Abra2(Abra):
     def run_math(self):
         pass
 
+
 class AbraGF(Abra):
+    play_game = False
+
     def construct(self):
         self.build()
+        MathTex.set_default(font_size=40)
 
         self.wait(1)
         n = len(self.choices)
         new_paidobjs = []
         for i in range(n):
-            new_paidobjs.append(MathTex(r'\bf \${}'.format(i), font_size=30, z_index=5, color=RED)
+            new_paidobjs.append(MathTex(r'\bf \${}'.format(i+1), font_size=30, z_index=5, color=RED)
                                 .move_to(self.paid_objs[i]))
 
         self.play(FadeOut(*self.paid_objs), FadeIn(*new_paidobjs), run_time=2)
+        eq1 = MathTex(r'{\rm Total\ paid} {{=}} 1+2+\cdots+N {{=}}\frac12N(N+1) {{=}} \frac12N^2+\frac12N').to_edge(LEFT, buff=0.5)\
+            .align_to(self.text_pos, UP).shift(self.math_shift)
+        self.play(FadeIn(eq1[:2]), run_time=0.5)
+
+        anims = [[], []]
+        for i, obj in enumerate(new_paidobjs):
+            copy = obj[0][1:].copy()
+            copy.generate_target().set_color(WHITE).set_opacity(0.5)
+            copy.target.move_to((eq1[2].get_left() * (n-i) + eq1[2].get_right()*i)/n)
+            anims[0].append(MoveToTarget(copy))
+            anims[1].append(FadeOut(copy))
+        self.play(LaggedStart(AnimationGroup(*anims[0]), FadeIn(eq1[2]), AnimationGroup(*anims[1]), lag_ratio=0.9), run_time=2)
+
+        eq1[3:5].next_to(eq1[1], submobject_to_align=eq1[3], direction=ORIGIN, coor_mask=RIGHT)
+        eq1[5:7].next_to(eq1[1], submobject_to_align=eq1[5], direction=ORIGIN, coor_mask=RIGHT)
+
+        self.play(FadeOut(eq1[2]), FadeIn(eq1[4]), run_time=2)
+        self.play(ReplacementTransform(eq1[4][:4] + eq1[4][6], eq1[6][:4] + eq1[6][5]),
+                  ReplacementTransform(eq1[4][:4].copy() + eq1[4][5], eq1[6][6:10] + eq1[6][3]),
+                  FadeOut(eq1[4][4], eq1[4][7:]),
+                  FadeIn(eq1[6][4]),
+                  run_time=2)
+        self.wait(1)
+        self.play(FadeOut(eq1[6]))
+
+        eq2 = MathTex(r'{{=}} 1 + 2 + \cdots + t^{N-1} {{=}} \frac{1-t^N}{1-t}')
+        eq2.next_to(eq1[1], submobject_to_align=eq2[0], direction=ORIGIN)
 
         self.paid_objs[0] = MathTex(r'\bf 1', font_size=30, z_index=5, color=RED).move_to(self.paid_objs[0])
         self.paid_objs[1] = MathTex(r'\bf t', font_size=30, z_index=5, color=RED).move_to(self.paid_objs[1])
+        stake_objs = []
+        new_stakes = []
+        anims = [[], []]
         for i in range(2, n):
             self.paid_objs[i] = MathTex(r'\bf t^{{{}}}'.format(i), font_size=30, z_index=5, color=RED)\
                 .move_to(self.paid_objs[i])
+            if self.stake_objs[i] is not None:
+                stake_objs.append(self.stake_objs[i])
+                copy = MathTex(r'\bf t^{{{}}} \times 26^{{{}}}'.format(i, n - i),
+                               font_size=30, z_index=5, color=WHITE).move_to(self.stake_objs[i])
+                new_stakes.append(copy.copy())
+                copy.generate_target().set_color(WHITE).set_opacity(0.5)
+                copy.target.move_to((eq2[1].get_left() * (n-i) + eq2[1].get_right()*i)/n)
+                anims[0].append(MoveToTarget(copy))
+                anims[1].append(FadeOut(copy))
+
 
         self.wait(1)
         self.play(FadeIn(*self.paid_objs), FadeOut(*new_paidobjs), run_time=2)
+        self.wait(1)
+        self.play(FadeOut(*stake_objs), FadeIn(*new_stakes), run_time=2)
+
+        self.play(LaggedStart(AnimationGroup(*anims[0]), FadeIn(eq2[1]), AnimationGroup(*anims[1]),
+                              lag_ratio=0.9), run_time=2)
+        txt1 = Tex(r'\rm Geometric series!', color=RED).next_to(eq2[1], DOWN)
+        self.play(FadeIn(txt1), run_time=2)
+        self.play(FadeIn(eq2[1]), FadeOut(eq1[6]), run_time=2)
+        self.play(FadeOut(txt1), run_time=1)
 
 
 class AbraHT(Abra):

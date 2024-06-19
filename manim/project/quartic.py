@@ -518,8 +518,22 @@ class Quartic(Scene):
 
     def construct(self):
         MathTex.set_default(font_size=40)
-        self.play(FadeOut(*self.change_var1()))
-        self.symmetric()
+        title = Tex(r'\underline{Solving the Quartic Equation}', font_size=60).to_edge(UP, buff=0.3)
+        self.add(title)
+        desc1 = Tex(r'The general quartic equation is of the form').next_to(title, DOWN, buff=0.5).to_edge(LEFT, buff=1)
+        desc2 = MathTex(r'ax^4+bx^3+cx^2+dx+e=0').next_to(desc1, DOWN, buff=0.4).move_to(ORIGIN, coor_mask=RIGHT)
+        desc3 = Tex(r'{{for specified coefficients $a,b,c,d,e$ with $a\not=0$.}}'
+                    r' {{The aim is to find\\ values of $x$ for which this equality is satisfied.}}',
+                    tex_environment="flushleft")\
+            .next_to(desc2, DOWN, buff=0.4).to_edge(LEFT, buff=0.3)
+
+        self.play(FadeIn(desc1, desc2, desc3[0]), run_time=2)
+        self.play(FadeIn(desc3[2]), run_time=1)
+
+
+        Tex(r'How can we start to even try to solve a general quadratic')
+#        self.play(FadeOut(*self.change_var1()))
+#        self.symmetric()
 #        self.special()
 #        self.solve()
         self.wait(1)
