@@ -1714,6 +1714,8 @@ class AbraGF(Abra):
         MathTex.set_default(font_size=40)
 
         self.wait(1)
+
+        # set payment of player k to k
         n = len(self.choices)
         new_paidobjs = []
         for i in range(n):
@@ -1744,10 +1746,53 @@ class AbraGF(Abra):
                   FadeIn(eq1[6][4]),
                   run_time=2)
         self.wait(1)
-        self.play(FadeOut(eq1[6]))
+        self.play(FadeOut(eq1[6], eq1[:2], *new_paidobjs), run_time=1)
+
+        # fade out this stuff, explain generating function
+        gf1 = Tex(r'Generating function', color=GREEN).move_to(eq1, LEFT)
+        gf2 = MathTex(r'G(t) {{=}} \mathbb E[t^N] {{=}} p_0 + p_1t + p_2t^2 + p_3t^3 + \cdots ').next_to(gf1, DOWN).align_to(gf1, LEFT)
+        self.play(LaggedStart(FadeIn(gf1), FadeIn(gf2[:3]), lag_ratio=0.5), run_time=2)
+        gf2[3:].next_to(gf2[:3], DOWN).align_to(gf2[1], LEFT)
+        gf3 = MathTex(r'\left(p_n=\mathbb P(N=n)\right)').next_to(gf2[3:5], DOWN)
+        self.play(FadeIn(gf2[3:5], gf3), run_time=2)
+        self.wait(2)
+        self.play(FadeOut(gf2[3:], gf3), run_time=1)
+
+        gf5 = MathTex(r'\left(t\frac{\partial}{\partial t}\right)^k\mathbb E\left[t^N\right]'
+                      r'{{=}} \mathbb E\left[N^kt^N\right]')
+        gf4 = MathTex(r'\left(t\frac{\partial}{\partial t}\right)^kt^N {{=}} N^kt^N')
+
+        gf6 = MathTex(r'\left(t\frac{\partial}{\partial t}\right)^k G(t)\vert_{t=1} {{=}} \mathbb E\left[N^k\right]')\
+            .next_to(gf2[:3], DOWN).align_to(gf2[0], LEFT)
+        gf4.next_to(gf6[1], ORIGIN, submobject_to_align=gf4[1])
+        gf5.next_to(gf6[1], ORIGIN, submobject_to_align=gf5[1])
+
+        self.play(FadeIn(gf4), run_time=1)
+        self.wait(1)
+        self.play(ReplacementTransform(gf4[0][:8] + gf4[0][8:10] + gf4[2][:4],
+                                       gf5[0][:8] + gf5[0][10:12] + gf5[2][2:6]),
+                  run_time=1)
+        self.play(FadeIn(gf5[0][8:10], gf5[0][12], gf5[2][:2], gf5[2][6]), run_time=2)
+        self.play(ReplacementTransform(gf5[0][:8] + gf5[0][10],
+                                       gf6[0][:8] + gf6[0][10]),
+                  FadeOut(gf5[0][8:10], gf5[0][11:]),
+                  FadeIn(gf6[0][8:10], gf6[0][11]),
+                  run_time=2)
+        self.play(FadeIn(gf6[0][12:]), run_time=1)
+        gf6_1 = MathTex('{{=}}1')
+        gf6_1.next_to(gf6[1], ORIGIN, submobject_to_align=gf6_1[0])
+        gf6_1[1][0].move_to(gf5[2][4], coor_mask=RIGHT)
+        self.play(FadeOut(gf5[2][4]), FadeIn(gf6_1[1]), run_time=1)
+        self.wait(1)
+        self.play(FadeOut(gf6_1[1], gf5[2][5]), run_time=1)
+        self.play(ReplacementTransform(gf5[2][:4] + gf5[2][6], gf6[2][:4] + gf6[2][4]), run_time=1)
+
+        self.wait(2)
+        self.play(FadeOut(gf1, gf2[:3], gf6[0], gf6[2], gf4[1]), run_time=1)
 
         eq2 = MathTex(r'{{=}} 1 + 2 + \cdots + t^{N-1} {{=}} \frac{1-t^N}{1-t}')
         eq2.next_to(eq1[1], submobject_to_align=eq2[0], direction=ORIGIN)
+        eq2[2:].next_to(eq2[0], ORIGIN, submobject_to_align=eq2[2], coor_mask=RIGHT)
 
         self.paid_objs[0] = MathTex(r'\bf 1', font_size=30, z_index=5, color=RED).move_to(self.paid_objs[0])
         self.paid_objs[1] = MathTex(r'\bf t', font_size=30, z_index=5, color=RED).move_to(self.paid_objs[1])
@@ -1759,25 +1804,26 @@ class AbraGF(Abra):
                 .move_to(self.paid_objs[i])
             if self.stake_objs[i] is not None:
                 stake_objs.append(self.stake_objs[i])
-                copy = MathTex(r'\bf t^{{{}}} \times 26^{{{}}}'.format(i, n - i),
+                stake = MathTex(r'\bf t^{{{}}} \times 26^{{{}}}'.format(i, n - i),
                                font_size=30, z_index=5, color=WHITE).move_to(self.stake_objs[i])
-                new_stakes.append(copy.copy())
-                copy.generate_target().set_color(WHITE).set_opacity(0.5)
-                copy.target.move_to((eq2[1].get_left() * (n-i) + eq2[1].get_right()*i)/n)
-                anims[0].append(MoveToTarget(copy))
-                anims[1].append(FadeOut(copy))
+                new_stakes.append(stake)
+            copy = self.paid_objs[i].copy()
+            copy.generate_target().set_color(WHITE).set_opacity(0.5)
+            copy.target.move_to((eq2[1].get_left() * (n-i) + eq2[1].get_right()*i)/n)
+            anims[0].append(MoveToTarget(copy))
+            anims[1].append(FadeOut(copy))
 
-
+        self.play(FadeIn(eq1[:2]), run_time=1)
         self.wait(1)
-        self.play(FadeIn(*self.paid_objs), FadeOut(*new_paidobjs), run_time=2)
+        self.play(FadeIn(*self.paid_objs), run_time=2)
         self.wait(1)
         self.play(FadeOut(*stake_objs), FadeIn(*new_stakes), run_time=2)
 
         self.play(LaggedStart(AnimationGroup(*anims[0]), FadeIn(eq2[1]), AnimationGroup(*anims[1]),
                               lag_ratio=0.9), run_time=2)
-        txt1 = Tex(r'\rm Geometric series!', color=RED).next_to(eq2[1], DOWN)
+        txt1 = Tex(r'\rm Geometric series!', color=RED).next_to(eq2, DOWN)
         self.play(FadeIn(txt1), run_time=2)
-        self.play(FadeIn(eq2[1]), FadeOut(eq1[6]), run_time=2)
+        self.play(FadeIn(eq2[3]), FadeOut(eq2[1]), run_time=2)
         self.play(FadeOut(txt1), run_time=1)
 
 
