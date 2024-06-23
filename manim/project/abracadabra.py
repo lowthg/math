@@ -1709,10 +1709,7 @@ class Abra2(Abra):
 class AbraGF(Abra):
     play_game = False
 
-    def construct(self):
-        self.build()
-        MathTex.set_default(font_size=40)
-
+    def create_paid_won(self):
         self.wait(1)
 
         # set payment of player k to k
@@ -1790,6 +1787,8 @@ class AbraGF(Abra):
         self.wait(2)
         self.play(FadeOut(gf1, gf2[:3], gf6[0], gf6[2], gf4[1]), run_time=1)
 
+        # paid amount
+
         eq2 = MathTex(r'{{=}} 1 + 2 + \cdots + t^{N-1} {{=}} \frac{1-t^N}{1-t}')
         eq2.next_to(eq1[1], submobject_to_align=eq2[0], direction=ORIGIN)
         eq2[2:].next_to(eq2[0], ORIGIN, submobject_to_align=eq2[2], coor_mask=RIGHT)
@@ -1804,7 +1803,8 @@ class AbraGF(Abra):
                 .move_to(self.paid_objs[i])
             if self.stake_objs[i] is not None:
                 stake_objs.append(self.stake_objs[i])
-                stake = MathTex(r'\bf t^{{{}}} \times 26^{{{}}}'.format(i, n - i),
+                stake1 = r'26^{{{}}}'.format(n - i) if i < n-1 else r'26'
+                stake = MathTex(r'\bf t^{{{}}}'.format(i), stake1,
                                font_size=30, z_index=5, color=WHITE).move_to(self.stake_objs[i])
                 new_stakes.append(stake)
             copy = self.paid_objs[i].copy()
@@ -1825,6 +1825,87 @@ class AbraGF(Abra):
         self.play(FadeIn(txt1), run_time=2)
         self.play(FadeIn(eq2[3]), FadeOut(eq2[1]), run_time=2)
         self.play(FadeOut(txt1), run_time=1)
+
+        #  winnings
+        eq4 = MathTex(r'{\rm Total\ won} {{=}}t^N\left(\frac{26^{11} }{t^{11} } + \frac{26^4}{t^4} + \frac{26}{t}\right)')\
+            .next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq3 = MathTex(r'{{=}} t^{N-11}26^{11} {{+}} t^{N-4}26^{4} {{+}} t^{N-1}26')
+        eq3.next_to(eq4[1], ORIGIN, submobject_to_align=eq3[0])
+
+        self.play(FadeIn(eq4[:2]), run_time=0.5)
+        winners = [n-11, n-4, n-1]
+        for i in range(3):
+            if i > 0:
+                self.play(FadeIn(eq3[2 * i]), run_time=0.2)
+                self.play(Transform(self.box, SurroundingRectangle(Group(*self.key_objs[winners[i]:]), color=GREEN,
+                                                                   corner_radius=0.1)), run_time=0.8)
+            stake1 = r'26^{{{}}}'.format(n - winners[i]) if winners[i] < n - 1 else r'26'
+            stake = MathTex(r't^{{{}}}'.format(i), stake1,
+                            font_size=30, z_index=5, color=WHITE).move_to(new_stakes[i])
+
+            eqstake = eq3[1+2*i]
+            j = [5, 4, 3][i]
+            self.play(ReplacementTransform(stake[1][:] + stake[0][0], eqstake[j:] + eqstake[0]),
+                      FadeOut(stake[0][1:], target_position=eqstake[1:j]),
+                      FadeIn(eqstake[1:j], target_position=stake[0][1:]),
+                      run_time=2)
+        self.play(FadeOut(self.box), run_time=0.2)
+
+        eq4_1 = eq4[2][3:11]
+        eq4_2 = eq4[2][12:18]
+        eq4_3 = eq4[2][19:23]
+        eq4_1.generate_target()
+        eq4_2.generate_target()
+        eq4_3.generate_target()
+        eq4_1.move_to(eq3[1][2:], coor_mask=RIGHT)
+        self.play(ReplacementTransform(eq3[1][5:9] + eq3[1][3:5] + eq3[1][0].copy(),
+                                       eq4_1[:4] + eq4_1[6:8] + eq4_1[5]),
+                  FadeIn(eq4_1[4]), FadeOut(eq3[1][2], target_position=eq4_1[6:8]),
+                  run_time=2)
+
+        eq4_2.move_to(eq3[3][2:], coor_mask=RIGHT)
+        self.play(ReplacementTransform(eq3[3][4:7] + eq3[3][3] + eq3[3][0].copy(),
+                                       eq4_2[:3] + eq4_2[5] + eq4_2[4]),
+                  FadeIn(eq4_2[3]), FadeOut(eq3[3][2], target_position=eq4_2[5]),
+                  run_time=2)
+
+        eq4_3.move_to(eq3[5][2:], coor_mask=RIGHT)
+        self.play(ReplacementTransform(eq3[5][4:6] + eq3[5][0].copy(),
+                                       eq4_3[:2] + eq4_3[3]),
+                  FadeIn(eq4_3[2]), FadeOut(eq3[5][2:4], target_position=eq4_3[3]),
+                  run_time=2)
+
+        self.play(ReplacementTransform(eq3[1][:2], eq4[2][:2]),
+                  ReplacementTransform(eq3[3][:2], eq4[2][:2]),
+                  ReplacementTransform(eq3[5][:2], eq4[2][:2]),
+                  ReplacementTransform(eq3[2][:] + eq3[4][:], eq4[2][11:12] + eq4[2][18:19]),
+                  MoveToTarget(eq4_1), MoveToTarget(eq4_2), MoveToTarget(eq4_3),
+                  FadeIn(eq4[2][2], eq4[2][-1]),
+                  run_time=2)
+
+        return eq1, eq2, eq4
+
+    def construct(self):
+        detail=False
+        self.build()
+        MathTex.set_default(font_size=40)
+        if detail:
+            eq1, eq2, eq4 = self.create_paid_won()
+        else:
+            eq1 = MathTex(r'{\rm Total\ paid} {{=}} 1+2+\cdots+N {{=}}\frac12N(N+1) {{=}} \frac12N^2+\frac12N').to_edge(LEFT, buff=0.5)\
+                .align_to(self.text_pos, UP).shift(self.math_shift)
+            eq2 = MathTex(r'{{=}} 1 + 2 + \cdots + t^{N-1} {{=}} \frac{1-t^N}{1-t}')
+            eq2.next_to(eq1[1], submobject_to_align=eq2[0], direction=ORIGIN)
+            eq2[2:].next_to(eq2[0], ORIGIN, submobject_to_align=eq2[2], coor_mask=RIGHT)
+            eq4 = MathTex(r'{\rm Total\ won} {{=}}t^N\left(\frac{26^{11} }{t^{11} } + \frac{26^4}{t^4} + \frac{26}{t}\right)')\
+                .next_to(eq1, DOWN).align_to(eq1, LEFT)
+            self.add(eq1[:2], eq2[3], eq4)
+
+        self.wait(1)
+
+
+
+
 
 
 class AbraHT(Abra):
