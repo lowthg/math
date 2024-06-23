@@ -1886,7 +1886,7 @@ class AbraGF(Abra):
         return eq1, eq2, eq4
 
     def construct(self):
-        detail=False
+        detail = False
         self.build()
         MathTex.set_default(font_size=40)
         if detail:
@@ -1901,11 +1901,47 @@ class AbraGF(Abra):
                 .next_to(eq1, DOWN).align_to(eq1, LEFT)
             self.add(eq1[:2], eq2[3], eq4)
 
+        eq5 = MathTex(r'\mathbb E\left[{\rm Total\ won}\right] {{=}} \mathbb E\left[{\rm Total\ paid}\right]')
+        eq5.next_to(eq4, DOWN).align_to(eq4, LEFT)
+
+        # paid LHS
+        eq6 = MathTex(r'\mathbb E\left[' + eq4[2].tex_string + r'\right] {{=}} \mathbb E\left[' + eq2[3].tex_string
+                      + r'\right]').next_to(eq4, DOWN, buff=-0.5).to_edge(LEFT, buff=0.2)
+
+        self.play(FadeIn(eq5), run_time=2)
+
+        self.play(eq5[0][:2].animate.move_to(eq6[0][:2], coor_mask=RIGHT),
+                  eq5[0][-1].animate.move_to(eq6[0][-1], coor_mask=RIGHT),
+                  eq5[0][2:-1].animate.move_to(eq6[0][2:-1], coor_mask=RIGHT),
+                  eq5[1:].animate.next_to(eq6[1], ORIGIN, submobject_to_align=eq5[1], coor_mask=RIGHT),
+                  run_time=2)
+
+        self.play(FadeOut(eq5[0][2:-1], target_position=eq6[0][2:-1]),
+                  FadeOut(eq4[:2]),
+                  ReplacementTransform(eq4[2][:], eq6[0][2:-1]),
+                  ReplacementTransform(eq5[0][:2] + eq5[0][-1], eq6[0][:2] + eq6[0][-1]),
+                  eq5[1:].animate.next_to(eq6[1], ORIGIN, submobject_to_align=eq5[1], coor_mask=UP),
+                  run_time=2)
+
+        eq6[1:].shift(UP * 0.8)
+        self.play(FadeOut(eq5[2][2:-1], target_position=eq6[2][2:-1]),
+                  FadeOut(eq1[:2]),
+                  ReplacementTransform(eq2[3][:], eq6[2][2:-1]),
+                  ReplacementTransform(eq5[2][:2] + eq5[2][-1], eq6[2][:2] + eq6[2][-1]),
+                  ReplacementTransform(eq5[1], eq6[1]),
+                  eq6[0].animate.shift(UP * 0.8),
+                  run_time=2)
+
+        eq6_L2 = MathTex(r'\mathbb E\left[t^N\right]' + eq4[2].tex_string[3:] + r' {{=}} ')
+        eq6_L2.next_to(eq6[1], ORIGIN, submobject_to_align=eq6_L2[1])
+        self.play(ReplacementTransform(eq6[0][4:-1], eq6_L2[0][5:]),
+                  ReplacementTransform(eq6[0][:4], eq6_L2[0][:4]),
+                  ReplacementTransform(eq6[0][-1], eq6_L2[0][4]),
+                  run_time=2)
+
+
+
         self.wait(1)
-
-
-
-
 
 
 class AbraHT(Abra):
@@ -2466,5 +2502,5 @@ class AliceBob(AbraHT):
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "preview": True}):
-        AliceBob().render()
+        AbraGF().render()
 #    print(SequenceH.sequences(10))
