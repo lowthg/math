@@ -1886,7 +1886,7 @@ class AbraGF(Abra):
         return eq1, eq2, eq4
 
     def construct(self):
-        detail = False
+        detail = True
         self.build()
         MathTex.set_default(font_size=40)
         if detail:
@@ -1932,15 +1932,86 @@ class AbraGF(Abra):
                   eq6[0].animate.shift(UP * 0.8),
                   run_time=2)
 
-        eq6_L2 = MathTex(r'\mathbb E\left[t^N\right]' + eq4[2].tex_string[3:] + r' {{=}} ')
+        eq6_L2 = MathTex(r'\mathbb E\left[t^N\right](1-t)' + eq4[2].tex_string[3:] + r' {{=}} ')
+        eq6_R2 = MathTex(r'{{=}} \mathbb E\left[1-t^N\right]')
         eq6_L2.next_to(eq6[1], ORIGIN, submobject_to_align=eq6_L2[1])
-        self.play(ReplacementTransform(eq6[0][4:-1], eq6_L2[0][5:]),
+        eq6_L2_2 = eq6_L2.copy().to_edge(LEFT, buff=0)
+        eq6_R2.next_to(eq6_L2_2[1], ORIGIN, submobject_to_align=eq6_R2[0])
+        eq6_L2[0][:5].align_to(eq6_L2[0][9], RIGHT)
+        self.play(ReplacementTransform(eq6[0][4:-1], eq6_L2[0][10:]),
                   ReplacementTransform(eq6[0][:4], eq6_L2[0][:4]),
                   ReplacementTransform(eq6[0][-1], eq6_L2[0][4]),
                   run_time=2)
 
+        eq6_L2[0][5:10].move_to(eq6_L2_2[0][5:10])
 
+        self.play(ReplacementTransform(eq6[2][7:10], eq6_L2[0][6:9]),
+                  eq6_L2[0][:5].animate.move_to(eq6_L2_2[0][:5]),
+                  eq6_L2[0][10:].animate.move_to(eq6_L2_2[0][10:]),
+                  eq6[1].animate.move_to(eq6_L2_2[1]),
+                  FadeIn(eq6_L2[0][5], target_position=eq6[2][1]),
+                  FadeIn(eq6_L2[0][9], target_position=eq6[2][-1]),
+                  ReplacementTransform(eq6[2][:6], eq6_R2[1][:6]),
+                  ReplacementTransform(eq6[2][-1], eq6_R2[1][-1]),
+                  FadeOut(eq6[2][6], target_position=eq6_R2[1][2:6].get_bottom()),
+                  run_time=2)
 
+        eq6_R3 = MathTex(r'{{=}} 1-\mathbb E\left[t^N\right]')
+        eq6_R3.next_to(eq6[1], ORIGIN, submobject_to_align=eq6_R3[0])
+
+        self.play(ReplacementTransform(eq6_R2[1][2:4] + eq6_R2[1][:2] + eq6_R2[1][4:],
+                                       eq6_R3[1][:2] + eq6_R3[1][2:4] + eq6_R3[1][4:]),
+                  run_time=2)
+
+        eq6_L3 = MathTex(r'\mathbb E\left[t^N\right] {{+}} ' + eq6_L2[0].tex_string + r'{{=}}')
+        eq6_L3.align_to(eq6_L2, LEFT).next_to(eq6[1], ORIGIN, submobject_to_align=eq6_L3[3], coor_mask=UP)
+
+        self.play(ReplacementTransform(eq6_R3[1][2:], eq6_L3[0][:]),
+                  eq6_L2[0].animate.move_to(eq6_L3[2]),
+                  eq6[1].animate.move_to(eq6_L3[3], coor_mask=RIGHT),
+                  FadeIn(eq6_L3[1][0], target_position=eq6_R3[1][1]),
+                  FadeOut(eq6_R3[1][1], target_position=eq6_L3[1][0]),
+                  eq6_R3[1][0].animate.next_to(eq6_L3[3], ORIGIN, submobject_to_align=eq6_R3[0], coor_mask=RIGHT),
+                  run_time=2
+                  )
+
+        eq6_L4 = MathTex(r'\mathbb E\left[t^N\right]\left(1+(1-t)' + eq4[2].tex_string[3:] + r'\right) {{=}}')
+        eq6_L4.to_edge(LEFT, buff=0.15).next_to(eq6[1], ORIGIN, submobject_to_align=eq6_L4[1], coor_mask=UP)
+
+        self.play(ReplacementTransform(eq6_L3[0][:], eq6_L4[0][:5]),
+                  ReplacementTransform(eq6_L2[0][:5], eq6_L4[0][:5]),
+                  ReplacementTransform(eq6_L3[1][0], eq6_L4[0][7]),
+                  ReplacementTransform(eq6_L2[0][5:], eq6_L4[0][8:-1]),
+                  eq6[1].animate.move_to(eq6_L4[1], coor_mask=RIGHT),
+                  FadeIn(eq6_L4[0][6], target_position=eq6_L3[0][-1]),
+                  FadeIn(eq6_L4[0][5], target_position=eq6_L3[0][-1]),
+                  FadeIn(eq6_L4[0][-1], target_position=eq6_L2[0][-1]),
+                  eq6_R3[1][0].animate.shift((eq6_L4[1].get_center()-eq6[1].get_center())*RIGHT),
+                  run_time=2)
+
+        eq7 = MathTex(r'\mathbb E[t^N] {{=}} \frac{1}{1+(1-t)' + eq4[2].tex_string[3:] + r'}')
+        eq7.to_edge(LEFT, buff=1).next_to(eq6[1], ORIGIN, submobject_to_align=eq7[1], coor_mask=UP)
+
+        self.play(ReplacementTransform(eq6_L4[0][:5], eq7[0][:5]),
+                  ReplacementTransform(eq6_L4[0][6:-1], eq7[2][2:]),
+                  ReplacementTransform(eq6[1], eq7[1]),
+                  ReplacementTransform(eq6_R3[1][0], eq7[2][0]),
+                  FadeOut(eq6_L4[0][5], target_position=eq7[2][2]),
+                  FadeOut(eq6_L4[0][-1], target_position=eq7[2][-1]),
+                  FadeIn(eq7[2][1]),
+                  run_time=2)
+
+        eq8 = MathTex(r'G(t) {{=}}')
+        eq8.next_to(eq7[1], ORIGIN, submobject_to_align=eq8[1])
+        self.play(FadeIn(eq8[0]), FadeOut(eq7[0]), run_time=2)
+
+        box = SurroundingRectangle(Group(eq8[0], eq7[2]), corner_radius=0.15, color=BLUE, stroke_width=5)
+        self.play(FadeIn(box), run_time=1)
+
+        self.wait(1)
+
+        eq9 = MathTex(r'\mathbb E[N] = G^\prime(1) = 26^{11}+26^4+26').next_to(box, DOWN)
+        self.play(FadeIn(eq9), run_time=1)
         self.wait(1)
 
 
