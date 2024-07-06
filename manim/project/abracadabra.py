@@ -1813,11 +1813,12 @@ class AbraGF(Abra):
             anims[0].append(MoveToTarget(copy))
             anims[1].append(FadeOut(copy))
 
-        self.play(FadeIn(eq1[:2]), run_time=1)
         self.wait(1)
         self.play(FadeIn(*self.paid_objs), run_time=2)
         self.wait(1)
         self.play(FadeOut(*stake_objs), FadeIn(*new_stakes), run_time=2)
+        self.wait(1)
+        self.play(FadeIn(eq1[:2]), run_time=1)
 
         self.play(LaggedStart(AnimationGroup(*anims[0]), FadeIn(eq2[1]), AnimationGroup(*anims[1]),
                               lag_ratio=0.9), run_time=2)
@@ -2013,6 +2014,381 @@ class AbraGF(Abra):
         eq9 = MathTex(r'\mathbb E[N] = G^\prime(1) = 26^{11}+26^4+26').next_to(box, DOWN)
         self.play(FadeIn(eq9), run_time=1)
         self.wait(1)
+
+
+class AbraGF2(Abra):
+    play_game = True
+
+    def get_text(self):
+        size = 35
+        desc = Group(Tex(r'Player n stakes t\textsuperscript{n-1} on their turn and bets on', font_size=size),
+                     Tex(r'the letter A', font_size=size),
+                     Tex(r'Any winnings are rolled over to bet on each of the', font_size=size),
+                     Tex(r'remaining letters of ABRACADABRA in turn', font_size=size),
+                     Tex(r'Fair game $\Rightarrow$ each win multiplies the stake by 26.', font_size=size)
+                     ).arrange(DOWN, center=False, aligned_edge=LEFT)\
+            .align_to(self.text_pos, UP).to_edge(LEFT, buff=0.2).shift(DOWN * 0.2)
+        return desc
+
+
+    def create_stake(self, iplayer, nwins):
+        size = 25
+        if nwins == 0:
+            winstr = ''
+            size = 30
+        elif nwins == 1:
+            winstr = r'26'
+        else:
+            winstr = r'26^{{ {} }}'.format(nwins)
+        if iplayer == 0:
+            stake = ''
+        elif iplayer == 1:
+            stake = r't'
+        else:
+            stake = r't^{{ {} }}'.format(iplayer)
+
+        if nwins == 0 and iplayer == 0:
+            str = r'1'
+        else:
+            str = stake + winstr
+
+        return MathTex(r'\bf ' + str, font_size=size)
+
+    def run_game(self, wojaks, choices, tables, target, wojak_happy, wojak_sad, key_space):
+        wojaks_arr = list(wojaks)
+        nw = len(wojaks_arr)
+        t2 = tables[1]
+        t4 = tables[3]
+
+        wojak_state = [None] * nw
+        wojak_bets = [None] * nw
+        wojak_stakes = []
+        wojak_betobjs = [None] * nw
+        wojak_winobjs = [None] * nw
+        box = None
+
+        for n in range(len(choices)):
+            print('bet #{}'.format(n+1))
+
+            key = choices[n]
+            self.key_objs.append(self.get_key(key).move_to(t4[0][nw*2+n]).shift(key_space))
+            if box is None:
+                box = SurroundingRectangle(self.key_objs[n], color=WHITE, corner_radius=0.1)
+
+                self.play(FadeIn(box), run_time=0.5)
+            else:
+                self.play(box.animate.move_to(self.key_objs[n]), run_time=0.5)
+
+            # wojak n places bet
+            pos = wojaks[n].get_center()
+            wojaks[n].move_to(t2[0][n])
+            wojak_state[n] = 0
+            wojak_stakes.append(self.create_stake(n, 0).move_to(t4[0][n]))
+            t2[0][n].set_z_index(3)
+            self.paid_objs.append(self.create_stake(n, 0).set_color(RED).move_to(t2[0][n]))
+            self.play(FadeIn(wojak_stakes[n], self.paid_objs[n]),
+                      wojaks[n].animate.move_to(pos),
+                      run_time=0.5)
+            t2[0][n].set_z_index(0)
+
+            to_add = []
+
+            # make choice
+            for i in range(n+1):
+                if wojak_state[i] is not None:
+                    state: int = wojak_state[i]
+                    wojak_bets[i] = target[state]
+                    wojak_betobjs[i] = self.get_choice(wojak_bets[i]).move_to(t4[0][nw*2 + i])
+                    to_add.append(wojak_betobjs[i])
+
+            self.play(FadeIn(*to_add), run_time=0.5)
+            self.add(*to_add)
+
+            # key is pressed
+            self.wait(1)
+            self.key_objs[n] = self.animate_key(key, self.key_objs[n])
+            self.wait(0.5)
+            to_remove = []
+            for i in range(n+1):
+                if wojak_state[i] is not None:
+                    to_remove.append(wojak_betobjs[i])
+                    if wojak_bets[i] == key:
+                        # wojak is winning!
+                        t4[0][nw*2+i].set_fill(color=GREEN, opacity=0)
+                        for x, y in [(1, True), (0, True), (1, True), (0, False)]:
+                            t4[0][nw*2+i].set_fill(color=GREEN, opacity=x)
+                            if y:
+                                self.wait(0.2)
+
+                        wojak_state[i] += 1
+                        wojak_stake = self.create_stake(i, wojak_state[i]).move_to(t4[0][i])
+                        win_obj = MathTex(r'{}'.format(wojak_state[i]), font_size=40, z_index=4).move_to(t4[0][nw + i])
+                        if wojak_state[i] == 1:  # first win
+                            happy = wojak_happy.copy().move_to(wojaks[i])
+                            self.play(FadeIn(happy, win_obj, wojak_stake), FadeOut(wojak_stakes[i]), run_time=0.5)
+                            self.remove(wojaks_arr[i])
+                            wojaks_arr[i] = happy
+                        else:
+                            self.play(FadeIn(win_obj, wojak_stake), FadeOut(wojak_winobjs[i], wojak_stakes[i]), run_time=0.5)
+                        wojak_winobjs[i] = win_obj
+                        wojak_stakes[i] = wojak_stake
+                    else:
+                        # wojak has lost!
+                        wojak_state[i] = None
+                        sad = wojak_sad.copy().move_to(wojaks[i])
+                        t4[0][nw*2 + i].set_fill(opacity=1, color=RED)
+                        out = [wojak_winobjs[i]] if wojak_winobjs[i] is not None else []
+                        self.play(FadeIn(sad), FadeOut(wojaks_arr[i], wojak_stakes[i], *out),
+                                  t4[0][nw*2+i].animate.set_fill(color=GREY, opacity=1),
+                                  t4[0][nw+i].animate.set_fill(color=GREY, opacity=1),
+                                  t4[0][i].animate.set_fill(color=GREY, opacity=1),
+                                  run_time=1)
+                        wojak_stakes[i] = None
+                        wojaks_arr[i] = sad
+
+            # highlight winners
+
+            self.play(FadeOut(*to_remove), run_time=0.5)
+
+        self.box = SurroundingRectangle(Group(*self.key_objs[-len(target):]), color=GREEN, corner_radius=0.1)
+        self.play(FadeOut(box), FadeIn(self.box), run_time=0.5)
+        self.stake_objs = wojak_stakes
+
+
+    def create_paid_won(self):
+        # set payment of player k to k
+        n = len(self.choices)
+
+        eq1 = MathTex(r'{\rm Total\ paid} {{=}} \frac{1-t^N}{1-t}').to_edge(LEFT, buff=0.5)\
+            .align_to(self.text_pos, UP).shift(self.math_shift)
+
+        # fade out this stuff, explain generating function
+        gf1 = Tex(r'Generating function', color=GREEN).move_to(eq1, LEFT)
+        gf2 = MathTex(r'G(t) {{=}} \mathbb E[t^N] {{=}} p_0 + p_1t + p_2t^2 + p_3t^3 + \cdots ').next_to(gf1, DOWN).align_to(gf1, LEFT)
+        self.play(LaggedStart(FadeIn(gf1), FadeIn(gf2[:3]), lag_ratio=0.5), run_time=2)
+        gf2[3:].next_to(gf2[:3], DOWN).align_to(gf2[1], LEFT)
+        gf3 = MathTex(r'\left(p_n=\mathbb P(N=n)\right)').next_to(gf2[3:5], DOWN)
+        self.play(FadeIn(gf2[3:5], gf3), run_time=2)
+        self.wait(2)
+
+        self.play(FadeOut(gf1, gf2, gf3), run_time=1)
+
+        # paid amount
+
+        eq2 = MathTex(r'{{=}} 1 + 2 + \cdots + t^{N-1} {{=}} \frac{1-t^N}{1-t}')
+        eq2.next_to(eq1[1], submobject_to_align=eq2[0], direction=ORIGIN)
+        eq2[2:].next_to(eq2[0], ORIGIN, submobject_to_align=eq2[2], coor_mask=RIGHT)
+
+        stake_objs = []
+        new_stakes = []
+        anims = [[], []]
+        for i in range(2, n):
+            if self.stake_objs[i] is not None:
+                stake_objs.append(self.stake_objs[i])
+                stake1 = r'26^{{{}}}'.format(n - i) if i < n-1 else r'26'
+                stake = MathTex(r'\bf t^{{{}}}'.format(i), stake1,
+                               font_size=30, z_index=5, color=WHITE).move_to(self.stake_objs[i])
+                new_stakes.append(stake)
+            copy = self.paid_objs[i].copy()
+            copy.generate_target().set_color(WHITE).set_opacity(0.5)
+            copy.target.move_to((eq2[1].get_left() * (n-i) + eq2[1].get_right()*i)/n)
+            anims[0].append(MoveToTarget(copy))
+            anims[1].append(FadeOut(copy))
+
+        self.wait(1)
+        self.play(FadeIn(eq1[:2]), run_time=1)
+
+        self.play(LaggedStart(AnimationGroup(*anims[0]), FadeIn(eq2[1]), AnimationGroup(*anims[1]),
+                              lag_ratio=0.9), run_time=2)
+        txt1 = Tex(r'\rm Geometric series!', color=RED).next_to(eq2, DOWN)
+        self.play(FadeIn(txt1), run_time=2)
+        self.play(FadeIn(eq2[3]), FadeOut(eq2[1]), run_time=2)
+        self.play(FadeOut(txt1), run_time=1)
+
+        #  winnings
+        eq4 = MathTex(r'{\rm Total\ won} {{=}}t^N\left(\frac{26^{11} }{t^{11} } + \frac{26^4}{t^4} + \frac{26}{t}\right)')\
+            .next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq3 = MathTex(r'{{=}} t^{N-11}26^{11} {{+}} t^{N-4}26^{4} {{+}} t^{N-1}26')
+        eq3.next_to(eq4[1], ORIGIN, submobject_to_align=eq3[0])
+
+        self.play(FadeIn(eq4[:2]), run_time=0.5)
+        winners = [n-11, n-4, n-1]
+        for i in range(3):
+            if i > 0:
+                self.play(FadeIn(eq3[2 * i]), run_time=0.2)
+                self.play(Transform(self.box, SurroundingRectangle(Group(*self.key_objs[winners[i]:]), color=GREEN,
+                                                                   corner_radius=0.1)), run_time=0.8)
+            stake1 = r'26^{{{}}}'.format(n - winners[i]) if winners[i] < n - 1 else r'26'
+            stake = MathTex(r't^{{{}}}'.format(i), stake1,
+                            font_size=30, z_index=5, color=WHITE).move_to(new_stakes[i])
+
+            eqstake = eq3[1+2*i]
+            j = [5, 4, 3][i]
+            self.play(ReplacementTransform(stake[1][:] + stake[0][0], eqstake[j:] + eqstake[0]),
+                      FadeOut(stake[0][1:], target_position=eqstake[1:j]),
+                      FadeIn(eqstake[1:j], target_position=stake[0][1:]),
+                      run_time=2)
+        self.play(FadeOut(self.box), run_time=0.2)
+
+        eq4_1 = eq4[2][3:11]
+        eq4_2 = eq4[2][12:18]
+        eq4_3 = eq4[2][19:23]
+        eq4_1.generate_target()
+        eq4_2.generate_target()
+        eq4_3.generate_target()
+        eq4_1.move_to(eq3[1][2:], coor_mask=RIGHT)
+        self.play(ReplacementTransform(eq3[1][5:9] + eq3[1][3:5] + eq3[1][0].copy(),
+                                       eq4_1[:4] + eq4_1[6:8] + eq4_1[5]),
+                  FadeIn(eq4_1[4]), FadeOut(eq3[1][2], target_position=eq4_1[6:8]),
+                  run_time=2)
+
+        eq4_2.move_to(eq3[3][2:], coor_mask=RIGHT)
+        self.play(ReplacementTransform(eq3[3][4:7] + eq3[3][3] + eq3[3][0].copy(),
+                                       eq4_2[:3] + eq4_2[5] + eq4_2[4]),
+                  FadeIn(eq4_2[3]), FadeOut(eq3[3][2], target_position=eq4_2[5]),
+                  run_time=2)
+
+        eq4_3.move_to(eq3[5][2:], coor_mask=RIGHT)
+        self.play(ReplacementTransform(eq3[5][4:6] + eq3[5][0].copy(),
+                                       eq4_3[:2] + eq4_3[3]),
+                  FadeIn(eq4_3[2]), FadeOut(eq3[5][2:4], target_position=eq4_3[3]),
+                  run_time=2)
+
+        self.play(ReplacementTransform(eq3[1][:2], eq4[2][:2]),
+                  ReplacementTransform(eq3[3][:2], eq4[2][:2]),
+                  ReplacementTransform(eq3[5][:2], eq4[2][:2]),
+                  ReplacementTransform(eq3[2][:] + eq3[4][:], eq4[2][11:12] + eq4[2][18:19]),
+                  MoveToTarget(eq4_1), MoveToTarget(eq4_2), MoveToTarget(eq4_3),
+                  FadeIn(eq4[2][2], eq4[2][-1]),
+                  run_time=2)
+
+        return eq1, eq2, eq4
+
+    def construct(self):
+        detail = True
+        self.build()
+        MathTex.set_default(font_size=40)
+        if detail:
+            eq1, eq2, eq4 = self.create_paid_won()
+        else:
+            eq1 = MathTex(r'{\rm Total\ paid} {{=}} 1+2+\cdots+N {{=}}\frac12N(N+1) {{=}} \frac12N^2+\frac12N').to_edge(LEFT, buff=0.5)\
+                .align_to(self.text_pos, UP).shift(self.math_shift)
+            eq2 = MathTex(r'{{=}} 1 + 2 + \cdots + t^{N-1} {{=}} \frac{1-t^N}{1-t}')
+            eq2.next_to(eq1[1], submobject_to_align=eq2[0], direction=ORIGIN)
+            eq2[2:].next_to(eq2[0], ORIGIN, submobject_to_align=eq2[2], coor_mask=RIGHT)
+            eq4 = MathTex(r'{\rm Total\ won} {{=}}t^N\left(\frac{26^{11} }{t^{11} } + \frac{26^4}{t^4} + \frac{26}{t}\right)')\
+                .next_to(eq1, DOWN).align_to(eq1, LEFT)
+            self.add(eq1[:2], eq2[3], eq4)
+
+        eq5 = MathTex(r'\mathbb E\left[{\rm Total\ won}\right] {{=}} \mathbb E\left[{\rm Total\ paid}\right]')
+        eq5.next_to(eq4, DOWN).align_to(eq4, LEFT)
+
+        # paid LHS
+        eq6 = MathTex(r'\mathbb E\left[' + eq4[2].tex_string + r'\right] {{=}} \mathbb E\left[' + eq2[3].tex_string
+                      + r'\right]').next_to(eq4, DOWN, buff=-0.5).to_edge(LEFT, buff=0.2)
+
+        self.play(FadeIn(eq5), run_time=2)
+
+        self.play(eq5[0][:2].animate.move_to(eq6[0][:2], coor_mask=RIGHT),
+                  eq5[0][-1].animate.move_to(eq6[0][-1], coor_mask=RIGHT),
+                  eq5[0][2:-1].animate.move_to(eq6[0][2:-1], coor_mask=RIGHT),
+                  eq5[1:].animate.next_to(eq6[1], ORIGIN, submobject_to_align=eq5[1], coor_mask=RIGHT),
+                  run_time=2)
+
+        self.play(FadeOut(eq5[0][2:-1], target_position=eq6[0][2:-1]),
+                  FadeOut(eq4[:2]),
+                  ReplacementTransform(eq4[2][:], eq6[0][2:-1]),
+                  ReplacementTransform(eq5[0][:2] + eq5[0][-1], eq6[0][:2] + eq6[0][-1]),
+                  eq5[1:].animate.next_to(eq6[1], ORIGIN, submobject_to_align=eq5[1], coor_mask=UP),
+                  run_time=2)
+
+        eq6[1:].shift(UP * 0.8)
+        self.play(FadeOut(eq5[2][2:-1], target_position=eq6[2][2:-1]),
+                  FadeOut(eq1[:2]),
+                  ReplacementTransform(eq2[3][:], eq6[2][2:-1]),
+                  ReplacementTransform(eq5[2][:2] + eq5[2][-1], eq6[2][:2] + eq6[2][-1]),
+                  ReplacementTransform(eq5[1], eq6[1]),
+                  eq6[0].animate.shift(UP * 0.8),
+                  run_time=2)
+
+        eq6_L2 = MathTex(r'\mathbb E\left[t^N\right](1-t)' + eq4[2].tex_string[3:] + r' {{=}} ')
+        eq6_R2 = MathTex(r'{{=}} \mathbb E\left[1-t^N\right]')
+        eq6_L2.next_to(eq6[1], ORIGIN, submobject_to_align=eq6_L2[1])
+        eq6_L2_2 = eq6_L2.copy().to_edge(LEFT, buff=0)
+        eq6_R2.next_to(eq6_L2_2[1], ORIGIN, submobject_to_align=eq6_R2[0])
+        eq6_L2[0][:5].align_to(eq6_L2[0][9], RIGHT)
+        self.play(ReplacementTransform(eq6[0][4:-1], eq6_L2[0][10:]),
+                  ReplacementTransform(eq6[0][:4], eq6_L2[0][:4]),
+                  ReplacementTransform(eq6[0][-1], eq6_L2[0][4]),
+                  run_time=2)
+
+        eq6_L2[0][5:10].move_to(eq6_L2_2[0][5:10])
+
+        self.play(ReplacementTransform(eq6[2][7:10], eq6_L2[0][6:9]),
+                  eq6_L2[0][:5].animate.move_to(eq6_L2_2[0][:5]),
+                  eq6_L2[0][10:].animate.move_to(eq6_L2_2[0][10:]),
+                  eq6[1].animate.move_to(eq6_L2_2[1]),
+                  FadeIn(eq6_L2[0][5], target_position=eq6[2][1]),
+                  FadeIn(eq6_L2[0][9], target_position=eq6[2][-1]),
+                  ReplacementTransform(eq6[2][:6], eq6_R2[1][:6]),
+                  ReplacementTransform(eq6[2][-1], eq6_R2[1][-1]),
+                  FadeOut(eq6[2][6], target_position=eq6_R2[1][2:6].get_bottom()),
+                  run_time=2)
+
+        eq6_R3 = MathTex(r'{{=}} 1-\mathbb E\left[t^N\right]')
+        eq6_R3.next_to(eq6[1], ORIGIN, submobject_to_align=eq6_R3[0])
+
+        self.play(ReplacementTransform(eq6_R2[1][2:4] + eq6_R2[1][:2] + eq6_R2[1][4:],
+                                       eq6_R3[1][:2] + eq6_R3[1][2:4] + eq6_R3[1][4:]),
+                  run_time=2)
+
+        eq6_L3 = MathTex(r'\mathbb E\left[t^N\right] {{+}} ' + eq6_L2[0].tex_string + r'{{=}}')
+        eq6_L3.align_to(eq6_L2, LEFT).next_to(eq6[1], ORIGIN, submobject_to_align=eq6_L3[3], coor_mask=UP)
+
+        self.play(ReplacementTransform(eq6_R3[1][2:], eq6_L3[0][:]),
+                  eq6_L2[0].animate.move_to(eq6_L3[2]),
+                  eq6[1].animate.move_to(eq6_L3[3], coor_mask=RIGHT),
+                  FadeIn(eq6_L3[1][0], target_position=eq6_R3[1][1]),
+                  FadeOut(eq6_R3[1][1], target_position=eq6_L3[1][0]),
+                  eq6_R3[1][0].animate.next_to(eq6_L3[3], ORIGIN, submobject_to_align=eq6_R3[0], coor_mask=RIGHT),
+                  run_time=2
+                  )
+
+        eq6_L4 = MathTex(r'\mathbb E\left[t^N\right]\left(1+(1-t)' + eq4[2].tex_string[3:] + r'\right) {{=}}')
+        eq6_L4.to_edge(LEFT, buff=0.15).next_to(eq6[1], ORIGIN, submobject_to_align=eq6_L4[1], coor_mask=UP)
+
+        self.play(ReplacementTransform(eq6_L3[0][:], eq6_L4[0][:5]),
+                  ReplacementTransform(eq6_L2[0][:5], eq6_L4[0][:5]),
+                  ReplacementTransform(eq6_L3[1][0], eq6_L4[0][7]),
+                  ReplacementTransform(eq6_L2[0][5:], eq6_L4[0][8:-1]),
+                  eq6[1].animate.move_to(eq6_L4[1], coor_mask=RIGHT),
+                  FadeIn(eq6_L4[0][6], target_position=eq6_L3[0][-1]),
+                  FadeIn(eq6_L4[0][5], target_position=eq6_L3[0][-1]),
+                  FadeIn(eq6_L4[0][-1], target_position=eq6_L2[0][-1]),
+                  eq6_R3[1][0].animate.shift((eq6_L4[1].get_center()-eq6[1].get_center())*RIGHT),
+                  run_time=2)
+
+        eq7 = MathTex(r'\mathbb E[t^N] {{=}} \frac{1}{1+(1-t)' + eq4[2].tex_string[3:] + r'}')
+        eq7.to_edge(LEFT, buff=1).next_to(eq6[1], ORIGIN, submobject_to_align=eq7[1], coor_mask=UP)
+
+        self.play(ReplacementTransform(eq6_L4[0][:5], eq7[0][:5]),
+                  ReplacementTransform(eq6_L4[0][6:-1], eq7[2][2:]),
+                  ReplacementTransform(eq6[1], eq7[1]),
+                  ReplacementTransform(eq6_R3[1][0], eq7[2][0]),
+                  FadeOut(eq6_L4[0][5], target_position=eq7[2][2]),
+                  FadeOut(eq6_L4[0][-1], target_position=eq7[2][-1]),
+                  FadeIn(eq7[2][1]),
+                  run_time=2)
+
+        eq8 = MathTex(r'G(t) {{=}}')
+        eq8.next_to(eq7[1], ORIGIN, submobject_to_align=eq8[1])
+        self.play(FadeIn(eq8[0]), FadeOut(eq7[0]), run_time=2)
+
+        box = SurroundingRectangle(Group(eq8[0], eq7[2]), corner_radius=0.15, color=BLUE, stroke_width=5)
+        self.play(FadeIn(box), run_time=1)
+
+        self.wait(1)
+
 
 
 class AbraHT(Abra):
