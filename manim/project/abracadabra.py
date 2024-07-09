@@ -94,6 +94,8 @@ def get_dice_faces():
             _dice_faces.append(VGroup(blank.copy(), *[dot.copy().move_to(s) for s in dots]))
     return _dice_faces
 
+def fade_replace(obj1, obj2):
+    return FadeOut(obj1, target_position=obj2.get_center()), FadeIn(obj2, target_position=obj1.get_center())
 
 def animate_roll(scene, key, pos=ORIGIN, scale=0.3, right=False, slide=True):
     if isinstance(pos, Mobject):
@@ -293,7 +295,7 @@ class GeometricMean(Scene):
                   ReplacementTransform(eq4_1[0:5], eq4[2][0:5]),
                   ReplacementTransform(eq4_2[0:5], eq4[2][0:5]),
                   ReplacementTransform(eq4_3[0:5], eq4[2][0:5]),
-                  FadeOut(eq3[5][1:-2]),
+                  FadeOut(eq3[5][1:-2], target_position=eq4[2][2]),
                   FadeIn(eq4[2][-1]),
                   ReplacementTransform(eq1[0], eq4[0]),
                   run_time=2)
@@ -320,7 +322,7 @@ class GeometricMean(Scene):
 
         self.play(ReplacementTransform(eq5[2], eq6[1]),
                  # ReplacementTransform(eq5[3], eq6[2]),
-                  ReplacementTransform(eq5[3][0], eq6[2][0]),
+                  fade_replace(eq5[3][0], eq6[2][0]),
                   FadeIn(eq6[2][1:]),
                   ReplacementTransform(eq5[4], eq6[3]),
                   run_time=2)
@@ -329,9 +331,9 @@ class GeometricMean(Scene):
         eq7.shift(eq6[0].get_center() - eq7[0].get_center())
         self.play(ReplacementTransform(eq5[1], eq7[0]),
                   ReplacementTransform(eq6[2][3:], eq7[1][1:]),
-                  ReplacementTransform(eq6[2][:3], eq7[1][:1]),
+                  fade_replace(eq6[2][:3], eq7[1][:1]),
                   ReplacementTransform(eq6[1][:4], eq7[2][:4]),
-                  ReplacementTransform(eq6[1][4:], eq7[2][4:]),
+                  fade_replace(eq6[1][4:], eq7[2][4:]),
                   ReplacementTransform(eq6[3], eq7[3]),
                   run_time=2)
         self.wait(0.5)
@@ -339,7 +341,8 @@ class GeometricMean(Scene):
         eq8.shift(eq7[0].get_center() - eq8[0].get_center())
         self.play(ReplacementTransform(eq7[:2], eq8[:2]),
                   FadeOut(eq7[2]),
-                  ReplacementTransform(eq7[3], eq8[2]),
+                  ReplacementTransform(eq7[3][:4] + eq7[3][-1], eq8[2][:4] + eq8[2][-1]),
+                  fade_replace(eq7[3][4:6], eq8[2][4:6]),
                   run_time=2)
         self.wait(0.5)
 
@@ -367,7 +370,9 @@ class GeometricMean(Scene):
         eq11.shift(eq10[0].get_center() - eq11[0].get_center())
         self.play(ReplacementTransform(eq10[0], eq11[0]),
                   ReplacementTransform(eq10[1][:4], eq11[1][:4]),
-                  ReplacementTransform(eq10[1][5:8], eq11[1][5:8]),
+                  ReplacementTransform(eq10[1][5], eq11[1][5]),
+                  ReplacementTransform(eq10[1][7], eq11[1][7]),
+                  fade_replace(eq10[1][6], eq11[1][6]),
                   FadeOut(eq10[1][4], eq10[1][8]),
                   run_time=0.5)
 
@@ -393,7 +398,7 @@ class GeometricMean(Scene):
                   ReplacementTransform(eq12[0], eq13[1]),
                   ReplacementTransform(eq12[1][:2], eq13[2][:2]),
                   ReplacementTransform(eq12[1][6], eq13[2][2]),
-                  FadeOut(eq12[1][5]),
+                  FadeOut(eq12[1][5], target_position=eq13[2][2]),
                   run_time=1)
         self.wait(2)
 
@@ -412,6 +417,7 @@ class GeometricMean(Scene):
             self.wait(0.1)
             for coin in coins:
                 animate_flip(self, coin)
+                self.wait(0.1)
 
         txt0 = VGroup(Tex(r'Biased coin with $\mathbb P({\rm H})=p$', font_size=font_size),
                       Tex(r'$N_H=$ number of tosses to get H', font_size=60))\
@@ -494,7 +500,7 @@ class GeometricMean(Scene):
             eq6.align_to(txt2, LEFT)
 
             self.play(ReplacementTransform(eq1[0], eq6[0]),
-                      ReplacementTransform(eq5[1][1], eq6[1][0]),
+                      fade_replace(eq5[1][1], eq6[1][0]),
                       ReplacementTransform(eq5[2:4], eq6[2:4]),
                       ReplacementTransform(eq5[0], eq6[4]),
                       ReplacementTransform(eq5[1][0], eq6[-1][0]),
@@ -819,8 +825,10 @@ class MartingaleH(Scene):
         eq7 = MathTex(r'\mathbb E\left[{{\frac1p-N_H}}\right]{{=}}0', font_size=eq_size)
         eq7.shift(eq6[0][0].get_center()-eq7[0][0].get_center())
         self.wait(1)
-        self.play(ReplacementTransform(eq6[0], eq7[0]),
-                  ReplacementTransform(eq6[2:], eq7[2:]),
+        self.play(ReplacementTransform(eq6[0][0], eq7[0][0]),
+                  *fade_replace(eq6[0][1], eq7[0][1]),
+                  ReplacementTransform(eq6[3:], eq7[3:]),
+                  *fade_replace(eq6[2], eq7[2]),
                   eq6[1].animate.move_to(eq7[1], coor_mask=RIGHT),
                   FadeOut(txt4),
                   run_time=1)
