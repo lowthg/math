@@ -993,7 +993,7 @@ class Pairs(Scene):
         eq10.shift(eq7[0][0].get_center()-eq10[1][0].get_center())
         self.play(FadeOut(eq6[3], target_position=eq10[2]),
                   FadeOut(eq9[1], target_position=eq10[2]),
-                  FadeIn(eq10[2]),
+                  FadeIn(eq10[2], target_position=eq9[1]),
                   ReplacementTransform(eq7[0], eq10[1]),
                   ReplacementTransform(eq6[0], eq10[0]),
                   run_time=1)
@@ -1066,12 +1066,12 @@ class Pairs(Scene):
 
         eq17 = MathTex(r'>', font_size=60)
         eq17.move_to(eq10[1])
-        self.play(Transform(eq10[1], eq17[0]), run_time=1)
+        self.play(fade_replace(eq10[1], eq17[0]), run_time=1)
         self.wait(1)
 
         eq17 = MathTex(r'<', font_size=60)
         eq17.move_to(eq11[1])
-        self.play(Transform(eq11[1], eq17[0]), run_time=1)
+        self.play(fade_replace(eq11[1], eq17[0]), run_time=1)
         self.wait(1)
 
 
