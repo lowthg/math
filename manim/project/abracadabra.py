@@ -12,7 +12,7 @@ from sorcery import dict_of, unpack_keys
 # Global variable with H coin and T coin used throughout
 H = LabeledDot(Text("H", color=BLACK, font='Helvetica', weight=SEMIBOLD), radius=0.35, color=BLUE).scale(1.5)
 T = LabeledDot(Text("T", color=BLACK, font='Helvetica', weight=SEMIBOLD), radius=0.35, color=YELLOW).scale(1.5)
-
+RED_AS = "#E02A20"
 
 class label_ctr(Text):
     def __init__(self, text, font_size):
@@ -192,7 +192,7 @@ class MonkeyType(Scene):
             ft2.set_opacity(1)
             self.wait(1)
 
-        self.play(ft2[ias:ias+10].animate.set(color="#E02A20").set_style(stroke_width=1.2), run_time=1)
+        self.play(ft2[ias:ias+10].animate.set(color=RED_AS).set_style(stroke_width=1.2), run_time=1)
         self.play(ft.animate.set_opacity(0), ft2[:ias].animate.set_opacity(0), ft2[ias+10:].animate.set_opacity(0),
                   monkey.animate.set_opacity(0), run_time=3)
         ft2.generate_target().set(font_size=100).shift(-ft2.target[ias:ias+10].get_center())
@@ -201,6 +201,8 @@ class MonkeyType(Scene):
 
 
 class SequenceH(Scene):
+    transparent = True
+
     @staticmethod
     def sequences(n=5):
         for i in range(n):
@@ -210,6 +212,9 @@ class SequenceH(Scene):
             print(row)
 
     def construct(self):
+        if self.transparent:
+            MathTex.set_default(color=WHITE, stroke_width=1.4)  # show up better
+
         sequences = [
             'TH',
             'TTTH',
@@ -227,12 +232,14 @@ class SequenceH(Scene):
             for coin in row:
                 animate_flip(self, coin)
             self.wait(0.5)
-            nh = MathTex('N_H={}'.format(len(row)), font_size=80).next_to(coins, RIGHT, buff=1).set_y(row.get_y())
+            nh = MathTex('N_H={}'.format(len(row)), font_size=80).next_to(coins, RIGHT, buff=0.2).set_y(row.get_y())
             self.play(FadeIn(nh))
             self.wait(0.5)
 
-        eq1 = MathTex(r'\mathbb E[N_H]=2', font_size=80).to_edge(DOWN, buff=1.2)
-        self.play(FadeIn(eq1))
+        eq1 = MathTex(r'\mathbb E[N_H]=2', font_size=80, color=BLACK, z_index=1).to_edge(DOWN, buff=0.2).shift(LEFT*2)
+        rect = SurroundingRectangle(eq1, corner_radius=0.1, fill_opacity=1, fill_color=WHITE,
+                                    stroke_opacity=0.5, stroke_color=BLUE, buff=0.2)
+        self.play(FadeIn(eq1, rect))
         self.wait(1)
 
 
