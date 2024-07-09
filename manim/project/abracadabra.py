@@ -541,6 +541,8 @@ class MartingaleH(Scene):
     """
     Time to get H
     """
+    use_door = False
+
     def get_door(self, z_index=0):
         door_back = ImageMobject('doorway.png', z_index=z_index).scale(0.6).to_edge(UR)
         a = door_back.pixel_array.copy()
@@ -616,14 +618,17 @@ class MartingaleH(Scene):
 
         l3 = Line(LEFT*0.6, RIGHT*0.6, color=BLUE, stroke_width=10).move_to(eq3[1][1]).rotate(0.8)
         l4 = Line(LEFT*0.6, RIGHT*0.6, color=BLUE, stroke_width=10).move_to(eq3[1][3]).rotate(0.8)
-        self.play(FadeIn(l3, l4))
-        self.wait(2)
-        self.play(FadeOut(l3, l4, eq3[1][0:2], eq3[1][3]), run_time=0.5)
-        self.wait(1)
-
         eq4 = MathTex(r'{{=}}0', font_size=60)
         eq4.shift(eq1[1].get_center()-eq4[0].get_center())
-        self.play(FadeIn(eq4[1]), FadeOut(eq3[1][2]), run_time=1)
+        self.play(FadeIn(l3, l4))
+        self.wait(2)
+        self.play(FadeOut(l3, l4, eq3[1][0:2], eq3[1][3]),
+                  FadeOut(eq3[1][2], target_position=eq4[1].get_center()),
+                  FadeIn(eq4[1], target_position=eq3[1][2].get_center()),
+                  run_time=1)
+        self.wait(1)
+
+#        self.play(FadeIn(eq4[1]), FadeOut(eq3[1][2]), run_time=1)
 
         txt1 = Tex(r'$\Rightarrow$\ Fair game!!!', font_size=60, color=RED).next_to(eq4, RIGHT, buff=0.2)
         self.play(FadeIn(txt1), run_time=1)
@@ -648,33 +653,50 @@ class MartingaleH(Scene):
         return box
 
     def play_game(self, flips='TTTH'):
-        door = self.get_door(z_index=1)
-        door.to_edge(DR).shift(UP*1.4)
         wojak0 = ImageMobject("wojak.png")
         wojak_happy0 = ImageMobject("wojak_happy.png")
-        wojak = ImageMobject(np.flip(wojak0.pixel_array, 1), z_index=2).scale(0.2).move_to(door[1])
+        wojak = ImageMobject(np.flip(wojak0.pixel_array, 1), z_index=2).scale(0.2)
         wojak_happy = ImageMobject(np.flip(wojak_happy0.pixel_array, 1), z_index=3).scale(0.2)
-        wojak.shift(LEFT*4.5)
-        wojak_pos = wojak.get_center()
-        wojak.align_to(door, RIGHT)
 
-        self.play(FadeIn(door), run_time=1)
-        self.play(wojak.animate.move_to(wojak_pos), run_time=1.5)
-        self.play(FadeOut(door), run_time=1)
+        if self.use_door:
+            door = self.get_door(z_index=1)
+            door.to_edge(DR).shift(UP * 1.4)
+            wojak.move_to(door[1])
+            wojak.shift(LEFT * 4.5)
+            wojak_pos = wojak.get_center()
+            wojak.align_to(door, RIGHT)
+            self.play(FadeIn(door), run_time=1)
+            self.play(wojak.animate.move_to(wojak_pos), run_time=1.5)
+            self.play(FadeOut(door), run_time=1)
 
-        t1 = MobjectTable([[Text(r'$0', color=RED, font_size=40)], [Text(r'$0', color=GREEN, font_size=40)]],
+        t1 = MobjectTable([[Text(r'$0', color=RED, font_size=40, z_index=4)],
+                           [Text(r'$0', color=GREEN, font_size=40, z_index=4)]],
                    row_labels=[Text('Paid', font_size=40), Text('Won', font_size=40)],
-                   include_outer_lines=True)
+                   include_outer_lines=True, z_index=4)
+        for x in t1:
+            x.set_z_index(4)
         t1.to_edge(DR).shift(UP*1.2)
 
         t2 = MobjectTable([[Text(r'$0', font_size=40)]],
                           row_labels=[Text('Stake', font_size=40)],
                           include_outer_lines=True,
-                          z_index=2, fill_color=BLACK, fill_opacity=1)
+                          z_index=4, fill_color=BLACK, fill_opacity=1)
         t2.to_edge(DL)
         t2.align_to(t1, UP)
 
         self.play(FadeIn(t1, t2), run_time=2)
+
+        if not self.use_door:
+            wojak.next_to(t1, LEFT, buff=0.4)
+            wojak_pos = wojak.get_center()
+            wojak.align_to(t1, LEFT)
+            rect = Rectangle(height=wojak.height, width=wojak.width, fill_color=BLACK, stroke_opacity=0,
+                             fill_opacity=1, z_index=3).move_to(t1).align_to(t1, LEFT)
+            self.wait(1)
+            self.add(rect)
+            self.play(wojak.animate(rate_func=rate_functions.ease_out_cubic).move_to(wojak_pos), run_time=0.8)
+            self.remove(rect)
+
 
         self.wait(1)
 
@@ -735,22 +757,25 @@ class MartingaleH(Scene):
 
         self.wait(1)
         eq9 = Text(r'Profit = Winnings  - Paid', font_size=60).to_edge(DL).shift(UP*0.8)
-        eq9_1 = Text(r'${}'.format(winnings), font_size=60, color=GREEN).move_to(eq9[6:14])
-        eq9_2 = Text(r'${}'.format(paid), font_size=60, color=RED).move_to(eq9[15:])
+        eq9_1 = Text(r'${}'.format(winnings), font_size=60, color=GREEN, z_index=5).move_to(eq9[6:14])
+        eq9_2 = Text(r'${}'.format(paid), font_size=60, color=RED, z_index=5).move_to(eq9[15:])
         self.play(FadeOut(coins, t2), run_time=2)
         self.play(FadeIn(eq9), run_time=1)
         self.wait(1)
         self.play(FadeOut(eq9[6:14]),
-                  ReplacementTransform(t1[0][3].copy(), eq9_1),
+                  ReplacementTransform(t1[0][3].copy().set_z_index(5), eq9_1),
                   run_time=2)
         self.play(FadeOut(eq9[15:]),
-                  ReplacementTransform(t1[0][1].copy(), eq9_2),
+                  ReplacementTransform(t1[0][1].copy().set_z_index(5), eq9_2),
                   run_time=2)
         self.wait(1)
         eq10 = Text(r'= -${}'.format(paid-winnings), font_size=60)
         eq10.shift(eq9[5].get_center()-eq10[0].get_center())
-        self.play(FadeOut(eq9_1, eq9_2, eq9[14]),
-                  FadeIn(eq10[1:]),
+        self.play(FadeOut(eq9_1, target_position=eq10[2:].get_center()),
+                  FadeOut(eq9_2, target_position=eq10[2:].get_center()),
+                  FadeOut(eq9[14], target_position=eq10[1].get_center()),
+                  FadeIn(eq10[2:], target_position=eq9_1.get_center()),
+                  FadeIn(eq10[1], target_position=eq9[14].get_center()),
                   run_time=2)
         return [eq10[1:], eq9[:6], wojak_happy, t1]
 
@@ -786,7 +811,7 @@ class MartingaleH(Scene):
                   ReplacementTransform(eq4[4], eq5[4]),
                   run_time=2)
         self.wait(1)
-        eq6 = MathTex(r'\mathbb E[{{{\rm Profit}}}]{{=}}0', font_size=eq_size).next_to(eq5, DOWN).align_to(eq5, LEFT)
+        eq6 = MathTex(r'\mathbb E\left[{{{\rm Profit}}}\right]{{=}}0', font_size=eq_size).next_to(eq5, DOWN).align_to(eq5, LEFT)
         eq6.shift(DOWN*0.2)
         self.play(FadeIn(eq6), run_time=0.5)
         txt4 = Text(r'Fair game!', color=RED, font_size=eq_size).next_to(eq6, RIGHT).shift(RIGHT)
@@ -796,9 +821,14 @@ class MartingaleH(Scene):
         self.wait(1)
         self.play(ReplacementTransform(eq6[0], eq7[0]),
                   ReplacementTransform(eq6[2:], eq7[2:]),
-                  FadeOut(eq6[1], txt4),
-                  FadeIn(eq7[1]),
-                  run_time=2)
+                  eq6[1].animate.move_to(eq7[1], coor_mask=RIGHT),
+                  FadeOut(txt4),
+                  run_time=1)
+        self.play(ReplacementTransform((eq5[2][:] + eq5[3][0] + eq5[4][:]).copy(),
+                                       eq7[1][:3] + eq7[1][3] + eq7[1][4:]),
+                  FadeOut(eq6[1]),
+                  run_time=1)
+
         self.wait(1)
         eq8 = MathTex(r'\frac1p-\mathbb E\left[{{N_H}}\right]{{=}}0', font_size=eq_size)
         eq8.shift(eq7[0][0].get_center()-eq8[0][4].get_center())
@@ -809,26 +839,17 @@ class MartingaleH(Scene):
                   ReplacementTransform(eq7[2:], eq8[2:]),
                   run_time=2)
         self.wait(1)
-        eq9 = MathTex(r'\frac1p=\mathbb E\left[{{N_H}}\right]', font_size=eq_size)
-        eq9.shift(eq8[0][4].get_center()-eq9[0][4].get_center())
-        eq9.align_to(eq8, LEFT)
-        self.play(ReplacementTransform(eq8[0][:3], eq9[0][:3]),
-                  ReplacementTransform(eq8[3][0], eq9[0][3]),
-                  ReplacementTransform(eq8[0][4:], eq9[0][4:]),
-                  ReplacementTransform(eq8[1:3], eq9[1:3]),
-                  FadeOut(eq8[4], eq8[0][3]),
+
+        eq10 = MathTex(r'\mathbb E\left[{{N_H}}\right]=\frac1p', font_size=eq_size)
+        eq10.shift(eq8[0][4].get_center()-eq10[0][0].get_center())
+        eq10.align_to(eq8, LEFT)
+
+        self.play(ReplacementTransform(eq8[0][:3] + eq8[0][4:] + eq8[1] + eq8[2][0] + eq8[3][0],
+                                       eq10[2][2:] + eq10[0][:] + eq10[1] + eq10[2][0] + eq10[2][1]),
+                  FadeOut(eq8[0][3], target_position=eq10[2][1]),
+                  FadeOut(eq8[4], target_position=eq10[2][3]),
                   run_time=2)
         self.wait(1)
-        eq10 = MathTex(r'\mathbb E\left[{{N_H}}\right]=\frac1p', font_size=eq_size)
-        eq10.shift(eq9[0][4].get_center()-eq10[0][0].get_center())
-        eq10.align_to(eq9, LEFT)
-        self.play(ReplacementTransform(eq9[0][4:], eq10[0][:]),
-                  ReplacementTransform(eq9[1], eq10[1]),
-                  ReplacementTransform(eq9[2][0], eq10[2][0]),
-                  ReplacementTransform(eq9[0][3], eq10[2][1]),
-                  ReplacementTransform(eq9[0][:3], eq10[2][2:]),
-                  run_time=2)
-        self.wait(2)
 
     def construct(self):
         if True:
