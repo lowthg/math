@@ -243,8 +243,9 @@ class ScreenType(Scene):
 
 class Abra1(Scene):
     def construct(self):
-        txt = Text("ABRACADABRA", font="Courier New", weight=SEMIBOLD, color=WHITE, font_size=60)\
-            .to_edge(UP, buff=2)
+        txt = Text("ABRACADABRA", font="Courier New", weight=SEMIBOLD, color=WHITE, font_size=80)\
+            .move_to(ORIGIN)
+        txt.next_to(txt, DOWN)
 
         self.wait(0.5)
         for x in txt:
@@ -253,7 +254,7 @@ class Abra1(Scene):
 
         self.wait(0.5)
 
-        eq1 = MathTex(r'\bf 26^{11}+26^4+26^1', font_size=60).to_edge(DOWN, buff=1)
+        eq1 = MathTex(r'\bf 26^{11}+26^4+26^1', font_size=80).to_edge(DOWN, buff=0.3)
 
         for x in eq1[0][:-1]:
             self.add(x)
@@ -274,8 +275,9 @@ class Abra1(Scene):
         self.play(x.animate.move_to(eq1[0][2:4]), run_time=1)
         self.wait(0.5)
         self.play(FadeOut(x, br1), run_time=0.5)
-        txt2 = txt.copy().next_to(txt, DOWN)
-        self.play(FadeIn(txt2), run_time=0.5)
+        txt2 = txt.copy()
+        self.play(txt2.animate.next_to(txt, UP), run_time=0.5)
+        txt, txt2 = txt2, txt
         self.wait(0.5)
 
         shift = (txt[-4].get_left() - txt2.get_left())*RIGHT
