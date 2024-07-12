@@ -14,6 +14,9 @@ H = LabeledDot(Text("H", color=BLACK, font='Helvetica', weight=SEMIBOLD), radius
 T = LabeledDot(Text("T", color=BLACK, font='Helvetica', weight=SEMIBOLD), radius=0.35, color=YELLOW).scale(1.5)
 RED_AS = "#E02A20"
 
+def brace_label(x):
+    return lambda text, font_size: x
+
 class label_ctr(Text):
     def __init__(self, text, font_size):
         Text.__init__(self, text, font_size=font_size, color=RED)
@@ -21,6 +24,10 @@ class label_ctr(Text):
 class mathlabel_ctr(MathTex):
     def __init__(self, text, font_size):
         MathTex.__init__(self, text, font_size=font_size)
+
+class mathlabel_ctr2(MathTex):
+    def __init__(self, text, font_size):
+        MathTex.__init__(self, text, font_size=font_size, color=RED)
 
 def label_ctrMU(text, font_size):
     return MarkupText(text, font_size=font_size, color=RED)
@@ -199,6 +206,117 @@ class MonkeyType(Scene):
         self.play(MoveToTarget(ft2), run_time=1)
         self.wait(1)
 
+
+class ScreenType(Scene):
+    """
+    just a wall of text to overlay on screen
+    """
+
+    run_type = True
+
+    def construct(self):
+        random.seed(1)
+        abc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ  '
+        letters = ''.join([random.choice(abc) for _ in range(305)])
+        letters += ' IT WAS THE BEST OF TIMES IT WAS THE BLURST OF TIMES'
+        width = Dot().to_edge(UR).get_right()[0] - Dot().to_edge(UL).get_left()[0]
+
+        text = Text(letters, font="Courier New", weight=SEMIBOLD, color=WHITE, font_size=10)
+        text.set(font_size=40).to_edge(UL)
+        print(len(letters))
+        print(len(text[:]))
+        i0 = 0
+        for i in range(len(text)):
+            if text[i0:i+1].width > width:
+                text[i:].next_to(text[i0:i], DOWN).align_to(text[i0], LEFT)
+                i0 = i
+
+        if self.run_type:
+            for x in text:
+                self.wait(1.1/config.frame_rate)
+                self.add(x)
+        else:
+            self.add(text)
+
+        self.wait(0.5)
+
+
+class Abra1(Scene):
+    def construct(self):
+        txt = Text("ABRACADABRA", font="Courier New", weight=SEMIBOLD, color=WHITE, font_size=60)\
+            .to_edge(UP, buff=2)
+
+        self.wait(0.5)
+        for x in txt:
+            self.add(x)
+            self.wait(0.08)
+
+        self.wait(0.5)
+
+        eq1 = MathTex(r'\bf 26^{11}+26^4+26^1', font_size=60).to_edge(DOWN, buff=1)
+
+        for x in eq1[0][:-1]:
+            self.add(x)
+            self.wait(0.08)
+
+        self.wait(0.5)
+        self.play((eq1[0][:2] + eq1[0][5:7] + eq1[0][9:11]).animate.set_color(RED), run_time=0.5)
+        self.wait(1)
+        self.play((eq1[0][:2] + eq1[0][5:7] + eq1[0][9:11]).animate.set_color(WHITE), run_time=0.5)
+
+        self.wait(0.5)
+        br1 = BraceLabel(txt, r'11',
+                         label_constructor=brace_label(eq1[0][2:4].copy().set_opacity(1).set_color(RED)),
+                         brace_config={'color': RED})
+        self.play(FadeIn(br1), run_time=1)
+        self.wait(0.5)
+        x = br1.label.copy()
+        self.play(x.animate.move_to(eq1[0][2:4]), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(x, br1), run_time=0.5)
+        txt2 = txt.copy().next_to(txt, DOWN)
+        self.play(FadeIn(txt2), run_time=0.5)
+        self.wait(0.5)
+
+        shift = (txt[-4].get_left() - txt2.get_left())*RIGHT
+        self.play(txt2.animate.shift(shift/2),
+                  txt.animate.shift(-shift/2),
+                  run_time=2)
+        self.wait(0.5)
+        self.play((txt2[:4] + txt[-4:]).animate.set_color(RED), run_time=1)
+        self.wait(0.5)
+        br2 = BraceLabel(txt2[:4], r'',
+                         label_constructor=brace_label(eq1[0][7].copy().set_opacity(1).set_color(RED)),
+                         brace_config={'color': RED})
+        self.play(FadeIn(br2), run_time=1)
+        self.wait(0.5)
+        x = br2.label.copy()
+        self.play(x.animate.move_to(eq1[0][7]), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(x, br2),
+                  (txt2[:4] + txt[-4:]).animate.set_color(WHITE),
+                  run_time=0.5)
+        self.wait(0.5)
+
+        shift = (txt[-1].get_left() - txt2.get_left())*RIGHT
+        self.play(txt2.animate.shift(shift/2),
+                  txt.animate.shift(-shift/2),
+                  run_time=1)
+        self.wait(0.5)
+        self.play((txt2[:1] + txt[-1:]).animate.set_color(RED), run_time=1)
+        self.wait(0.5)
+        br3 = BraceLabel(txt2[:1], r'1',
+                         label_constructor=brace_label(eq1[0][-1].copy().set_opacity(1).set_color(RED)),
+                         brace_config={'color': RED})
+        self.play(FadeIn(br3), run_time=1)
+        self.wait(0.5)
+        x = br3.label.copy()
+        self.play(x.animate.move_to(eq1[0][-1]), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(x, br3),
+                  (txt2[:1] + txt[-1:]).animate.set_color(WHITE),
+                  run_time=0.5)
+        self.wait(0.5)
 
 class SequenceH(Scene):
     transparent = True
@@ -3005,5 +3123,5 @@ class AliceBob(AbraHT):
 
 if __name__ == "__main__":
     with tempconfig({"quality": "high_quality", "preview": True}):
-        MonkeyType().render()
+        Abra1().render()
 #    print(SequenceH.sequences(10))
