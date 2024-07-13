@@ -1803,7 +1803,7 @@ class Abra(Scene):
             eq7 = MathTex(r'\mathbb E[{{ {\rm Total\ won} }}]{{-}}\mathbb E[{{ {\rm Total\ paid} }} ] {{=}} 0',
                           font_size=40).move_to(eq8, LEFT)
 
-            self.play(LaggedStart(FadeIn(eq5), FadeIn(txt.next_to(eq5, RIGHT)), lag_ratio=0.5), run_time=2)
+            self.play(LaggedStart(FadeIn(eq5), FadeIn(txt.next_to(eq5, DOWN)), lag_ratio=0.5), run_time=2)
 
             self.play(ReplacementTransform(eq5[-3:] + eq5[0], eq6[-3:] + eq6[0]),
                       eq5[1].animate.move_to(eq6[2], coor_mask=1),
@@ -2626,7 +2626,8 @@ class Abra66(Abra):
 
     def get_text(self):
         desc = Text('Each player stakes $1 on their turn and bets on 6.\n'
-                    'Any winnings are rolled over to bet on 6 on the following roll.\n'
+                    'Any winnings are rolled over to bet on 6 on the\n'
+                    'following roll.\n'
                     'Fair game => each win multiplies the stake by 6.', font_size=27, line_spacing=0.8) \
             .align_to(self.text_pos, UP).to_edge(LEFT, buff=1).shift(DOWN * 0.5)
         return desc
@@ -2649,8 +2650,9 @@ class Abra66(Abra):
 
     @staticmethod
     def get_monkey():
-        dice = ImageMobject("dice.jpg").to_edge(DR, buff=0.04)
-        return dice.scale(4/dice.height)
+        return None
+#        dice = ImageMobject("dice.jpg").to_edge(DR, buff=0.04)
+#        return dice.scale(4/dice.height)
 
 
 class Abra6(Abra66):
@@ -3121,6 +3123,41 @@ class AliceBob(AbraHT):
 
         return winner
 
+
+class HTvsHH(Scene):
+    def construct(self):
+        MathTex.set_default(font_size=60, stroke_width=1.4)
+        eq2 = MathTex(r'\mathbb P(N_{HH} < N_{TH}) {{=}} \frac14 {{<}} \frac34 {{=}}\mathbb P(N_{TH} < N_{HH})')\
+            .to_edge(DOWN)
+        eq1 = MathTex(r'\mathbb P(N_{HH} < N_{HT}) {{=}} \frac12 {{=}}\mathbb P(N_{HT} < N_{HH})')\
+            .next_to(eq2, UP)
+        self.wait(0.5)
+        self.play(FadeIn(eq1[0]), run_time=0.5)
+        self.wait(0.5)
+        self.play(FadeIn(eq1[1:3]), run_time=1)
+        self.wait(0.5)
+        self.play(FadeIn(eq1[3:]), run_time=1)
+        self.wait(0.5)
+        self.wait(0.5)
+        self.play(FadeIn(eq2[0]), run_time=0.5)
+        self.wait(0.5)
+        self.play(FadeIn(eq2[1:3]), run_time=1)
+        self.wait(0.5)
+        self.play(FadeIn(eq2[3:]), run_time=1)
+        self.wait(0.5)
+
+        eq3 = MathTex(r'TH  >  HH')
+        eq4 = MathTex(r'= =')
+        eq4[0][0].rotate(math.pi / 2)
+        eq4[0][1].rotate(math.pi / 2)
+        eq4.next_to(eq3, DOWN)
+        eq4[0][0].move_to(eq3[0][:2], coor_mask=RIGHT)
+        eq4[0][1].move_to(eq3[0][-2:], coor_mask=RIGHT)
+        eq5 = MathTex(r'TT < HT').next_to(eq4, DOWN)
+        eq6 = VGroup(eq3, eq4, eq5)
+        eq6.next_to(eq1, UP, buff=1).to_edge(LEFT, buff=1)
+        self.play(FadeIn(eq6), run_time=1)
+        self.wait(0.5)
 
 
 if __name__ == "__main__":
