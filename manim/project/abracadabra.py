@@ -241,6 +241,35 @@ class ScreenType(Scene):
         self.wait(0.5)
 
 
+class ShakespeareTime(Scene):
+    def construct(self):
+        MathTex.set_default(font_size=100, stroke_width=1.4)
+        eq2 = MathTex(r'26^{3,695,990}\approx 10^{5,229,728}')
+        eq0 = MathTex(r'3.695,990')
+        eq1 = eq2[0][2:11].copy()
+        scale = eq0.width/eq1.width
+        eq1.scale(scale).move_to(ORIGIN).to_edge(DOWN, buff=1)
+        self.play(FadeIn(eq1), run_time=1)
+        eq2.move_to(eq1)
+        eq2.shift((eq1.get_left()-eq2[0][2].get_left())*RIGHT)
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq1, eq2[0][2:11]),
+                  FadeIn(eq2[0][:2]),
+                  run_time=1)
+        self.wait(0.5)
+        shift = -eq2.get_center() * RIGHT
+        self.play(eq2[0][:11].animate.shift(shift), run_time=1)
+        eq2[0][11:].shift(shift)
+        self.play(FadeIn(eq2[0][11:]), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(eq2[0][:14]),
+                  eq2[0][14:].animate.scale(scale).move_to(ORIGIN).align_to(eq2, DOWN),
+                  run_time=2)
+        self.wait(0.5)
+
+
+
+
 class Abra1(Scene):
     def construct(self):
         txt = Text("ABRACADABRA", font="Courier New", weight=SEMIBOLD, color=WHITE, font_size=80)\
