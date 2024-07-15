@@ -3246,16 +3246,23 @@ class MartingaleDef(Scene):
         chart.generate_target().scale(0.6).to_edge(UP)
         self.play(MoveToTarget(chart), eq1.animate.next_to(chart.target, DOWN), run_time=2)
 
-        eq2 = MathTex(r'\mathbb E[X_{n+1}\vert X_0,X_1,\ldots,X_n]=X_n').next_to(eq1, DOWN).align_to(eq1, LEFT)
-        eq3 = MathTex(r'\mathbb E[\lvert X_{n+1}\rvert\;\vert X_0,X_1,\ldots,X_n] < \infty')\
+        eq2 = MathTex(r'\mathbb E[X_{n+1}\vert X_0,X_1,\ldots,X_n]=X_n')[0].next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq3 = MathTex(r'\mathbb E[\lvert X_{n+1}\rvert] < \infty')[0]\
             .next_to(eq2, DOWN).align_to(eq2, LEFT)
         self.play(FadeIn(eq2), run_time=1)
         self.wait(0.5)
         self.play(FadeIn(eq3), run_time=1)
         self.wait(0.5)
-        eq4 = MathTex(r'\mathcal F_n=\sigma(X_0,X_1,\ldots,X_n)').next_to(eq3, DOWN).align_to(eq2, LEFT)
+        eq4 = MathTex(r'\mathcal F_n=\sigma(X_0,X_1,\ldots,X_n)')[0].next_to(eq3, DOWN).align_to(eq2, LEFT)
         self.play(FadeIn(eq4), run_time=1)
         self.wait(0.5)
+
+        eq5 = MathTex(r'\mathbb E[X_{n+1}\vert \mathcal F_n]=X_n')[0]
+        eq5.next_to(eq2[-3], ORIGIN, submobject_to_align=eq5[-3]).align_to(eq2, LEFT)
+
+        f = eq4[:2].copy()
+        self.play(FadeOut(eq2[7:-4]), f.animate.move_to(eq5[-6:-4]).move_to(eq2[7:-4], coor_mask=RIGHT),
+                  run_time=2)
 
         self.wait(0.5)
 
