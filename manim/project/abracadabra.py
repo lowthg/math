@@ -3282,20 +3282,20 @@ class MartingaleDef(Scene):
         self.play(FadeOut(eq4), run_time=2)
         pos = mart_eqs.get_center()
         self.play(mart_eqs.animate.arrange(direction=DOWN, center=False, aligned_edge=LEFT)
-                  .move_to(pos, coor_mask=UP), run_time=2)
-        box = SurroundingRectangle(mart_eqs, color=DARK_BLUE, corner_radius=0.1)
+                  .move_to(pos, coor_mask=UP).shift(LEFT * 0.5), run_time=2)
+        box = SurroundingRectangle(mart_eqs, color=DARK_BLUE, corner_radius=0.1, stroke_width=5)
         self.play(FadeIn(box), run_time=1)
 
         eq1 = MathTex(r'\mathbb E[X_m\vert\mathcal F_n]=X_n')
         eq2 = Tex(r'for $m \ge n$').next_to(eq1, DOWN)
-        VGroup(eq1, eq2).next_to(mart_eqs, RIGHT)
+        VGroup(eq1, eq2).next_to(mart_eqs, RIGHT, buff=0.5)
         self.wait(0.5)
         self.play(FadeIn(eq1, eq2), run_time=1)
         self.wait(0.5)
         self.play(FadeOut(eq1, eq2), run_time=1)
 
         self.wait(0.5)
-        eq7 = MathTex(r'\mathbb E[X_{n+1}-X_n\vert\mathcal F_n]=0')[0].next_to(mart_eqs, RIGHT)
+        eq7 = MathTex(r'\mathbb E[X_{n+1}-X_n\vert\mathcal F_n]=0')[0].next_to(mart_eqs, RIGHT, buff=0.5)
         eq7.next_to(eq5[-3], ORIGIN, submobject_to_align=eq7[-2], coor_mask=UP)
         self.play(ReplacementTransform((eq5[:6] + eq5[-2:] + eq5[-7:-2]).copy(),
                                        eq7[:6] + eq7[7:9] + eq7[-6:-1]),
@@ -3318,6 +3318,21 @@ class MartingaleDef(Scene):
         self.play(FadeOut(eq9[1:3]), eq9_1.animate.move_to(eq9[1], coor_mask=RIGHT), run_time=2)
         self.wait(0.5)
         self.play(ReplacementTransform(eq9[0], eq8[-2]), ReplacementTransform(eq9_1, eq8[-1]), run_time=2)
+
+        eq10 = MathTex(r'Y_{n+1}-Y_n=H_n(X_{n+1}-X_n)')[0].next_to(eq8, DOWN).align_to(eq7, LEFT)
+#        eq10_2 = MathTex(r'=H_n(X_{n+1}-X_n)')[0].next_to(eq10_1, DOWN).align_to(eq10_1[4], LEFT)
+        self.wait(0.5)
+        self.play(FadeIn(eq10), run_time=1)
+        self.wait(0.5)
+
+        self.play(FadeOut(eq7, eq8),
+                  eq10.animate.next_to(eq7[-2], ORIGIN, submobject_to_align=eq10[7], coor_mask=UP),
+                  run_time=2)
+
+        eq11 = MathTex(r'Y_n=Y_0+\sum_{k=0}^{n-1}H_k(X_{k+1}-X_k)').next_to(eq10, DOWN).align_to(eq10, LEFT)
+        self.wait(0.5)
+        self.play(FadeIn(eq11), run_time=1)
+
 
         self.wait(0.5)
 
