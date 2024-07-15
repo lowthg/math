@@ -3207,7 +3207,7 @@ class HTvsHH(Scene):
 
 
 class MartingaleDef(Scene):
-    def construct(self):
+    def build_graph(self):
         nt = 10
 
         # construct axes
@@ -3247,13 +3247,17 @@ class MartingaleDef(Scene):
         self.play(FadeIn(eq1[1::2], eq1[-1]), run_time=2)
 
         chart = VGroup(ax.x_axis, ax.y_axis, plot, *labels, *x_labels)
+        self.wait(0.5)
         chart.generate_target().scale(0.6).to_edge(UP, buff=0)
         self.play(MoveToTarget(chart), eq1.animate.next_to(chart.target, DOWN), run_time=2)
 
-        # show martingale def
+        return chart, eq1
+
+    def build_def(self, eq1):
         eq2 = MathTex(r'\mathbb E[X_{n+1}\vert X_0,X_1,\ldots,X_n]=X_n')[0].next_to(eq1, DOWN).align_to(eq1, LEFT)
-        eq3 = MathTex(r'\mathbb E[\lvert X_{n+1}\rvert] < \infty')[0]\
+        eq3 = MathTex(r'\mathbb E[\lvert X_{n+1}\rvert] < \infty')[0] \
             .next_to(eq2, DOWN).align_to(eq2, LEFT)
+        self.wait(0.5)
         self.play(FadeIn(eq2), run_time=1)
         self.wait(0.5)
         self.play(FadeIn(eq3), run_time=1)
@@ -3266,13 +3270,13 @@ class MartingaleDef(Scene):
         eq5.next_to(eq2[-3], ORIGIN, submobject_to_align=eq5[-3]).align_to(eq2, LEFT)
 
         f = eq4[:2].copy()
-#        self.play(FadeOut(eq2[7:-4]), f.animate.move_to(eq5[-6:-4]).move_to(eq2[7:-4], coor_mask=RIGHT), run_time=2)
+        #        self.play(FadeOut(eq2[7:-4]), f.animate.move_to(eq5[-6:-4]).move_to(eq2[7:-4], coor_mask=RIGHT), run_time=2)
         self.play(FadeOut(eq2[7:-4]), ReplacementTransform(eq4[:2].copy(), eq5[-6:-4]),
                   run_time=2)
         self.play(ReplacementTransform(eq2[-4:], eq5[-4:]),
                   ReplacementTransform(eq2[:7], eq5[:7]), run_time=1)
 
-        eq6 = MathTex(r'\mathcal F_0\subseteq\mathcal F_1\subseteq\mathcal F_2\subseteq\mathcal F_3\subseteq\cdots')\
+        eq6 = MathTex(r'\mathcal F_0\subseteq\mathcal F_1\subseteq\mathcal F_2\subseteq\mathcal F_3\subseteq\cdots') \
             .next_to(eq4, DOWN).align_to(eq2, LEFT)
         self.wait(0.5)
         self.play(FadeIn(eq6), run_time=1)
@@ -3282,20 +3286,23 @@ class MartingaleDef(Scene):
         self.play(FadeOut(eq4), run_time=2)
         pos = mart_eqs.get_center()
         self.play(mart_eqs.animate.arrange(direction=DOWN, center=False, aligned_edge=LEFT)
-                  .move_to(pos, coor_mask=UP).shift(LEFT * 0.5), run_time=2)
+                  .move_to(pos, coor_mask=UP).shift(LEFT * 0.75), run_time=2)
         box = SurroundingRectangle(mart_eqs, color=DARK_BLUE, corner_radius=0.1, stroke_width=5)
         self.play(FadeIn(box), run_time=1)
 
+        return VGroup(eq5, eq3, eq6, box)
+
+    def mart_int(self, eq5, mart_def):
         eq1 = MathTex(r'\mathbb E[X_m\vert\mathcal F_n]=X_n')
         eq2 = Tex(r'for $m \ge n$').next_to(eq1, DOWN)
-        VGroup(eq1, eq2).next_to(mart_eqs, RIGHT, buff=0.5)
+        VGroup(eq1, eq2).next_to(mart_def, RIGHT, buff=0.5)
         self.wait(0.5)
         self.play(FadeIn(eq1, eq2), run_time=1)
         self.wait(0.5)
         self.play(FadeOut(eq1, eq2), run_time=1)
 
         self.wait(0.5)
-        eq7 = MathTex(r'\mathbb E[X_{n+1}-X_n\vert\mathcal F_n]=0')[0].next_to(mart_eqs, RIGHT, buff=0.5)
+        eq7 = MathTex(r'\mathbb E[X_{n+1}-X_n\vert\mathcal F_n]=0')[0].next_to(mart_def, RIGHT, buff=0.5)
         eq7.next_to(eq5[-3], ORIGIN, submobject_to_align=eq7[-2], coor_mask=UP)
         self.play(ReplacementTransform((eq5[:6] + eq5[-2:] + eq5[-7:-2]).copy(),
                                        eq7[:6] + eq7[7:9] + eq7[-6:-1]),
@@ -3320,7 +3327,7 @@ class MartingaleDef(Scene):
         self.play(ReplacementTransform(eq9[0], eq8[-2]), ReplacementTransform(eq9_1, eq8[-1]), run_time=2)
 
         eq10 = MathTex(r'Y_{n+1}-Y_n=H_n(X_{n+1}-X_n)')[0].next_to(eq8, DOWN).align_to(eq7, LEFT)
-#        eq10_2 = MathTex(r'=H_n(X_{n+1}-X_n)')[0].next_to(eq10_1, DOWN).align_to(eq10_1[4], LEFT)
+        #        eq10_2 = MathTex(r'=H_n(X_{n+1}-X_n)')[0].next_to(eq10_1, DOWN).align_to(eq10_1[4], LEFT)
         self.wait(0.5)
         self.play(FadeIn(eq10), run_time=1)
         self.wait(0.5)
@@ -3329,12 +3336,21 @@ class MartingaleDef(Scene):
                   eq10.animate.next_to(eq7[-2], ORIGIN, submobject_to_align=eq10[7], coor_mask=UP),
                   run_time=2)
 
-        eq11 = MathTex(r'Y_n=Y_0+\sum_{k=0}^{n-1}H_k(X_{k+1}-X_k)').next_to(eq10, DOWN).align_to(eq10, LEFT)
+        eq11 = MathTex(r'Y_n=Y_0+\sum_{k=0}^{n-1}H_k(X_{k+1}-X_k)')[0].next_to(eq10, DOWN).align_to(eq10, LEFT)
         self.wait(0.5)
         self.play(FadeIn(eq11), run_time=1)
-
+        self.wait(0.5)
+        self.play(FadeOut(eq10),
+                  eq11.animate.next_to(eq10[7], ORIGIN, submobject_to_align=eq11[2], coor_mask=UP),
+                  run_time=2)
 
         self.wait(0.5)
+
+    def construct(self):
+        chart, eq1 = self.build_graph()
+        mart_def = self.build_def(eq1)
+        eq11 = self.mart_int(mart_def[0], mart_def[-1])
+
 
 
 if __name__ == "__main__":
