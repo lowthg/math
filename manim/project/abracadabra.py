@@ -3205,9 +3205,12 @@ class HTvsHH(Scene):
         self.play(FadeIn(eq6), run_time=1)
         self.wait(0.5)
 
+
 class MartingaleDef(Scene):
     def construct(self):
         nt = 10
+
+        # construct axes
         ax = Axes(x_range=[0, nt], y_range=[-5, 5],
                   axis_config={'color': BLUE, 'stroke_width': 5, 'include_ticks': False},
                   )
@@ -3231,11 +3234,12 @@ class MartingaleDef(Scene):
         self.play(FadeIn(dot, x_labels[0]), run_time=0.2)
         for x in range(1, n):
             dot = Dot(points[x], fill_color=YELLOW, z_index=2)
-            line = Line(points[x-1], points[x], stroke_width=4)
+            line = Line(points[x-1], points[x], stroke_width=5)
             x_labels.append(MathTex(r'X_{{{}}}'.format(x)).next_to(points[x], UP))
             self.play(FadeIn(dot, x_labels[x]), Create(line, rate_func=linear), run_time=0.5)
             plot.add(line, dot)
 
+        # show process terms
         x_procstr = r'{{,}}'.join(['X_{{{}}}'.format(x) for x in range(n)] + [r'\ldots'])
         eq1 = MathTex(x_procstr).to_edge(DOWN)
         anim = [ReplacementTransform(x_labels[x][0].copy(), eq1[2*x]) for x in range(n)]
@@ -3243,9 +3247,10 @@ class MartingaleDef(Scene):
         self.play(FadeIn(eq1[1::2], eq1[-1]), run_time=2)
 
         chart = VGroup(ax.x_axis, ax.y_axis, plot, *labels, *x_labels)
-        chart.generate_target().scale(0.6).to_edge(UP)
+        chart.generate_target().scale(0.6).to_edge(UP, buff=0)
         self.play(MoveToTarget(chart), eq1.animate.next_to(chart.target, DOWN), run_time=2)
 
+        # show martingale def
         eq2 = MathTex(r'\mathbb E[X_{n+1}\vert X_0,X_1,\ldots,X_n]=X_n')[0].next_to(eq1, DOWN).align_to(eq1, LEFT)
         eq3 = MathTex(r'\mathbb E[\lvert X_{n+1}\rvert] < \infty')[0]\
             .next_to(eq2, DOWN).align_to(eq2, LEFT)
@@ -3261,12 +3266,58 @@ class MartingaleDef(Scene):
         eq5.next_to(eq2[-3], ORIGIN, submobject_to_align=eq5[-3]).align_to(eq2, LEFT)
 
         f = eq4[:2].copy()
-        self.play(FadeOut(eq2[7:-4]), f.animate.move_to(eq5[-6:-4]).move_to(eq2[7:-4], coor_mask=RIGHT),
+#        self.play(FadeOut(eq2[7:-4]), f.animate.move_to(eq5[-6:-4]).move_to(eq2[7:-4], coor_mask=RIGHT), run_time=2)
+        self.play(FadeOut(eq2[7:-4]), ReplacementTransform(eq4[:2].copy(), eq5[-6:-4]),
                   run_time=2)
+        self.play(ReplacementTransform(eq2[-4:], eq5[-4:]),
+                  ReplacementTransform(eq2[:7], eq5[:7]), run_time=1)
+
+        eq6 = MathTex(r'\mathcal F_0\subseteq\mathcal F_1\subseteq\mathcal F_2\subseteq\mathcal F_3\subseteq\cdots')\
+            .next_to(eq4, DOWN).align_to(eq2, LEFT)
+        self.wait(0.5)
+        self.play(FadeIn(eq6), run_time=1)
+
+        mart_eqs = VGroup(eq5, eq3, eq6)
+        self.wait(0.5)
+        self.play(FadeOut(eq4), run_time=2)
+        pos = mart_eqs.get_center()
+        self.play(mart_eqs.animate.arrange(direction=DOWN, center=False, aligned_edge=LEFT)
+                  .move_to(pos, coor_mask=UP), run_time=2)
+        box = SurroundingRectangle(mart_eqs, color=DARK_BLUE, corner_radius=0.1)
+        self.play(FadeIn(box), run_time=1)
+
+        eq1 = MathTex(r'\mathbb E[X_m\vert\mathcal F_n]=X_n')
+        eq2 = Tex(r'for $m \ge n$').next_to(eq1, DOWN)
+        VGroup(eq1, eq2).next_to(mart_eqs, RIGHT)
+        self.wait(0.5)
+        self.play(FadeIn(eq1, eq2), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(eq1, eq2), run_time=1)
 
         self.wait(0.5)
+        eq7 = MathTex(r'\mathbb E[X_{n+1}-X_n\vert\mathcal F_n]=0')[0].next_to(mart_eqs, RIGHT)
+        eq7.next_to(eq5[-3], ORIGIN, submobject_to_align=eq7[-2], coor_mask=UP)
+        self.play(ReplacementTransform((eq5[:6] + eq5[-2:] + eq5[-7:-2]).copy(),
+                                       eq7[:6] + eq7[7:9] + eq7[-6:-1]),
+                  FadeIn(eq7[6], target_position=eq5[-3]),
+                  FadeIn(eq7[-1], target_position=eq5[-2]),
+                  run_time=2)
 
+        eq8 = MathTex(r'\mathbb E[H_n(X_{n+1}-X_n)\vert\mathcal F_n]=0')[0].next_to(eq7, DOWN).align_to(eq7, LEFT)
+        eq9 = MathTex(r'=H_n\mathbb E[X_{n+1}-X_n\vert\mathcal F_n]')[0].next_to(eq8, DOWN).align_to(eq8[2], LEFT)
 
+        self.wait(0.5)
+        self.play(FadeIn(eq8[:-2]), run_time=1)
+        self.play(FadeIn(eq9[0]), run_time=0.5)
+        self.play(ReplacementTransform((eq8[:2] + eq8[5:12] + eq8[13:17] + eq8[2:4]).copy(),
+                                       eq9[3:5] + eq9[5:12] + eq9[12:] + eq9[1:3]),
+                  run_time=2)
+        eq9_1 = eq7[-1].copy()
+        self.wait(0.5)
+        self.play(eq9_1.animate.move_to(eq9[3]), FadeOut(eq9[3:]), run_time=2)
+        self.play(FadeOut(eq9[1:3]), eq9_1.animate.move_to(eq9[1], coor_mask=RIGHT), run_time=2)
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq9[0], eq8[-2]), ReplacementTransform(eq9_1, eq8[-1]), run_time=2)
 
         self.wait(0.5)
 
