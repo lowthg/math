@@ -699,6 +699,35 @@ class GeometricMean(Scene):
             return
 
 
+def martingaleH_rules(s, show_rules):
+    rules_size = 40
+    rules = VGroup(
+        Tex(r'\underline{Coin Toss Game Rules}', font_size=rules_size),
+        Tex(r'Before flip: Place your stake', font_size=rules_size),
+        Tex(r'If T comes up: Receive nothing, losing the stake', font_size=rules_size),
+        Tex(r'If H comes up: Receive stake multiplied by $1/p$', font_size=rules_size),
+        z_index=1,
+    ).arrange(DOWN, center=False, aligned_edge=LEFT).to_edge(UL)
+    rules.shift(rules.get_center() * np.array([-1, 0, 0]))
+
+    box = SurroundingRectangle(rules, color=RED, corner_radius=0.1, fill_color=BLACK, fill_opacity=1)
+
+    if show_rules:
+        s.add(box)
+
+        for rule in rules:
+            s.wait(1)
+            s.play(FadeIn(rule), run_time=0.5)
+        s.wait(1)
+
+    return box, rules
+
+
+class MartingaleH_rules(Scene):
+    def construct(self):
+        martingaleH_rules(self, True)
+
+
 class MartingaleH(Scene):
     """
     Time to get H
@@ -719,22 +748,9 @@ class MartingaleH(Scene):
         return Group(door_back, door_hide, door_front)
 
     def initial_setup(self):
-        rules_size = 40
-        rules = VGroup(
-            Tex(r'\underline{Coin Toss Game Rules}', font_size=rules_size),
-            Tex(r'Before flip: Place your stake', font_size=rules_size),
-            Tex(r'If T comes up: Receive nothing, losing the stake', font_size=rules_size),
-            Tex(r'If H comes up: Receive stake multiplied by $1/p$', font_size=rules_size),
-        ).arrange(DOWN, center=False, aligned_edge=LEFT).to_edge(UL)
-        rules.shift(rules.get_center() * np.array([-1, 0, 0]))
-
-        for rule in rules:
-            self.play(FadeIn(rule), run_time=0.5)
-            self.wait(1)
-        self.wait(1)
-
-        box = SurroundingRectangle(rules, color=RED, corner_radius=0.1)
-        self.play(FadeIn(box), run_time=0.5)
+        box, rules = martingaleH_rules(self, False)
+        self.wait(0.5)
+        self.add(box, rules)
 
         eq1 = MathTex(r'{\rm Expected\ profit} {{=}} -S + \frac{S}{p}\mathbb{P}(H)', font_size=60)
         eq1.next_to(rules, DOWN, buff=1)
@@ -796,7 +812,8 @@ class MartingaleH(Scene):
         self.play(FadeIn(txt1), run_time=1)
         self.wait(2)
         self.play(FadeOut(eq1[0:2], eq4, txt1), run_time=1)
-
+        
+        rules_size=40
         strat = VGroup(
             Tex(r'\underline{Strategy}', font_size=rules_size),
             Tex(r'Stake \$1 before each toss', font_size=rules_size),
@@ -3188,8 +3205,66 @@ class HTvsHH(Scene):
         self.play(FadeIn(eq6), run_time=1)
         self.wait(0.5)
 
+class MartingaleDef(Scene):
+    def construct(self):
+        nt = 10
+        ax = Axes(x_range=[0, nt], y_range=[-5, 5],
+                  axis_config={'color': BLUE, 'stroke_width': 5, 'include_ticks': False},
+                  )
+
+        labels = ax.get_axis_labels(x_label=MathTex(r't'), y_label=MathTex(r'X_t'))
+
+        ax.x_axis.generate_target()
+        ax.x_axis.target.add_ticks()
+        self.play(LaggedStart(Write(ax), Write(ax.x_axis.target.submobjects[1], run_time=0.4), lag_ratio=0.5), run_time=3)
+        self.add(ax.x_axis.target)
+        self.remove(ax.x_axis)
+        ax.x_axis = ax.x_axis.target
+        self.play(LaggedStart(Write(labels[0]), Write(labels[1]), lag_ratio=0.5), run_time=1)
+
+        y_vals = [0.4, 2, -0.2, -0.5, -2, -1.6, -4, -1, 1, 0.5, 3.5]
+        n = len(y_vals)
+        points = [ax.coords_to_point(x, y_vals[x]) for x in range(11)]
+        dot = Dot(points[0], fill_color=YELLOW, z_index=2)
+        plot = VGroup(dot)
+        x_labels = [MathTex(r'X_0').next_to(points[0], UL)]
+        self.play(FadeIn(dot, x_labels[0]), run_time=0.2)
+        for x in range(1, n):
+            dot = Dot(points[x], fill_color=YELLOW, z_index=2)
+            line = Line(points[x-1], points[x], stroke_width=4)
+            x_labels.append(MathTex(r'X_{{{}}}'.format(x)).next_to(points[x], UP))
+            self.play(FadeIn(dot, x_labels[x]), Create(line, rate_func=linear), run_time=0.5)
+            plot.add(line, dot)
+
+        x_procstr = r'{{,}}'.join(['X_{{{}}}'.format(x) for x in range(n)] + [r'\ldots'])
+        eq1 = MathTex(x_procstr).to_edge(DOWN)
+        anim = [ReplacementTransform(x_labels[x][0].copy(), eq1[2*x]) for x in range(n)]
+        self.play(*anim, run_time=2)
+        self.play(FadeIn(eq1[1::2], eq1[-1]), run_time=2)
+
+        chart = VGroup(ax.x_axis, ax.y_axis, plot, *labels, *x_labels)
+        chart.generate_target().scale(0.6).to_edge(UP)
+        self.play(MoveToTarget(chart), eq1.animate.next_to(chart.target, DOWN), run_time=2)
+
+        eq2 = MathTex(r'\mathbb E[X_{n+1}\vert X_0,X_1,\ldots,X_n]=X_n').next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq3 = MathTex(r'\mathbb E[\lvert X_{n+1}\rvert\;\vert X_0,X_1,\ldots,X_n] < \infty')\
+            .next_to(eq2, DOWN).align_to(eq2, LEFT)
+        self.play(FadeIn(eq2), run_time=1)
+        self.wait(0.5)
+        self.play(FadeIn(eq3), run_time=1)
+        self.wait(0.5)
+        eq4 = MathTex(r'\mathcal F_n=\sigma(X_0,X_1,\ldots,X_n)').next_to(eq3, DOWN).align_to(eq2, LEFT)
+        self.play(FadeIn(eq4), run_time=1)
+        self.wait(0.5)
+
+        self.wait(0.5)
+
+
+
+        self.wait(0.5)
+
 
 if __name__ == "__main__":
-    with tempconfig({"quality": "high_quality", "preview": True}):
-        Abra1().render()
+    with tempconfig({"quality": "low_quality", "preview": True}):
+        MartingaleDef().render()
 #    print(SequenceH.sequences(10))
