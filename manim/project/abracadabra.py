@@ -14,23 +14,29 @@ H = LabeledDot(Text("H", color=BLACK, font='Helvetica', weight=SEMIBOLD), radius
 T = LabeledDot(Text("T", color=BLACK, font='Helvetica', weight=SEMIBOLD), radius=0.35, color=YELLOW).scale(1.5)
 RED_AS = "#E02A20"
 
+
 def brace_label(x):
     return lambda text, font_size: x
+
 
 class label_ctr(Text):
     def __init__(self, text, font_size):
         Text.__init__(self, text, font_size=font_size, color=RED)
 
+
 class mathlabel_ctr(MathTex):
     def __init__(self, text, font_size):
         MathTex.__init__(self, text, font_size=font_size)
+
 
 class mathlabel_ctr2(MathTex):
     def __init__(self, text, font_size):
         MathTex.__init__(self, text, font_size=font_size, color=RED)
 
+
 def label_ctrMU(text, font_size):
     return MarkupText(text, font_size=font_size, color=RED)
+
 
 def get_coin(face='H'):
     global H, T
@@ -39,6 +45,7 @@ def get_coin(face='H'):
     elif face == 'T':
         return T.copy()
     raise Exception('invalid argument {}'.format(face))
+
 
 def set_new_location(A, B):
     A.set_x(B.get_x())
@@ -101,8 +108,10 @@ def get_dice_faces():
             _dice_faces.append(VGroup(blank.copy(), *[dot.copy().move_to(s) for s in dots]))
     return _dice_faces
 
+
 def fade_replace(obj1, obj2):
     return FadeOut(obj1, target_position=obj2.get_center()), FadeIn(obj2, target_position=obj1.get_center())
+
 
 def animate_roll(scene, key, pos=ORIGIN, scale=0.3, right=False, slide=True):
     if isinstance(pos, Mobject):
@@ -159,6 +168,7 @@ def animate_roll(scene, key, pos=ORIGIN, scale=0.3, right=False, slide=True):
 
     scene.remove(*f[1:])
     return f[0]
+
 
 class MonkeyType(Scene):
     """
@@ -268,8 +278,6 @@ class ShakespeareTime(Scene):
         self.wait(0.5)
 
 
-
-
 class Abra1(Scene):
     def construct(self):
         txt = Text("ABRACADABRA", font="Courier New", weight=SEMIBOLD, color=WHITE, font_size=80)\
@@ -348,6 +356,7 @@ class Abra1(Scene):
                   (txt2[:1] + txt[-1:]).animate.set_color(WHITE),
                   run_time=0.5)
         self.wait(0.5)
+
 
 class SequenceH(Scene):
     transparent = True
@@ -2360,7 +2369,6 @@ class AbraGF2(Abra):
         self.play(FadeOut(box), FadeIn(self.box), run_time=0.5)
         self.stake_objs = wojak_stakes
 
-
     def create_paid_won(self):
         # set payment of player k to k
         n = len(self.choices)
@@ -2596,7 +2604,6 @@ class AbraGF2(Abra):
         self.wait(1)
 
 
-
 class AbraHT(Abra):
     target = r'HT'
     choices = r'THHT'
@@ -2697,8 +2704,6 @@ class Abra66(Abra):
     @staticmethod
     def get_monkey():
         return None
-#        dice = ImageMobject("dice.jpg").to_edge(DR, buff=0.04)
-#        return dice.scale(4/dice.height)
 
 
 class Abra6(Abra66):
@@ -3013,9 +3018,6 @@ class AliceBob(AbraHT):
         self.play(FadeIn(eq12), run_time=1)
         self.wait(1)
 
-
-
-
     def run_game2(self, wojak, wife, t1, t2, t3, wojak_happy, wife_happy, choices):
         stakes = self.stakes
 
@@ -3207,6 +3209,8 @@ class HTvsHH(Scene):
 
 
 class MartingaleDef(Scene):
+    skip = False
+
     def build_graph(self):
         nt = 10
 
@@ -3251,11 +3255,11 @@ class MartingaleDef(Scene):
         chart.generate_target().scale(0.6).to_edge(UP, buff=0)
         self.play(MoveToTarget(chart), eq1.animate.next_to(chart.target, DOWN), run_time=2)
 
-        return chart, eq1
+        return chart, eq1, y_vals
 
     def build_def(self, eq1):
         eq2 = MathTex(r'\mathbb E[X_{n+1}\vert X_0,X_1,\ldots,X_n]=X_n')[0].next_to(eq1, DOWN).align_to(eq1, LEFT)
-        eq3 = MathTex(r'\mathbb E[\lvert X_{n+1}\rvert] < \infty')[0] \
+        eq3 = MathTex(r'\mathbb E[\lvert X_n\rvert] < \infty')[0] \
             .next_to(eq2, DOWN).align_to(eq2, LEFT)
         self.wait(0.5)
         self.play(FadeIn(eq2), run_time=1)
@@ -3269,8 +3273,6 @@ class MartingaleDef(Scene):
         eq5 = MathTex(r'\mathbb E[X_{n+1}\vert \mathcal F_n]=X_n')[0]
         eq5.next_to(eq2[-3], ORIGIN, submobject_to_align=eq5[-3]).align_to(eq2, LEFT)
 
-        f = eq4[:2].copy()
-        #        self.play(FadeOut(eq2[7:-4]), f.animate.move_to(eq5[-6:-4]).move_to(eq2[7:-4], coor_mask=RIGHT), run_time=2)
         self.play(FadeOut(eq2[7:-4]), ReplacementTransform(eq4[:2].copy(), eq5[-6:-4]),
                   run_time=2)
         self.play(ReplacementTransform(eq2[-4:], eq5[-4:]),
@@ -3346,14 +3348,102 @@ class MartingaleDef(Scene):
 
         self.wait(0.5)
 
-    def construct(self):
-        chart, eq1 = self.build_graph()
-        mart_def = self.build_def(eq1)
-        eq11 = self.mart_int(mart_def[0], mart_def[-1])
+        return eq11
 
+    def construct(self):
+        chart, seq, y_vals = self.build_graph()
+
+        if self.skip:
+            eq_int = seq
+        else:
+            mart_def = self.build_def(seq)
+            eq_int = self.mart_int(mart_def[0], mart_def[-1])
+
+        k = 7
+        eq1 = MathTex(r'H_{}=-0.99'.format(k), z_index=1)[0].next_to(eq_int, DOWN).shift(LEFT*1.5+DOWN*0.2)
+        box = SurroundingRectangle(eq1, stroke_opacity=0,
+                               stroke_color=DARK_BLUE, fill_opacity=0.6, fill_color=DARK_BLUE,
+                                   corner_radius=0.1, z_index=0)
+
+        plot = chart[2].copy()
+        chart[2].set_z_index(2)
+        for p in plot[0::2]:
+            p.set_color(YELLOW_A)
+        for p in plot[1::2]:
+            p.set_color(GREY)
+
+        k = 7
+        scale = ValueTracker(1)
+        p0, p1 = plot[2*k].get_center(), plot[2*(k+1)].get_center()
+        dp = (p1 - p0) * UP
+
+        def scale_path():
+            s = scale.get_value()
+            dp1 = dp * (s-1)
+            new_plot = [Line(p0, p1 + dp1, color=GREY, stroke_width=5)]
+            for i in range(2*(k+1), 21):
+                new_plot.append(plot[i].copy().shift(dp1))
+            return VGroup(*new_plot)
+
+        def show_val():
+            s = scale.get_value()
+            eq = MathTex(r'{:.2f}'.format(s), z_index=1).next_to(eq1[2], RIGHT)
+            return eq
+
+        path = always_redraw(scale_path)
+        val = always_redraw(show_val)
+        self.add(path)
+        self.play(FadeIn(eq1[:3].set_z_index(2), box, val), run_time=1)
+
+        self.play(scale.animate.set_value(-1), run_time=2)
+        self.play(scale.animate.set_value(1), run_time=2)
+
+        self.remove(path)
+
+        def scale_path2(scale):
+            path = [plot[0]]
+            p0 = plot[0].get_center()
+            for i in range(10):
+                dp = plot[2*(i+1)].get_center() - plot[2*i].get_center()
+                dp = dp*RIGHT + dp*UP*scale[i]
+                path.append(Line(p0, p0+dp, color=GREY, stroke_width=5))
+                path.append(plot[2*(i+1)].copy().move_to(p0+dp))
+                p0 = p0 + dp
+
+            return VGroup(*path)
+
+        self.wait(0.5)
+        eq2 = MathTex(r'H_n=n/5').move_to(eq1).align_to(eq1, LEFT)
+        box.target = SurroundingRectangle(eq2, stroke_opacity=0,
+                                   stroke_color=DARK_BLUE, fill_opacity=0.6, fill_color=DARK_BLUE,
+                                   corner_radius=0.1, z_index=0)
+
+        path = scale_path2(np.linspace(0, 9/5, 10))
+        self.play(MoveToTarget(box), FadeOut(eq1[:3], val), FadeIn(eq2),
+                  ReplacementTransform(plot.copy(), path),
+                  run_time=2)
+
+        self.wait(0.5)
+        self.play(FadeOut(path), run_time=0.5)
+        eq3 = MathTex(r'H_n=X_n').move_to(eq1).align_to(eq1, LEFT)
+        box.target = SurroundingRectangle(eq3, stroke_opacity=0,
+                                   stroke_color=DARK_BLUE, fill_opacity=0.6, fill_color=DARK_BLUE,
+                                   corner_radius=0.1, z_index=0)
+
+        path = scale_path2([0.4 * x for x in y_vals[:-1]])
+        self.play(MoveToTarget(box), FadeOut(eq2), FadeIn(eq3),
+                  ReplacementTransform(plot.copy(), path),
+                  run_time=2)
+
+
+        self.wait(0.5)
+
+
+
+
+        self.wait(0.5)
 
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "preview": True}):
         MartingaleDef().render()
-#    print(SequenceH.sequences(10))
