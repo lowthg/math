@@ -3209,7 +3209,7 @@ class HTvsHH(Scene):
 
 
 class MartingaleDef(Scene):
-    skip = True
+    skip = False
     graph_only = False
 
     def build_graph(self):
@@ -3289,7 +3289,7 @@ class MartingaleDef(Scene):
         self.play(FadeOut(eq4), run_time=2)
         pos = mart_eqs.get_center()
         self.play(mart_eqs.animate.arrange(direction=DOWN, center=False, aligned_edge=LEFT)
-                  .move_to(pos, coor_mask=UP).shift(LEFT * 0.75), run_time=2)
+                  .move_to(pos, coor_mask=UP).shift(LEFT * 1), run_time=2)
         box = SurroundingRectangle(mart_eqs, color=DARK_BLUE, corner_radius=0.1, stroke_width=5)
         self.play(FadeIn(box), run_time=1)
         self.wait(0.5)
@@ -3434,8 +3434,8 @@ class MartingaleDef(Scene):
 
     def walk(self, pos):
         print('POS', pos)
-        pos = pos + RIGHT * 0.1 + DOWN * 0.05
-        pos2 = RIGHT * (config.frame_x_radius - 0.15) + DOWN * (config.frame_y_radius - 0.05)
+        pos = pos + RIGHT * 0.15 + DOWN * 0.05
+        pos2 = RIGHT * (config.frame_x_radius - 0.25) + DOWN * (config.frame_y_radius - 0.05)
         nt = 6
         ax = Axes(x_range=[0, nt], y_range=[-4, 4],
                   axis_config={'color': BLUE, 'stroke_width': 3, 'include_ticks': False,
@@ -3538,22 +3538,23 @@ class MartingaleDef(Scene):
         thm_size = 45
         opt1 = Tex(r'\underline{\bf Optional Sampling Theorem}', tex_environment="flushleft", font_size=thm_size)
         opt1.next_to(seq, DOWN, buff=0.2).next_to(mart_def, RIGHT, buff=0.2, coor_mask=RIGHT)
-        opt2 = Tex(r'Let $X$ be a martingale and $T$ be a\\bounded stopping time.\\'
-                   r'Then, $\displaystyle\mathbb E[X_T]=\mathbb E[X_0]$.',
-                   tex_environment="flushleft", font_size=thm_size)
-        opt2.next_to(opt1, DOWN).align_to(opt1, LEFT)
+        opt2 = Tex(r'Let $X$ be a martingale and $T$ be a\\bounded stopping time.',
+                   tex_environment="flushleft", font_size=thm_size).next_to(opt1, DOWN).align_to(opt1, LEFT)
+        opt1.move_to(opt2, coor_mask=RIGHT)  # center heading
+        opt3 = Tex(r'Then, $\displaystyle\mathbb E[X_T]=\mathbb E[X_0]$.',
+                   tex_environment="flushleft", font_size=thm_size).next_to(opt2, DOWN, buff=0.2).align_to(opt2, LEFT)
         bdd = opt2[0][24:31]
-        opt3 = Tex(r'stopping time such that $\mathbb E[\max(\lvert X_0\rvert,\ldots,\lvert X_T\rvert)] < \infty$.',
-                   font_size=thm_size)
 
-        thm = VGroup(opt1, opt2)
+        thm = VGroup(opt1, opt2, opt3)
         box_thm = SurroundingRectangle(thm, color=DARK_BLUE, corner_radius=0.1, stroke_width=5)
-        self.play(FadeIn(opt1), FadeOut(eq6), run_time=1)
-        self.play(FadeIn(opt2), run_time=1)
+
+        mart_def.generate_target().shift(LEFT * 0.3)
+        self.play(FadeIn(opt1), FadeOut(eq6), MoveToTarget(mart_def), run_time=1)
+        self.play(FadeIn(opt2, opt3), run_time=1)
         self.play(FadeIn(box_thm), run_time=1)
         self.wait(0.5)
-        stop1 = Tex(r'{\bf Stopping Time}: $\displaystyle\{T=n\}\in\mathcal F_n$', font_size=thm_size)\
-            .next_to(box_thm, DOWN, buff=0.2).align_to(opt1, LEFT)
+        stop1 = Tex(r'{\bf Stopping Time:} $\displaystyle\{T=n\}\in\mathcal F_n$', font_size=thm_size)\
+            .next_to(box_thm, DOWN, buff=0.1).align_to(opt2, LEFT)
         self.play(FadeIn(stop1), run_time=1)
         self.wait(2)
         self.play(FadeOut(stop1), run_time=1)
@@ -3562,22 +3563,34 @@ class MartingaleDef(Scene):
         self.play(FadeIn(l1), run_time=1)
         self.wait(0.5)
         self.play(LaggedStart(FadeOut(bdd, l1),
-                              opt2[0][31:44].animate.align_to(opt1, LEFT), lag_ratio=0.5),
+                              opt2[0][31:44].animate.align_to(opt2, LEFT), lag_ratio=0.5),
                   run_time=2)
 
-        opt3.next_to(opt2[0][31], ORIGIN, submobject_to_align=opt3[0][0])
+        opt4 = Tex(r'stopping time such that', font_size=thm_size)
+        opt4.next_to(opt2[0][31], ORIGIN, submobject_to_align=opt4[0][0])
+        opt4_1 = Tex(r'$\displaystyle\mathbb E[\max(\lvert X_0\rvert,\ldots,\lvert X_T\rvert)] < \infty$.',
+                   font_size=thm_size).next_to(opt4, DOWN, buff=0.2).move_to(box_thm, coor_mask=RIGHT)
         self.wait(0.5)
-        self.play(ReplacementTransform(opt2[0][31:43], opt3[0][:12]),
+        self.play(ReplacementTransform(opt2[0][31:43], opt4[0][:12]),
                   FadeOut(opt2[0][43]),
-                  FadeIn(opt3[0][12:20]),
+                  FadeIn(opt4[0][12:20]),
                   run_time=1)
         self.wait(1)
-        self.play(FadeIn(opt3[0][20:]), run_time=1)
+        opt3.generate_target()
+        opt3.target.next_to(opt4_1, DOWN, coor_mask=UP, buff=0.1)
+        box2 = SurroundingRectangle(VGroup(opt1, opt2, opt3.target, opt4), color=DARK_BLUE,
+                                    corner_radius=0.1, stroke_width=5)
+        self.play(Transform(box_thm, box2),
+                  MoveToTarget(opt3),
+                  run_time=1)
         self.wait(0.5)
-
+        self.play(FadeIn(opt4_1), run_time=1)
+        self.wait(0.5)
 
     def construct(self):
         chart, seq, y_vals, ax = self.build_graph()
+        if self.graph_only:
+            return
         mart_def = self.build_def(seq)
         if not self.skip:
             self.play(FadeOut(*self.walk(mart_def.get_right() * RIGHT + seq.get_bottom() * UP)), run_time=1)
