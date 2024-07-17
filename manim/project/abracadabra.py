@@ -3209,7 +3209,8 @@ class HTvsHH(Scene):
 
 
 class MartingaleDef(Scene):
-    skip = False
+    skip = True
+    graph_only = False
 
     def build_graph(self):
         nt = 10
@@ -3291,17 +3292,18 @@ class MartingaleDef(Scene):
                   .move_to(pos, coor_mask=UP).shift(LEFT * 0.75), run_time=2)
         box = SurroundingRectangle(mart_eqs, color=DARK_BLUE, corner_radius=0.1, stroke_width=5)
         self.play(FadeIn(box), run_time=1)
-
-        return VGroup(eq5, eq3, eq6, box)
-
-    def mart_int(self, eq5, mart_def):
+        self.wait(0.5)
         eq1 = MathTex(r'\mathbb E[X_m\vert\mathcal F_n]=X_n')
         eq2 = Tex(r'for $m \ge n$').next_to(eq1, DOWN)
-        VGroup(eq1, eq2).next_to(mart_def, RIGHT, buff=0.5)
+        VGroup(eq1, eq2).next_to(box, RIGHT, buff=0.5)
         self.wait(0.5)
         self.play(FadeIn(eq1, eq2), run_time=1)
         self.wait(0.5)
         self.play(FadeOut(eq1, eq2), run_time=1)
+
+        return VGroup(eq5, eq3, eq6, box)
+
+    def mart_int(self, eq5, mart_def):
 
         self.wait(0.5)
         eq7 = MathTex(r'\mathbb E[X_{n+1}-X_n\vert\mathcal F_n]=0')[0].next_to(mart_def, RIGHT, buff=0.5)
@@ -3350,19 +3352,10 @@ class MartingaleDef(Scene):
 
         return eq11
 
-    def construct(self):
-        chart, seq, y_vals = self.build_graph()
-
-        if self.skip:
-            eq_int = seq
-        else:
-            mart_def = self.build_def(seq)
-            eq_int = self.mart_int(mart_def[0], mart_def[-1])
-
-        k = 7
+    def anim_int(self, k, chart, eq_int, y_vals):
         eq1 = MathTex(r'H_{}=-0.99'.format(k), z_index=1)[0].next_to(eq_int, DOWN).shift(LEFT*1.5+DOWN*0.2)
         box = SurroundingRectangle(eq1, stroke_opacity=0,
-                               stroke_color=DARK_BLUE, fill_opacity=0.6, fill_color=DARK_BLUE,
+                                   stroke_color=DARK_BLUE, fill_opacity=0.6, fill_color=DARK_BLUE,
                                    corner_radius=0.1, z_index=0)
 
         plot = chart[2].copy()
@@ -3438,8 +3431,71 @@ class MartingaleDef(Scene):
 
         self.wait(0.5)
 
+    def walk(self, pos):
+        print('POS', pos)
+        pos = pos + RIGHT * 0.1 + DOWN * 0.05
+        pos2 = RIGHT * (config.frame_x_radius - 0.15) + DOWN * (config.frame_y_radius - 0.05)
+        nt = 6
+        ax = Axes(x_range=[0, nt], y_range=[-4, 4],
+                  axis_config={'color': BLUE, 'stroke_width': 3, 'include_ticks': False,
+                               "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               },
+                  x_axis_config={'include_ticks': True},
+                  x_length=pos2[0] - pos[0],
+                  y_length=pos[1] - pos2[1]
+                  ).move_to((pos+pos2)/2)
 
+        title = Tex(r'\underline{Random Walk}', font_size=40).next_to(ax.get_top(), DOWN, buff=-0.02)
 
+        self.play(FadeIn(ax, title), run_time=1)
+
+        random.seed(4)
+        items = [ax, title]
+
+        for _ in range(3):
+            y = 0
+            point = ax.coords_to_point(0, y)
+            dot = Dot(point, fill_color=YELLOW, z_index=2)
+            plot = VGroup(dot)
+            coins = []
+            self.play(FadeIn(dot), run_time=0.2)
+            for i in range(1, nt+1):
+                up = random.choice([False, True])
+                y1 = y + 1 if up else y - 1
+                point1 = ax.coords_to_point(i, y1)
+                line = Line(point, point1, stroke_width=5, z_index=3)
+                dot = Dot(point1, fill_color=YELLOW, z_index=4)
+                plot.add(line, dot)
+                coin = get_coin('H' if up else 'T').scale(0.6)\
+                    .next_to(ax.coords_to_point(i-0.5, 0)*RIGHT + pos2*UP, UP, buff=0)
+                coins.append(animate_flip(self, coin, rate=0.1))
+                self.play(FadeIn(dot), Create(line, rate_func=linear), run_time=0.27)
+                point = point1
+                y = y1
+
+            self.wait(0.5)
+            self.play(plot[1::2].animate.set_color(ManimColor(WHITE.to_rgb() * 0.5)).set_z_index(1),
+                      plot[0::2].animate.set_color(ManimColor(YELLOW.to_rgb() * 0.5)).set_z_index(2),
+                      FadeOut(*coins),
+                      run_time=0.5)
+            items = items + [plot]
+
+        self.wait(0.5)
+        return items
+
+    def construct(self):
+        if self.skip:
+            self.walk(-0.436 * RIGHT - 0.567 * UP)
+            return
+
+        chart, seq, y_vals = self.build_graph()
+        if self.graph_only:
+            return
+        mart_def = self.build_def(seq)
+        self.play(FadeOut(*self.walk(mart_def.get_right() * RIGHT + seq.get_bottom() * UP)), run_time=1)
+        eq_int = self.mart_int(mart_def[0], mart_def[-1])
+        self.anim_int(7, chart, eq_int, y_vals)
 
         self.wait(0.5)
 
