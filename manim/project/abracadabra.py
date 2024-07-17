@@ -3256,7 +3256,7 @@ class MartingaleDef(Scene):
         chart.generate_target().scale(0.6).to_edge(UP, buff=0)
         self.play(MoveToTarget(chart), eq1.animate.next_to(chart.target, DOWN), run_time=2)
 
-        return chart, eq1, y_vals
+        return chart, eq1, y_vals, ax
 
     def build_def(self, eq1):
         eq2 = MathTex(r'\mathbb E[X_{n+1}\vert X_0,X_1,\ldots,X_n]=X_n')[0].next_to(eq1, DOWN).align_to(eq1, LEFT)
@@ -3293,13 +3293,14 @@ class MartingaleDef(Scene):
         box = SurroundingRectangle(mart_eqs, color=DARK_BLUE, corner_radius=0.1, stroke_width=5)
         self.play(FadeIn(box), run_time=1)
         self.wait(0.5)
-        eq1 = MathTex(r'\mathbb E[X_m\vert\mathcal F_n]=X_n')
-        eq2 = Tex(r'for $m \ge n$').next_to(eq1, DOWN)
-        VGroup(eq1, eq2).next_to(box, RIGHT, buff=0.5)
-        self.wait(0.5)
-        self.play(FadeIn(eq1, eq2), run_time=1)
-        self.wait(0.5)
-        self.play(FadeOut(eq1, eq2), run_time=1)
+        if not self.skip:
+            eq1 = MathTex(r'\mathbb E[X_m\vert\mathcal F_n]=X_n')
+            eq2 = Tex(r'for $m \ge n$').next_to(eq1, DOWN)
+            VGroup(eq1, eq2).next_to(box, RIGHT, buff=0.5)
+            self.wait(0.5)
+            self.play(FadeIn(eq1, eq2), run_time=1)
+            self.wait(0.5)
+            self.play(FadeOut(eq1, eq2), run_time=1)
 
         return VGroup(eq5, eq3, eq6, box)
 
@@ -3428,8 +3429,8 @@ class MartingaleDef(Scene):
                   ReplacementTransform(plot.copy(), path),
                   run_time=2)
 
-
-        self.wait(0.5)
+        self.wait(1)
+        self.play(FadeOut(box, eq3, path, eq_int), run_time=1)
 
     def walk(self, pos):
         print('POS', pos)
@@ -3484,18 +3485,107 @@ class MartingaleDef(Scene):
         self.wait(0.5)
         return items
 
-    def construct(self):
-        if self.skip:
-            self.walk(-0.436 * RIGHT - 0.567 * UP)
-            return
+    def optional(self, mart_def, chart, ax, seq):
+        if not self.skip:
+            eq_mart = mart_def[0]
+            eq1 = MathTex(r'\mathbb E[X_n]=\mathbb E[\mathbb E[X_{n+1}\vert\mathcal F_n]]')[0]\
+                .next_to(mart_def, RIGHT, buff=0.5)
+            eq1.next_to(eq_mart[-3], ORIGIN, submobject_to_align=eq1[5], coor_mask=UP)
 
-        chart, seq, y_vals = self.build_graph()
-        if self.graph_only:
-            return
+            self.play(ReplacementTransform((eq_mart[:10] + eq_mart[10] + eq_mart[11:13]).copy(),
+                                           eq1[8:18] + eq1[5] + eq1[2:4]),
+                      run_time=2)
+            self.play(FadeIn(eq1[:2], eq1[4], eq1[6:8], eq1[18]), run_time=1)
+            self.wait(0.5)
+            eq2 = MathTex(r'\mathbb E[X_n]=\mathbb E[X_{n+1}]')[0]
+            eq2.next_to(eq1[5], ORIGIN, submobject_to_align=eq2[5])
+            self.play(LaggedStart(FadeOut(eq1[8:10], eq1[14:18]),
+                                  ReplacementTransform(eq1[10:14] + eq1[18], eq2[8:12] + eq2[12]),
+                                  lag_ratio=0.5),
+                      run_time=3)
+
+            eq3 = MathTex(r'\mathbb E[X_0] = \mathbb E[X_1] {{= \mathbb E[X_2]}}{{= \cdots}}')\
+                .next_to(eq1, DOWN).align_to(eq1, LEFT)
+            self.wait(0.5)
+            self.play(FadeIn(eq3[0]), run_time=1)
+            self.wait(0.5)
+            self.play(FadeIn(eq3[1]), run_time=1)
+            self.wait(0.5)
+            self.play(FadeIn(eq3[2]), run_time=1)
+            self.wait(0.5)
+
+            t = 8
+            self.play(FadeOut(chart[5:]), run_time=1)
+            p0=ax.coords_to_point(t, 0)
+            p1=chart[2][t * 2].get_center()
+            eq4 = MathTex(r'T').next_to(p0, DOWN)
+            eq5 = MathTex(r'X_T').next_to(p1, UP)
+            l1 = Line(p0, p1, color=GREY, stroke_width=5, stroke_opacity=1)
+            self.play(FadeIn(eq4), run_time=1)
+            self.play(Create(l1), run_time=1)
+            self.play(FadeIn(eq5), run_time=1)
+            self.wait(0.5)
+            eq6 = MathTex(r'\mathbb E[X_T]=\mathbb E[X_0]').next_to(eq3, DOWN).align_to(eq1, LEFT)
+            self.play(FadeIn(eq6), run_time=1)
+            self.wait(0.5)
+            self.play(FadeOut(eq1[:8], eq2[8:], eq3),
+                      eq6.animate.next_to(mart_def[-1], RIGHT, buff=1),
+                      run_time=2)
+            self.wait(0.5)
+        else:
+            eq6 = VGroup()
+
+        thm_size = 45
+        opt1 = Tex(r'\underline{\bf Optional Sampling Theorem}', tex_environment="flushleft", font_size=thm_size)
+        opt1.next_to(seq, DOWN, buff=0.2).next_to(mart_def, RIGHT, buff=0.2, coor_mask=RIGHT)
+        opt2 = Tex(r'Let $X$ be a martingale and $T$ be a\\bounded stopping time.\\'
+                   r'Then, $\displaystyle\mathbb E[X_T]=\mathbb E[X_0]$.',
+                   tex_environment="flushleft", font_size=thm_size)
+        opt2.next_to(opt1, DOWN).align_to(opt1, LEFT)
+        bdd = opt2[0][24:31]
+        opt3 = Tex(r'stopping time such that $\mathbb E[\max(\lvert X_0\rvert,\ldots,\lvert X_T\rvert)] < \infty$.',
+                   font_size=thm_size)
+
+        thm = VGroup(opt1, opt2)
+        box_thm = SurroundingRectangle(thm, color=DARK_BLUE, corner_radius=0.1, stroke_width=5)
+        self.play(FadeIn(opt1), FadeOut(eq6), run_time=1)
+        self.play(FadeIn(opt2), run_time=1)
+        self.play(FadeIn(box_thm), run_time=1)
+        self.wait(0.5)
+        stop1 = Tex(r'{\bf Stopping Time}: $\displaystyle\{T=n\}\in\mathcal F_n$', font_size=thm_size)\
+            .next_to(box_thm, DOWN, buff=0.2).align_to(opt1, LEFT)
+        self.play(FadeIn(stop1), run_time=1)
+        self.wait(2)
+        self.play(FadeOut(stop1), run_time=1)
+
+        l1 = Line(bdd.get_left(), bdd.get_right(), stroke_width=6, color=RED)
+        self.play(FadeIn(l1), run_time=1)
+        self.wait(0.5)
+        self.play(LaggedStart(FadeOut(bdd, l1),
+                              opt2[0][31:44].animate.align_to(opt1, LEFT), lag_ratio=0.5),
+                  run_time=2)
+
+        opt3.next_to(opt2[0][31], ORIGIN, submobject_to_align=opt3[0][0])
+        self.wait(0.5)
+        self.play(ReplacementTransform(opt2[0][31:43], opt3[0][:12]),
+                  FadeOut(opt2[0][43]),
+                  FadeIn(opt3[0][12:20]),
+                  run_time=1)
+        self.wait(1)
+        self.play(FadeIn(opt3[0][20:]), run_time=1)
+        self.wait(0.5)
+
+
+    def construct(self):
+        chart, seq, y_vals, ax = self.build_graph()
         mart_def = self.build_def(seq)
-        self.play(FadeOut(*self.walk(mart_def.get_right() * RIGHT + seq.get_bottom() * UP)), run_time=1)
-        eq_int = self.mart_int(mart_def[0], mart_def[-1])
-        self.anim_int(7, chart, eq_int, y_vals)
+        if not self.skip:
+            self.play(FadeOut(*self.walk(mart_def.get_right() * RIGHT + seq.get_bottom() * UP)), run_time=1)
+            eq_int = self.mart_int(mart_def[0], mart_def[-1])
+            self.anim_int(7, chart, eq_int, y_vals)
+
+        self.optional(mart_def, chart, ax, seq)
+
 
         self.wait(0.5)
 
