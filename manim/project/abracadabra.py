@@ -3571,19 +3571,17 @@ class MartingaleDef(Scene):
         opt4_1 = Tex(r'$\displaystyle\mathbb E[\max(\lvert X_0\rvert,\ldots,\lvert X_T\rvert)] < \infty$.',
                    font_size=thm_size).next_to(opt4, DOWN, buff=0.2).move_to(box_thm, coor_mask=RIGHT)
         self.wait(0.5)
-        self.play(ReplacementTransform(opt2[0][31:43], opt4[0][:12]),
-                  FadeOut(opt2[0][43]),
-                  FadeIn(opt4[0][12:20]),
-                  run_time=1)
-        self.wait(1)
+        anim1 = AnimationGroup(ReplacementTransform(opt2[0][31:43], opt4[0][:12]),
+                               FadeOut(opt2[0][43]),
+                               FadeIn(opt4[0][12:20]))
         opt3.generate_target()
         opt3.target.next_to(opt4_1, DOWN, coor_mask=UP, buff=0.1)
         box2 = SurroundingRectangle(VGroup(opt1, opt2, opt3.target, opt4), color=DARK_BLUE,
                                     corner_radius=0.1, stroke_width=5)
-        self.play(Transform(box_thm, box2),
-                  MoveToTarget(opt3),
-                  run_time=1)
-        self.wait(0.5)
+        anim2 = AnimationGroup(Transform(box_thm, box2), MoveToTarget(opt3))
+        self.play(LaggedStart(anim1, anim2, lag_ratio=0.2),
+                  run_time=2)
+        self.wait(1)
         self.play(FadeIn(opt4_1), run_time=1)
         self.wait(0.5)
 
