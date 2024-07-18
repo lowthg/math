@@ -3345,16 +3345,11 @@ class MartingaleDef(Scene):
         self.wait(0.5)
         self.play(FadeIn(eq11), run_time=1)
         self.wait(0.5)
-        self.play(FadeOut(eq10),
-                  eq11.animate.next_to(eq10[7], ORIGIN, submobject_to_align=eq11[2], coor_mask=UP),
-                  run_time=2)
 
-        self.wait(0.5)
+        return VGroup(eq10, eq11)
 
-        return eq11
-
-    def anim_int(self, k, chart, eq_int, y_vals):
-        eq1 = MathTex(r'H_{}=-0.99'.format(k), z_index=1)[0].next_to(eq_int, DOWN).shift(LEFT*1.5+DOWN*0.2)
+    def anim_int(self, k, chart, y_vals, ax):
+        eq1 = MathTex(r'H_{}=-0.99'.format(k), z_index=1)[0].move_to(ax.coords_to_point(5, 3))
         box = SurroundingRectangle(eq1, stroke_opacity=0,
                                    stroke_color=DARK_BLUE, fill_opacity=0.6, fill_color=DARK_BLUE,
                                    corner_radius=0.1, z_index=0)
@@ -3413,8 +3408,9 @@ class MartingaleDef(Scene):
                                    corner_radius=0.1, z_index=0)
 
         path = scale_path2(np.linspace(0, 9/5, 10))
-        self.play(MoveToTarget(box), FadeOut(eq1[:3], val), FadeIn(eq2),
-                  ReplacementTransform(plot.copy(), path),
+        self.play(LaggedStart(AnimationGroup(MoveToTarget(box), FadeOut(eq1[:3], val), FadeIn(eq2)),
+                              ReplacementTransform(plot.copy(), path),
+                              lag_ratio=0.5),
                   run_time=2)
 
         self.wait(0.5)
@@ -3425,12 +3421,13 @@ class MartingaleDef(Scene):
                                    corner_radius=0.1, z_index=0)
 
         path = scale_path2([0.4 * x for x in y_vals[:-1]])
-        self.play(MoveToTarget(box), FadeOut(eq2), FadeIn(eq3),
-                  ReplacementTransform(plot.copy(), path),
+        self.play(LaggedStart(AnimationGroup(MoveToTarget(box), FadeOut(eq2), FadeIn(eq3)),
+                              ReplacementTransform(plot.copy(), path),
+                              lag_ratio=0.5),
                   run_time=2)
-
         self.wait(1)
-        self.play(FadeOut(box, eq3, path, eq_int), run_time=1)
+
+        return VGroup(box, eq3, path)
 
     def walk(self, pos):
         print('POS', pos)
@@ -3593,7 +3590,7 @@ class MartingaleDef(Scene):
         if not self.skip:
             self.play(FadeOut(*self.walk(mart_def.get_right() * RIGHT + seq.get_bottom() * UP)), run_time=1)
             eq_int = self.mart_int(mart_def[0], mart_def[-1])
-            self.anim_int(7, chart, eq_int, y_vals)
+            self.play(FadeOut(eq_int, self.anim_int(7, chart, y_vals, ax)), run_time=0.5)
 
         self.optional(mart_def, chart, ax, seq)
 
