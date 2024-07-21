@@ -3594,8 +3594,152 @@ class MartingaleDef(Scene):
 
         self.optional(mart_def, chart, ax, seq)
 
-
         self.wait(0.5)
+
+
+class MartingaleStrategy(Scene):
+    """
+    Double-loss
+    """
+
+#    flips = 'TTTH'
+    flips = 'TTTTTTTTTT'
+
+    coin_map = {
+        0:  'coin1.png',
+        1:  'coin2.png',
+        2:  'coin2x2.png',
+        3:  'coin4x2.png',
+        4:  'coin4x4.png',
+        5:  'coin8x4.png',
+        6:  'coin16x4.png',
+        7:  'coin16x8.png',
+        8:  'coin16x16.png',
+        9:  'coin32x16.png',
+    }
+
+    def get_staked_coin(self, i):
+        coin = ImageMobject(self.coin_map[i], z_index=1)
+
+        return coin
+
+
+    def play_game(self, flips):
+        wojak0 = ImageMobject("wojak.png")
+        wojak_happy0 = ImageMobject("wojak_happy.png")
+        wojak = ImageMobject(np.flip(wojak0.pixel_array, 1), z_index=2).scale(0.2)
+        wojak_happy = ImageMobject(np.flip(wojak_happy0.pixel_array, 1), z_index=3).scale(0.2)
+
+        t1 = MobjectTable([[Text(r'$0', color=RED, font_size=40, z_index=4)],
+                           [Text(r'$0', color=GREEN, font_size=40, z_index=4)]],
+                          row_labels=[Text('Paid', font_size=40), Text('Won', font_size=40)],
+                          include_outer_lines=True, z_index=4)
+        for x in t1:
+            x.set_z_index(4)
+        t1.to_edge(DR).shift(UP * 1.05)
+
+        t2 = MobjectTable([[Text('Stake', font_size=40)], [Text(r'$0', font_size=40)]],
+                          include_outer_lines=True,
+                          z_index=4, fill_color=BLACK, fill_opacity=1)
+        t2.to_edge(DL)
+        t2.align_to(t1, UP)
+        for x in t2:
+            x.set_z_index(4)
+
+        self.play(FadeIn(t1, t2), run_time=2)
+
+        wojak.next_to(t1, LEFT, buff=0.4)
+        wojak_pos = wojak.get_center()
+        wojak.align_to(t1, LEFT)
+        rect = SurroundingRectangle(t1, buff=0, fill_color=BLACK, stroke_opacity=0,
+                         fill_opacity=1, z_index=3)
+        rect2 = SurroundingRectangle(t2, buff=0, fill_color=BLACK, stroke_opacity=0,
+                         fill_opacity=1, z_index=3)
+        rect0 = Rectangle(width=2*config.frame_x_radius, height=t1.get_top()[1] + config.frame_y_radius + 0.1,
+                          fill_color=BLACK, stroke_opacity=0, fill_opacity=1, z_index=0).to_edge(DOWN, buff=0)
+
+        self.wait(1)
+        self.add(rect, rect2, rect0)
+        self.play(wojak.animate(rate_func=rate_functions.ease_out_cubic).move_to(wojak_pos), run_time=0.8)
+
+        self.wait(1)
+
+        coins = VGroup(*[get_coin(face) for face in flips]).arrange(RIGHT).to_edge(DL)
+
+        paid = 0
+
+        for i, flip in enumerate(flips):
+            coin = self.get_staked_coin(i)
+            coin.move_to(wojak).shift(LEFT * 0.3)
+            pos = coin.get_corner(UL)
+            pos[0] = max(pos[0], wojak.get_left()[0])
+            pos[1] = min(pos[1], wojak.get_top()[1])
+            coin.move_to(pos, UL)
+            wojak.get_left()
+            eq5 = Text(r'${}'.format(2**i), font_size=40).set_z_index(4)
+            eq5.shift(t2[0][1][0].get_center() - eq5[0].get_center())
+            paid += 2**i
+            eq6 = Text(r'${}'.format(paid), font_size=40, color=RED).set_z_index(4)
+            eq6.shift(t1[0][1].get_center() - eq6.get_center())
+            pos = t2.get_right() + RIGHT * 0.2
+            if i > 6:
+                pos[1] = t2.get_bottom()[1] + coin.height/2
+            if i > 8:
+                pos[0] = 0
+                pass
+
+            diff = pos - coin.get_left()
+            dist = math.sqrt(diff[0]*diff[0] + diff[1]*diff[1])
+            self.play(coin.animate(rate_func=rate_functions.ease_out_cubic).move_to(pos, LEFT), run_time=dist/3)
+            self.play(ReplacementTransform(t2[0][1][0], eq5[0]),
+                      ReplacementTransform(t1[0][1][0], eq6[0]),
+                      FadeOut(t1[0][1][1:], t2[0][1][1:]),
+                      FadeIn(eq5[1:], eq6[1:]),
+                      run_time=0.5)
+            t1[0][1] = eq6
+            t2[0][1] = eq5
+            coins[i] = animate_flip(self, coins[i])
+            eq7 = Text(r'$0', font_size=40).set_z_index(4)
+            eq7.shift(t2[0][1][0].get_center() - eq7[0].get_center())
+            if flip == 'T':
+                self.wait(1)
+                shift = config.frame_x_radius + coin.get_right()[0]
+                self.play(coin.animate(rate_func=rate_functions.linear).shift(LEFT * shift), run_time=shift/5)
+                self.play(ReplacementTransform(t2[0][1][0], eq7[0]),
+                          FadeOut(t2[0][1][1:]),
+                          FadeIn(eq7[1:]),
+                          run_time=0.5)
+            else:
+                self.wait(1)
+                wojak_happy.move_to(wojak)
+                self.add(wojak_happy)
+                self.remove(wojak)
+                coin_win = self.get_staked_coin(i+1).move_to(coin, LEFT)
+                eq8 = Text(r'${}'.format(2**(i+1)), font_size=40, color=GREEN).set_z_index(4)
+                eq8.shift(t1[0][3].get_center() - eq8.get_center())
+                self.play(FadeOut(coin), FadeIn(coin_win), run_time=2)
+                self.play(ReplacementTransform(t2[0][1][0], eq7[0]),
+                          FadeOut(t2[0][1][1:]),
+                          FadeIn(eq7[1:]),
+                          coin_win.animate(rate_func=linear).move_to(wojak),
+                          run_time=1)
+                self.play(FadeOut(coin_win),
+                          FadeOut(t1[0][3][1:]),
+                          FadeIn(eq8[1:]),
+                          ReplacementTransform(t1[0][3][0], eq8[0]),
+                          run_time=0.8)
+                t1[0][3] = eq8
+
+            t2[0][1] = eq7
+
+        self.wait(1)
+        self.play(FadeOut(coins, t2), run_time=2)
+
+    def construct(self):
+        box = Rectangle(width=2, height=2).to_edge(UP)
+
+        self.play_game(flips=self.flips)
+        self.wait(2)
 
 
 if __name__ == "__main__":
