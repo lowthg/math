@@ -3685,8 +3685,7 @@ class MartingaleStrategy(Scene):
             if i > 6:
                 pos[1] = t2.get_bottom()[1] + coin.height/2
             if i > 8:
-                pos[0] = 0
-                pass
+                pos[0] = -coin.width/2
 
             diff = pos - coin.get_left()
             dist = math.sqrt(diff[0]*diff[0] + diff[1]*diff[1])
