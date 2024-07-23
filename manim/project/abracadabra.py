@@ -3619,10 +3619,9 @@ class MartingaleStrategy(Scene):
     }
 
     def get_staked_coin(self, i):
-        coin = ImageMobject(self.coin_map[i], z_index=1)
+        coin = ImageMobject(self.coin_map[i], z_index=1).scale(1.1)
 
         return coin
-
 
     def play_game(self, flips):
         wojak0 = ImageMobject("wojak.png")
@@ -3630,19 +3629,27 @@ class MartingaleStrategy(Scene):
         wojak = ImageMobject(np.flip(wojak0.pixel_array, 1), z_index=2).scale(0.2)
         wojak_happy = ImageMobject(np.flip(wojak_happy0.pixel_array, 1), z_index=3).scale(0.2)
 
-        t1 = MobjectTable([[Text(r'$0', color=RED, font_size=40, z_index=4)],
-                           [Text(r'$0', color=GREEN, font_size=40, z_index=4)]],
+        coins = VGroup(*[get_coin(face) for face in flips]).arrange(RIGHT).to_edge(DOWN, buff=0.04).to_edge(LEFT)
+
+        placeholder = Text(r'$1024', font_size=40)
+        vbuff = 0.2
+        hbuff = 0.2
+
+        t1 = MobjectTable([[placeholder.copy()], [placeholder.copy()]],
                           row_labels=[Text('Paid', font_size=40), Text('Won', font_size=40)],
-                          include_outer_lines=True, z_index=4)
+                          include_outer_lines=True, z_index=4, v_buff=vbuff, h_buff=hbuff)
+        t1[0][1] = Text(r'$0', color=RED, font_size=40, z_index=4).move_to(t1[0][1])
+        t1[0][3] = Text(r'$0', color=GREEN, font_size=40, z_index=4).move_to(t1[0][3])
         for x in t1:
             x.set_z_index(4)
-        t1.to_edge(DR).shift(UP * 1.05)
+        t1.next_to(coins, UP).to_edge(RIGHT)
 
-        t2 = MobjectTable([[Text('Stake', font_size=40)], [Text(r'$0', font_size=40)]],
+        t2 = MobjectTable([[Text('Stake', font_size=40)], [placeholder]],
                           include_outer_lines=True,
-                          z_index=4, fill_color=BLACK, fill_opacity=1)
+                          z_index=4, fill_color=BLACK, fill_opacity=1, v_buff=vbuff, h_buff=hbuff)
+        t2[0][1] = Text(r'$0', font_size=40).move_to(t2[0][1])
         t2.to_edge(DL)
-        t2.align_to(t1, UP)
+        t2.align_to(t1, DOWN)
         for x in t2:
             x.set_z_index(4)
 
@@ -3664,7 +3671,6 @@ class MartingaleStrategy(Scene):
 
         self.wait(1)
 
-        coins = VGroup(*[get_coin(face) for face in flips]).arrange(RIGHT).to_edge(DL)
 
         paid = 0
 
@@ -3676,13 +3682,11 @@ class MartingaleStrategy(Scene):
             pos[1] = min(pos[1], wojak.get_top()[1])
             coin.move_to(pos, UL)
             wojak.get_left()
-            eq5 = Text(r'${}'.format(2**i), font_size=40).set_z_index(4)
-            eq5.shift(t2[0][1][0].get_center() - eq5[0].get_center())
+            eq5 = Text(r'${}'.format(2**i), font_size=40).set_z_index(4).move_to(t2[0][1])
             paid += 2**i
-            eq6 = Text(r'${}'.format(paid), font_size=40, color=RED).set_z_index(4)
-            eq6.shift(t1[0][1].get_center() - eq6.get_center())
+            eq6 = Text(r'${}'.format(paid), font_size=40, color=RED).set_z_index(4).move_to(t1[0][1])
             pos = t2.get_right() + RIGHT * 0.2
-            if i > 6:
+            if i > 3:
                 pos[1] = t2.get_bottom()[1] + coin.height/2
             if i > 8:
                 pos[0] = -coin.width/2
@@ -3698,8 +3702,7 @@ class MartingaleStrategy(Scene):
             t1[0][1] = eq6
             t2[0][1] = eq5
             coins[i] = animate_flip(self, coins[i])
-            eq7 = Text(r'$0', font_size=40).set_z_index(4)
-            eq7.shift(t2[0][1][0].get_center() - eq7[0].get_center())
+            eq7 = Text(r'$0', font_size=40).set_z_index(4).move_to(t2[0][1])
             if flip == 'T':
                 self.wait(1)
                 shift = config.frame_x_radius + coin.get_right()[0]
@@ -3714,8 +3717,7 @@ class MartingaleStrategy(Scene):
                 self.add(wojak_happy)
                 self.remove(wojak)
                 coin_win = self.get_staked_coin(i+1).move_to(coin, LEFT)
-                eq8 = Text(r'${}'.format(2**(i+1)), font_size=40, color=GREEN).set_z_index(4)
-                eq8.shift(t1[0][3].get_center() - eq8.get_center())
+                eq8 = Text(r'${}'.format(2**(i+1)), font_size=40, color=GREEN).set_z_index(4).move_to(t1[0][3])
                 self.play(FadeOut(coin), FadeIn(coin_win), run_time=2)
                 self.play(ReplacementTransform(t2[0][1][0], eq7[0]),
                           FadeOut(t2[0][1][1:]),
@@ -3739,6 +3741,72 @@ class MartingaleStrategy(Scene):
 
         self.play_game(flips=self.flips)
         self.wait(2)
+
+
+class InfiniteStake(Scene):
+    def construct(self):
+        MathTex.set_default(font_size=50, z_index=1)
+        eq1 = MathTex(r'\mathbb E[{\rm Total\ Stake}] {{=}} \sum_{n=0}^\infty\mathbb P(N > n){\rm Stake}_n')\
+            .set_z_index(1)
+        box1 = SurroundingRectangle(eq1, color=DARK_BLUE, corner_radius=0.1, stroke_width=5,
+                                    fill_opacity=1, fill_color=BLACK)
+        self.play(FadeIn(eq1, box1), run_time=1)
+        self.wait(0.5)
+        eq2 = MathTex(r'{{=}}2^{-n}2^n').set_z_index(1)
+        eq2.next_to(eq1[1], ORIGIN, submobject_to_align=eq2[0])
+        eq2[1][:3].move_to(eq1[2][5:11], coor_mask=RIGHT)
+        eq2[1][3:].move_to(eq1[2][11:], coor_mask=RIGHT)
+#        self.play(FadeOut(eq1[2][5:11]), FadeIn(eq2[1][:3]), run_time=2)
+        self.play(FadeOut(eq1[2][5:9], eq1[2][10]), FadeIn(eq2[1][:2]),
+                  ReplacementTransform(eq1[2][9], eq2[1][2]),
+                  run_time=2)
+        self.wait(0.5)
+#        self.play(FadeOut(eq1[2][11:]), FadeIn(eq2[1][3:]), run_time=2)
+        self.play(FadeOut(eq1[2][11:-1]), FadeIn(eq2[1][3:-1]),
+                  ReplacementTransform(eq1[2][-1], eq2[1][-1]),
+                  run_time=2)
+        eq3 = MathTex(r'{{=}} \sum_{n=0}^\infty 1')
+        eq3.next_to(eq1[1], ORIGIN, submobject_to_align=eq3[0])
+        box3 = SurroundingRectangle(VGroup(eq1[:2], eq3[1]), color=DARK_BLUE, corner_radius=0.1, stroke_width=5,
+                                    fill_opacity=1, fill_color=BLACK)
+        self.wait(0.5)
+        self.play(FadeOut(eq2[1][:3], shift=(eq3[1][-1].get_center()-eq2[1][0].get_center())*RIGHT),
+                  FadeOut(eq2[1][3:], shift=(eq3[1][-1].get_center()-eq2[1][3].get_center())*RIGHT),
+                  FadeIn(eq3[1][-1], shift=(eq3[1][-1].get_center()-eq2[1][0].get_center())*RIGHT),
+                  ReplacementTransform(box1, box3),
+                  run_time=2)
+        self.wait(0.5)
+        eq4 = MathTex(r'{{=}} \infty')
+        eq4.next_to(eq1[1], ORIGIN, submobject_to_align=eq4[0])
+        eq4_1 = eq4[1].copy().move_to(eq3[1], coor_mask=RIGHT)
+        self.play(FadeIn(eq4_1), FadeOut(eq1[2][:5], eq3[1][-1]), run_time=2)
+        box4 = SurroundingRectangle(VGroup(eq1[:2], eq1[2][0], eq1[2][2], eq4[1]), color=DARK_BLUE, corner_radius=0.1, stroke_width=5,
+                                    fill_opacity=1, fill_color=BLACK)
+        self.play(ReplacementTransform(eq4_1, eq4[1]),
+                  ReplacementTransform(box3, box4), run_time=1)
+        self.wait(1)
+
+        return
+
+
+class InfiniteStake2(Scene):
+    def construct(self):
+        thm_size = 45
+        opt1 = Tex(r'\underline{\bf Optional Sampling Theorem}', tex_environment="flushleft", font_size=thm_size)
+        opt2 = Tex(r'Let $X$ be a martingale and $T$ be a\\stopping time such that',
+                   tex_environment="flushleft", font_size=thm_size).next_to(opt1, DOWN).align_to(opt1, LEFT)
+        opt3 = Tex(r'$\displaystyle\mathbb E[\max(\lvert X_0\rvert,\ldots,\lvert X_T\rvert)] < \infty$.',
+                   font_size=thm_size).next_to(opt2, DOWN, buff=0.2).align_to(opt1, LEFT)  #.move_to(box_thm, coor_mask=RIGHT)
+        opt4 = Tex(r'Then, $\displaystyle\mathbb E[X_T]=\mathbb E[X_0]$.',
+                   tex_environment="flushleft", font_size=thm_size).next_to(opt3, DOWN, buff=0.2).align_to(opt1, LEFT)
+        box = SurroundingRectangle(VGroup(opt1, opt2, opt3, opt4), color=DARK_BLUE, corner_radius=0.1, stroke_width=5)
+        opt1.move_to(box, coor_mask=RIGHT)
+        opt3.move_to(box, coor_mask=RIGHT)
+        thm = VGroup(opt1, opt2, opt3, opt4, box).move_to(ORIGIN)
+
+        self.add(thm)
+
+        self.wait(1)
 
 
 if __name__ == "__main__":
