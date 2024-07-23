@@ -3792,19 +3792,43 @@ class InfiniteStake(Scene):
 class InfiniteStake2(Scene):
     def construct(self):
         thm_size = 45
-        opt1 = Tex(r'\underline{\bf Optional Sampling Theorem}', tex_environment="flushleft", font_size=thm_size)
-        opt2 = Tex(r'Let $X$ be a martingale and $T$ be a\\stopping time such that',
-                   tex_environment="flushleft", font_size=thm_size).next_to(opt1, DOWN).align_to(opt1, LEFT)
-        opt3 = Tex(r'$\displaystyle\mathbb E[\max(\lvert X_0\rvert,\ldots,\lvert X_T\rvert)] < \infty$.',
-                   font_size=thm_size).next_to(opt2, DOWN, buff=0.2).align_to(opt1, LEFT)  #.move_to(box_thm, coor_mask=RIGHT)
-        opt4 = Tex(r'Then, $\displaystyle\mathbb E[X_T]=\mathbb E[X_0]$.',
-                   tex_environment="flushleft", font_size=thm_size).next_to(opt3, DOWN, buff=0.2).align_to(opt1, LEFT)
-        box = SurroundingRectangle(VGroup(opt1, opt2, opt3, opt4), color=DARK_BLUE, corner_radius=0.1, stroke_width=5)
+        Tex.set_default(font_size=45, tex_environment='flushleft', z_index=1)
+        opt1 = Tex(r'\underline{\bf Optional Sampling Theorem}').set_z_index(1)
+        opt2 = Tex(r'Let $X$ be a martingale and $T$ be a\\stopping time such that')\
+            .next_to(opt1, DOWN).align_to(opt1, LEFT).set_z_index(1)
+        opt3 = Tex(r'$\displaystyle\mathbb E[\max(\lvert X_0\rvert,\ldots,\lvert X_T\rvert)] < \infty$.')\
+            .next_to(opt2, DOWN, buff=0.2).align_to(opt1, LEFT).set_z_index(1)
+        opt4 = Tex(r'Then, $\displaystyle\mathbb E[X_T]=\mathbb E[X_0]$.')\
+            .next_to(opt3, DOWN, buff=0.2).align_to(opt1, LEFT).set_z_index(1)
+        box = SurroundingRectangle(VGroup(opt1, opt2, opt3, opt4), color=DARK_BLUE, corner_radius=0.1, stroke_width=5,
+                                   fill_opacity=1, fill_color=BLACK)
         opt1.move_to(box, coor_mask=RIGHT)
         opt3.move_to(box, coor_mask=RIGHT)
         thm = VGroup(opt1, opt2, opt3, opt4, box).move_to(ORIGIN)
 
         self.add(thm)
+
+        points = [
+            (opt3.get_corner(UL) +opt3.get_top())*0.5 + UP*0.3,
+            opt3.get_corner(UR) + UR * 0.2 + RIGHT*0.5,
+            opt3.get_corner(UR) + UR * 0.05 + RIGHT*0.5,
+            opt3.get_right() + RIGHT*0.1,
+            opt3.get_corner(DR) + DR * 0.05 + RIGHT*0.5,
+            opt3.get_corner(DR) + DR * 0.2 + RIGHT*0.5,
+            opt3.get_corner(DR) + DR * 0.2 + RIGHT*0.5,
+            opt3.get_bottom() + DOWN * 0.2,
+            opt3.get_bottom() + DOWN * 0.2,
+            opt3.get_corner(DL) + DL * 0.2 + LEFT * 0.5,
+            opt3.get_corner(DL) + DL * 0.2 + LEFT * 0.5,
+            opt3.get_corner(DL) + DL * 0.05 + LEFT * 0.8,
+            opt3.get_corner(UL) + UL * 0.2 + LEFT * 0.8,
+            opt3.get_corner(UL) + UL * 0.2 + LEFT * 0.5,
+            (opt3.get_corner(UR) + opt3.get_top()) * 0.5 + UP * 0.3,
+        ]
+        bez = bezier(points)
+        plot = ParametricFunction(bez, color=RED, stroke_width=10).set_z_index(2)
+        self.wait(1)
+        self.play(Create(plot), run_time=1.5)
 
         self.wait(1)
 
