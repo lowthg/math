@@ -394,9 +394,9 @@ class SequenceH(Scene):
             self.play(FadeIn(nh))
             self.wait(0.5)
 
-        eq1 = MathTex(r'\mathbb E[N_H]=2', font_size=80, color=BLACK, z_index=1).to_edge(DOWN, buff=0.2).shift(LEFT*2)
-        rect = SurroundingRectangle(eq1, corner_radius=0.1, fill_opacity=1, fill_color=WHITE,
-                                    stroke_opacity=0.5, stroke_color=BLUE, buff=0.2)
+        eq1 = MathTex(r'\mathbb E[N_H]=2', font_size=80, z_index=1).to_edge(DOWN, buff=0.2).shift(LEFT*2)
+        rect = SurroundingRectangle(eq1, corner_radius=0.1, fill_opacity=1, fill_color=BLACK,
+                                    stroke_opacity=1, stroke_width=5, color=DARK_BLUE, buff=0.2)
         self.play(FadeIn(eq1, rect))
         self.wait(1)
 
@@ -3602,8 +3602,8 @@ class MartingaleStrategy(Scene):
     Double-loss
     """
 
-#    flips = 'TTTH'
-    flips = 'TTTTTTTTTT'
+    flips = 'TTTH'
+#    flips = 'TTTTTTTTTT'
 
     coin_map = {
         0:  'coin1.png',
@@ -3619,7 +3619,7 @@ class MartingaleStrategy(Scene):
     }
 
     def get_staked_coin(self, i):
-        coin = ImageMobject(self.coin_map[i], z_index=1).scale(1.1)
+        coin = ImageMobject(self.coin_map[i], z_index=1)
 
         return coin
 
@@ -3653,8 +3653,6 @@ class MartingaleStrategy(Scene):
         for x in t2:
             x.set_z_index(4)
 
-        self.play(FadeIn(t1, t2), run_time=2)
-
         wojak.next_to(t1, LEFT, buff=0.4)
         wojak_pos = wojak.get_center()
         wojak.align_to(t1, LEFT)
@@ -3665,8 +3663,10 @@ class MartingaleStrategy(Scene):
         rect0 = Rectangle(width=2*config.frame_x_radius, height=t1.get_top()[1] + config.frame_y_radius + 0.1,
                           fill_color=BLACK, stroke_opacity=0, fill_opacity=1, z_index=0).to_edge(DOWN, buff=0)
 
-        self.wait(1)
         self.add(rect, rect2, rect0)
+        self.play(FadeIn(t1, t2), run_time=2)
+        self.wait(1)
+
         self.play(wojak.animate(rate_func=rate_functions.ease_out_cubic).move_to(wojak_pos), run_time=0.8)
 
         self.wait(1)
