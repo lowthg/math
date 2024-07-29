@@ -2641,9 +2641,9 @@ class AbraHT(Abra):
         return None
 
     def get_text(self):
-        desc = Text('\nEach player stakes $1 on their turn and bets on tails.\n'
+        desc = Text('\nEach player stakes $1 on their turn and bets on heads.\n'
                     'Any winnings are rolled over to bet on the next toss\n'
-                    'being heads.\n'
+                    'being tails.\n'
                     'Fair game => each win multiplies the stake by 2.', font_size=27, line_spacing=0.8) \
             .align_to(self.text_pos, UP).to_edge(LEFT, buff=0.2).shift(DOWN * 0.2)
         return desc
