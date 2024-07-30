@@ -252,6 +252,10 @@ class ScreenType(Scene):
 
 
 class ShakespeareTime(Scene):
+    def __init__(self, *args, **kwargs):
+        config.background_color = WHITE
+        Scene.__init__(self, *args, *kwargs)
+
     def construct(self):
         MathTex.set_default(font_size=100, stroke_width=1.4)
         eq2 = MathTex(r'26^{3,695,990}\approx 10^{5,229,728}')
