@@ -1543,6 +1543,49 @@ class AdhocHH(Scene):
         self.wait(1)
 
 
+class Mental(Scene):
+    def __init__(self, *args, **kwargs):
+        config.background_color = WHITE
+        Scene.__init__(self, *args, *kwargs)
+
+    def construct(self):
+        MathTex.set_default(font_size=80, stroke_width=1.4)
+        eq1 = MathTex('\mathbb E[N_{HHH}] {{=}} 8 + 4 + 2 {{=}} 14')
+        eq2 = MathTex('\mathbb E[N_{HTH}] {{=}} 8 + 2 {{=}} 10')
+        eq3 = MathTex('\mathbb E[N_{HTHT}] {{=}} 16 + 4 {{=}} 20')
+
+        eq1[3:].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[3], coor_mask=RIGHT)
+        eq2[3:].next_to(eq2[1], ORIGIN, submobject_to_align=eq2[3], coor_mask=RIGHT)
+        eq3[3:].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[3], coor_mask=RIGHT)
+
+        g = VGroup(eq1, eq2, eq3).arrange(direction=DOWN, center=False, aligned_edge=LEFT)
+        g.to_edge(DOWN)
+        g.shift((eq3[0:2] + eq3[4]).get_center() * LEFT)
+
+        self.play(FadeIn(eq1[0]), run_time=1)
+        self.play(FadeIn(eq1[1:3]), run_time=1)
+        self.play(FadeOut(eq1[2][0], target_position=eq1[4]),
+                  FadeOut(eq1[2][1], target_position=eq1[4]),
+                  FadeOut(eq1[2][2], target_position=eq1[4]),
+                  FadeOut(eq1[2][3], target_position=eq1[4]),
+                  FadeOut(eq1[2][4], target_position=eq1[4]),
+                  FadeIn(eq1[4]), run_time=2)
+        self.wait(0.5)
+        self.play(FadeIn(eq2[0]), run_time=1)
+        self.play(FadeIn(eq2[1:3]), run_time=1)
+        self.play(FadeOut(eq2[2][0], target_position=eq2[4]),
+                  FadeOut(eq2[2][1], target_position=eq2[4]),
+                  FadeOut(eq2[2][2], target_position=eq2[4]),
+                  FadeIn(eq2[4]), run_time=2)
+        self.wait(0.5)
+        self.play(FadeIn(eq3[0]), run_time=1)
+        self.play(FadeIn(eq3[1:3]), run_time=1)
+        self.play(FadeOut(eq3[2][0:2], target_position=eq3[4]),
+                  FadeOut(eq3[2][2], target_position=eq3[4]),
+                  FadeOut(eq3[2][3], target_position=eq3[4]),
+                  FadeIn(eq3[4]), run_time=2)
+
+
 class Abra(Scene):
     target = r'ABRACADABRA'
     choices = r'BABRACYABABRACADABRA'
