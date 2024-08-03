@@ -84,6 +84,53 @@ def animate_flip(scene: Scene, coin, rate=0.1, nflips=1):
     return coin
 
 
+def animate_flip2(scene: Scene, coin, rate=0.1, nflips=1):
+    """
+    RETURNS a list of animations that animate the mobject "coin" being flipped
+    The "final" variable incidicates what you want it to be at the end of the flipping
+    To animate a coin, use a loop to play the animations:
+
+    for a in animate_flip(coins[i],coin_flips[i]):
+            self.play(a,run_time=0.2)
+
+    """
+
+    global H, T
+
+    final = coin.submobjects[0].text
+
+    offset = 0 if final == 'H' else 1  # Ensures the coin lands on the side requested
+
+    scale = coin.width/H.width
+
+    full_fc = [H.copy().move_to(coin.get_center()).scale(scale), T.copy().move_to(coin.get_center()).scale(scale)]
+    full_fc = [full_fc[offset], full_fc[1-offset]]
+
+    time = ValueTracker(2 * math.pi)
+    times = []
+
+    def scale_path():
+        t = time.get_value()
+        times.append(t)
+        c = math.cos(t)
+        if c >= 0:
+            return full_fc[0].copy().stretch(max(c, 0.05), dim=1)
+        else:
+            return full_fc[1].copy().stretch(max(-c, 0.05), dim=1)
+
+    def show_time():
+        t = time.get_value()
+        eq = MathTex(r'{:.2f}'.format(t), z_index=1).next_to(coin, DOWN)
+        return eq
+
+    flip = always_redraw(scale_path)
+    showt = always_redraw(show_time)
+    scene.add(flip, showt)
+    scene.play(time.animate(rate_func=rate_functions.linear).set_value(0), run_time=rate * nflips * 4)
+
+    return coin
+
+
 _dice_faces = None
 
 
@@ -3880,6 +3927,22 @@ class InfiniteStake2(Scene):
         self.wait(1)
 
 
+class Test(Scene):
+
+    sequence = r'HTHHTH'
+
+    def construct(self):
+        rate=0.2
+        self.wait(1)
+        coins = [get_coin(x) for x in self.sequence]
+
+        g = Group(*coins).arrange(RIGHT)
+        g2 = Group(g, g.copy()).arrange(DOWN).move_to(ORIGIN)
+        for i in range(len(coins)):
+            animate_flip(self, g2[0][i], rate=rate)
+            animate_flip2(self, g2[1][i], rate=rate)
+        self.wait(1)
+
 if __name__ == "__main__":
-    with tempconfig({"quality": "low_quality", "preview": True}):
-        MartingaleDef().render()
+    with tempconfig({"quality": "low_quality", "fps": 30, "preview": True}):
+        Test().render()
