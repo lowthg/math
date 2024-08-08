@@ -1939,7 +1939,7 @@ class Abra(Scene):
             .next_to(eq3, DOWN).align_to(eq1, LEFT)
         eq8 = MathTex(r'\mathbb E[{{ {\rm Total\ paid} }}] {{=}} \mathbb E[{{ {\rm Total\ won} }}]',
                       font_size=40).next_to(eq4, DOWN).align_to(eq4, LEFT)
-        txt = Text(r'Fair game!', font_size=35, color=RED).next_to(eq8, RIGHT)
+        txt = Text(r'Fair game!', font_size=35, color=RED).next_to(eq8, DOWN)
 
         if self.do_fair_game:
             self.play(FadeIn(eq4), run_time=1)
@@ -1956,7 +1956,6 @@ class Abra(Scene):
 
             self.play(ReplacementTransform(eq5[-3:] + eq5[0], eq6[-3:] + eq6[0]),
                       eq5[1].animate.move_to(eq6[2], coor_mask=1),
-                      txt.animate.next_to(eq7, RIGHT),
                       run_time=2)
             self.play(ReplacementTransform(eq4[2:].copy(), eq6[1:4]),
                       FadeOut(eq5[1]),
@@ -1968,7 +1967,6 @@ class Abra(Scene):
             self.play(ReplacementTransform(eq7[4:8] + eq7[:3], eq8[:4] + eq8[-3:]),
                       FadeOut(eq7[3], target_position=eq8[3]),
                       FadeOut(eq7[-1]),
-                      txt.animate.next_to(eq8, RIGHT),
                       run_time=2)
             self.play(FadeOut(eq4), run_time=2)
         else:
@@ -2098,7 +2096,7 @@ class AbraGF(Abra):
 
         # paid amount
 
-        eq2 = MathTex(r'{{=}} 1 + 2 + \cdots + t^{N-1} {{=}} \frac{1-t^N}{1-t}')
+        eq2 = MathTex(r'{{=}} 1 + t + \cdots + t^{N-1} {{=}} \frac{1-t^N}{1-t}')
         eq2.next_to(eq1[1], submobject_to_align=eq2[0], direction=ORIGIN)
         eq2[2:].next_to(eq2[0], ORIGIN, submobject_to_align=eq2[2], coor_mask=RIGHT)
 
