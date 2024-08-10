@@ -2765,7 +2765,7 @@ class Abra66(Abra):
     table_shift = [1, 0, 0]
     play_game = True
     buff = 1
-    do_fair_game = True
+    do_fair_game = False
     math_shift = RIGHT + DOWN * 0.2
     final_rhs = r'42'
 
