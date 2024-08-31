@@ -216,6 +216,28 @@ def animate_roll(scene, key, pos=ORIGIN, scale=0.3, right=False, slide=True):
     scene.remove(*f[1:])
     return f[0]
 
+def circle_eq(eq):
+    points = [
+        (eq.get_corner(UL) + eq.get_top()) * 0.5 + UP * 0.3,
+        eq.get_corner(UR) + UR * 0.2 + RIGHT * 0.5,
+        eq.get_corner(UR) + UR * 0.05 + RIGHT * 0.5,
+        eq.get_right() + RIGHT * 0.1,
+        eq.get_corner(DR) + DR * 0.05 + RIGHT * 0.5,
+        eq.get_corner(DR) + DR * 0.2 + RIGHT * 0.5,
+        eq.get_corner(DR) + DR * 0.2 + RIGHT * 0.5,
+        eq.get_bottom() + DOWN * 0.2,
+        eq.get_bottom() + DOWN * 0.2,
+        eq.get_corner(DL) + DL * 0.2 + LEFT * 0.5,
+        eq.get_corner(DL) + DL * 0.2 + LEFT * 0.5,
+        eq.get_corner(DL) + DL * 0.05 + LEFT * 0.8,
+        eq.get_corner(UL) + UL * 0.2 + LEFT * 0.8,
+        eq.get_corner(UL) + UL * 0.2 + LEFT * 0.5,
+        (eq.get_corner(UR) + eq.get_top()) * 0.5 + UP * 0.3,
+    ]
+    bez = bezier(points)
+    plot = ParametricFunction(bez, color=RED, stroke_width=10).set_z_index(2)
+    return plot
+
 
 class MonkeyType(Scene):
     """
@@ -297,6 +319,47 @@ class ScreenType(Scene):
 
         self.wait(0.5)
 
+
+class ScreenTypeThumb(Scene):
+    """
+    just a wall of text to overlay on screen
+    """
+
+    run_type = True
+    part = 2
+
+    def construct(self):
+        random.seed(1)
+        abc = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ  '
+        letters = r''.join([random.choice(abc) for _ in range(145)])
+
+        letters = letters[:39] + 'MARTINGALE' + letters[49:]
+        letters = letters[:60] + 'THEORY' + letters[66:]
+        width = Dot().to_edge(UR, buff=0.1).get_right()[0] - Dot().to_edge(UL, buff=0.1).get_left()[0]
+
+        text = Text(letters, font="Courier New", weight=SEMIBOLD, color=BLUE, font_size=10).set_opacity(1)
+        text.set(font_size=78).to_edge(UL, buff=0.1)
+        op = 0.7
+        text[:37].set_opacity(op)
+        text[47:58].set_opacity(op)
+        text[64:].set_opacity(op)
+
+        text[37:47].set_color(RED)
+        text[58:64].set_color(RED)
+        print(len(letters))
+        print(len(text[:]))
+        i0 = 0
+        for i in range(len(text)):
+            if text[i0:i+1].width > width:
+                text[i:].next_to(text[i0:i], DOWN).align_to(text[i0], LEFT)
+                i0 = i
+
+        if self.part == 0:
+            self.add(text)
+        elif self.part == 1:
+            self.add(text[:37] + text[47:58] + text[64:])
+        else:
+            self.add(text[37:47] + text[58:64])
 
 class ShakespeareTime(Scene):
     def __init__(self, *args, **kwargs):
