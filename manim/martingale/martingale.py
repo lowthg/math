@@ -656,13 +656,120 @@ class MartingaleScaling(MartingaleDef):
         mart_def = self.build_def(seq, skip=True)
 
         eq_int = self.mart_int(mart_def[0], mart_def[-1])
-
-        self.play(FadeOut(eq_int, self.anim_int(7, chart, y_vals, ax)), run_time=0.5)
+        anim_int = self.anim_int(7, chart, y_vals, ax)
+        circle = abra.circle_eq(eq_int[1])
+        self.play(Create(circle), run_time=2)
+        self.wait(1)
+        self.play(FadeOut(circle), run_time=1)
+        self.wait(1)
+        self.play(FadeOut(eq_int, anim_int), run_time=0.5)
+        self.wait(1)
 
         return
 
         self.optional(mart_def, chart, ax, seq)
 
+
+class OptionalStopping(MartingaleDef):
+    skip = False
+
+    def optional(self, mart_def, chart, ax, seq):
+        eq1 = MathTex(r'Y_n = X^T_n=\begin{cases} X_n,&{\rm if\ }n\le T,\\ X_T,&{\rm if\ }n > T.\end{cases}')[0]
+        eq1.next_to(mart_def, RIGHT)
+        pos = eq1[:3].get_center()
+        eq1[:3].next_to(eq1[6], ORIGIN, submobject_to_align=eq1[2])
+        self.play(FadeIn(eq1[:2], eq1[6:8]), run_time=1)
+        self.wait(0.5)
+        self.play(FadeIn(eq1[8:16]), run_time=1)
+        self.wait(0.5)
+        self.play(FadeIn(eq1[16:]), run_time=1)
+        self.wait(0.5)
+        self.play(eq1[:3].animate.move_to(pos), run_time=1)
+        self.play(FadeIn(eq1[3:6]), run_time=0.5)
+        self.wait(0.5)
+
+        t = 8
+        t1 = 10
+        self.play(FadeOut(chart[5:]), run_time=1)
+        p0 = ax.coords_to_point(t, 0)
+        p_arr = [chart[2][s*2].get_center() for s in range(t, t1 + 1)]
+        y = p_arr[0][1]
+        for p in p_arr:
+            p[1] = y
+        eq4 = MathTex(r'T').next_to(p0, DOWN)
+        eq5 = MathTex(r'X^T').next_to(p_arr[0], UP)
+        l1 = Line(p0, p_arr[0], color=GREY, stroke_width=5, stroke_opacity=1)
+        l2 = Line(p_arr[0], p_arr[-1], color=WHITE, stroke_width=5, stroke_opacity=1)
+        eq5 = MathTex(r'X^T').next_to(l2, UP)
+
+        self.play(FadeIn(eq4), run_time=1)
+        self.play(Create(l1), run_time=1)
+        self.play(Create(l2), FadeOut(chart[2][t*2:]), run_time=1)
+        self.play(FadeIn(eq5), run_time=1)
+        self.wait(0.5)
+
+        thm_size = 45
+        opt1 = Tex(r'\underline{\bf Optional Stopping Theorem}', tex_environment="flushleft", font_size=thm_size)
+        opt1.next_to(seq, DOWN, buff=0.2).next_to(mart_def, RIGHT, buff=0.2, coor_mask=RIGHT)
+        opt2 = Tex(r'Let $X$ be a martingale and $T$ be a\\ stopping time.',
+                   tex_environment="flushleft", font_size=thm_size).next_to(opt1, DOWN).align_to(opt1, LEFT)
+        opt1.move_to(opt2, coor_mask=RIGHT)  # center heading
+        opt3 = Tex(r'Then, $X^T$ is a martingale.',
+                   tex_environment="flushleft", font_size=thm_size).next_to(opt2, DOWN, buff=0.2).align_to(opt2, LEFT)
+
+        box_thm = SurroundingRectangle(VGroup(opt1, opt2, opt3), color=DARK_BLUE, corner_radius=0.1, stroke_width=5)
+        thm = VGroup(opt1, opt2, opt3, box_thm).next_to(mart_def, RIGHT, buff=0.2)
+
+        mart_def.generate_target().shift(LEFT * 0.3)
+        self.play(FadeIn(opt1), FadeOut(eq1), MoveToTarget(mart_def), run_time=1)
+        self.play(FadeIn(opt2, opt3), run_time=1)
+        self.play(FadeIn(box_thm), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(mart_def), run_time=2)
+        self.wait(0.5)
+
+        l3 = Line(LEFT * config.frame_x_radius, RIGHT * thm.get_left())
+        stop1 = Tex(r'\underline{\bf Stopping Time}', font_size=thm_size)
+        stop2 = Tex(r'\\$\displaystyle\{T=n\}\in\mathcal F_n$', font_size=thm_size).next_to(stop1, DOWN)
+        stop3 = VGroup(stop1, stop2).next_to(thm, LEFT).move_to(l3, coor_mask=RIGHT)
+        self.play(FadeIn(stop3), run_time=1)
+        self.wait(2)
+        self.play(FadeOut(stop3), run_time=1)
+        self.wait(0.5)
+
+        eq6 = MathTex('Y_n = X^T_n = X_{\min(T, n)}').to_edge(LEFT).align_to(thm, UP)
+        self.play(FadeIn(eq6), run_time=1)
+        self.wait(0.1)
+        eq7 = MathTex(r'Y_{n+1}-Y_n = \begin{cases} X_{n+1}-X_n,&{\rm if\ }n < T,\\ 0,&{\rm if\ }n \ge T.\end{cases}')[0]
+        eq7.next_to(eq6, DOWN).align_to(eq6, LEFT)
+        thm2 = thm.copy()
+        self.play(FadeIn(eq7[:9]), thm.animate.scale(0.65).align_to(thm, DR), run_time=1)
+        self.wait(0.1)
+        self.play(FadeIn(eq7[9:23]), run_time=1)
+        self.wait(0.1)
+        self.play(FadeIn(eq7[23:]), run_time=1)
+        self.wait(0.5)
+        eq8 = MathTex(r'Y_{n+1}-Y_n =H_n(X_{n+1}-X_n)')[0].next_to(eq6, DOWN).align_to(eq6, LEFT)
+        self.play(ReplacementTransform(eq7[:8] + eq7[9:16], eq8[:8] + eq8[11:18]),
+                  FadeOut(eq7[8], eq7[16:]),
+                  FadeIn(eq8[8:10], target_position=eq7[8]),
+                  FadeIn(eq8[10], target_position=eq7[9].get_left()),
+                  FadeIn(eq8[18], target_position=eq7[14:15].get_right()),
+                  run_time=3)
+        self.wait(0.5)
+        eq9 = MathTex(r'H_n=\begin{cases}1, & {\rm if\ }n < T,\\ 0, & {\rm if\ }n\ge T.\end{cases}')[0]\
+            .next_to(eq8, DOWN).align_to(eq8, LEFT)
+        self.play(FadeIn(eq9), run_time=1)
+        self.wait(0.5)
+        thm2.scale(0.9).align_to(thm2, DR)
+        self.play(ReplacementTransform(thm, thm2), run_time=1)
+        self.wait(0.5)
+
+    def construct(self):
+        chart, seq, y_vals, ax = self.build_graph(skip=True)
+        mart_def = self.build_def(seq, skip=True)
+        self.optional(mart_def, chart, ax, seq)
+        self.wait(0.5)
 
 
 if __name__ == "__main__":
