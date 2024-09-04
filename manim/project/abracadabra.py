@@ -1923,7 +1923,7 @@ class Abra(Scene):
                           h_buff=0, v_buff=0).next_to(t1, RIGHT, buff=0)\
             .next_to(t3, RIGHT).align_to(t2, LEFT).set_z_index(0)
 
-        t3[0][0] = MathTex(r'\bf\rm stake', font_size=25, color=GREEN, z_index=4).move_to(t3[0][0])
+        t3[0][0] = MathTex(r'\bf\rm won', font_size=25, color=GREEN, z_index=4).move_to(t3[0][0])
         t3[0][1] = MathTex(r'\bf\rm wins', font_size=25, color=WHITE, z_index=4).move_to(t3[0][1])
         t3[0][2] = MathTex(r'\bf\rm bet', font_size=25, z_index=4).move_to(t3[0][2])
 
@@ -2765,9 +2765,9 @@ class AbraHT(Abra):
     num_players = 22
     wojak_scale = 0.12
     table_shift = [1, 0, 0]
-    play_game = True
+    play_game = False
     buff = 1
-    do_fair_game = True
+    do_fair_game = False
     math_shift = RIGHT + DOWN * 0.2
 
     @staticmethod
@@ -2808,8 +2808,8 @@ class AbraHH(AbraHT):
     target = r'HH'
     choices = r'THTHH'
     final_rhs = r'6'
-    play_game = True
-    do_fair_game = True
+    play_game = False
+    do_fair_game = False
 
     def get_text(self):
         desc = Text('\nEach player stakes $1 on their turn and bets on heads.\n'
@@ -2876,6 +2876,7 @@ class Abra6(Abra66):
 class AliceBob(AbraHT):
     target = [r'HTTTH', r'HTHTH']
     choices = [r'HTHHTTTH', r'HHTHTH' ]
+
     play_game = True
     num_players = 10
     wojak_space = 0.67
@@ -2904,11 +2905,14 @@ class AliceBob(AbraHT):
     def construct(self):
         title = Tex(r'\underline{{Alice ({}) vs Bob ({})}}'.format(*self.target), font_size=40).to_edge(UP)
         wojak0 = ImageMobject("wojak.png")
-        wojak_happy0 = ImageMobject("wojak_happy.png")
 
-        wojak = ImageMobject(np.flip(wojak0.pixel_array, 1), z_index=2).scale(self.wojak_scale)
-        wojak_happy = ImageMobject(np.flip(wojak_happy0.pixel_array, 1), z_index=3)
-        wojak_happy.scale(wojak.width / wojak_happy.width)
+        husbandjak = ImageMobject("husbandjak.png")
+        husbandjak_happy = ImageMobject("husbandjak_happy.png")
+        wojak = ImageMobject(husbandjak.pixel_array[:442, :, :], z_index=2)
+        wojak_happy = ImageMobject(husbandjak_happy.pixel_array[:442, :, :], z_index=3)
+        h_scale = self.wojak_scale/(wojak.height/wojak0.height*1)
+        wojak.scale(h_scale)
+        wojak_happy.scale(h_scale)
 
         wife0 = ImageMobject("wifejak.png")
         wife_happy0 = ImageMobject("wifejak_happy.png")

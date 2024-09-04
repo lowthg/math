@@ -163,19 +163,23 @@ class OneHead(Scene):
 
 
 class CoinSeq(Scene):
-    seq = ['HTHTHH', 'TTHHT']
+    seq = ['HTTTH']
+    toss = False
 
     def construct(self):
         n = len(self.seq)
         coins = [[abra.get_coin(seq[i]).scale(0.8) for i in range(len(seq))] for seq in self.seq]
         gp = VGroup(*[VGroup(*row).arrange(RIGHT) for row in coins]).arrange(DOWN, center=False, aligned_edge=LEFT)
-        for c1 in coins:
-            for c2 in c1:
-                self.wait(0.1)
-                abra.animate_flip(self, c2)
-            rect = SurroundingRectangle(VGroup(*c1[-2:]), color=GREEN, fill_opacity=0, stroke_width=6, corner_radius=0.2, buff=0.067)
-            self.play(FadeIn(rect), run_time=0.2)
-        self.wait(0.1)
+        if self.toss:
+            for c1 in coins:
+                for c2 in c1:
+                    self.wait(0.1)
+                    abra.animate_flip(self, c2)
+                rect = SurroundingRectangle(VGroup(*c1[-2:]), color=GREEN, fill_opacity=0, stroke_width=6, corner_radius=0.2, buff=0.067)
+                self.play(FadeIn(rect), run_time=0.2)
+            self.wait(0.1)
+        else:
+            self.add(gp)
 
 
 class MartingaleDef(Scene):
