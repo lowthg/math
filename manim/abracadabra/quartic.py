@@ -520,15 +520,61 @@ class Quartic(Scene):
         MathTex.set_default(font_size=40)
         title = Tex(r'\underline{Solving the Quartic Equation}', font_size=60).to_edge(UP, buff=0.3)
         self.add(title)
+
+        axes = Axes(
+            #    [start,end,step]
+            x_range=[-2, 4, 10],
+            y_range=[-8, 6, 10],
+            # Size of each axis
+            x_length=6.3,
+            y_length=7.5,
+            # axis_config: the settings you make here
+            # will apply to both axis, you have to use the
+            # NumberLine options
+            axis_config={"include_numbers": False},
+            # While axis_config applies to both axis,
+            # x_axis_config and y_axis_config only apply
+            # to their respective axis.
+            x_axis_config={
+                "color": GREY,
+                "include_tip": True,
+                "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+            },
+            y_axis_config={
+                "color": GREY,
+                "include_tip": True,
+                "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+            },
+        ).to_edge(LEFT, buff=-0.1)
+        xaxis = axes.get_x_axis()
+        x0, x1 = -2, 4
+        def f(x: float) -> float: return (x+1)*(x-1)*(x-2)*(x-3)
+        x2 = (x0+x1)/2
+        y2 = f(x2)
+        tick: Line = xaxis.get_tick(x2)
+        xaxis.add(tick)
+        graph = axes.plot(f, color=RED)
+
+        self.add(axes, graph)
+        self.play(Write(graph), run_time=2)
         desc1 = Tex(r'The general quartic equation is of the form').next_to(title, DOWN, buff=0.5).to_edge(LEFT, buff=1)
         desc2 = MathTex(r'ax^4+bx^3+cx^2+dx+e=0').next_to(desc1, DOWN, buff=0.4).move_to(ORIGIN, coor_mask=RIGHT)
         desc3 = Tex(r'{{for specified coefficients $a,b,c,d,e$ with $a\not=0$.}}'
-                    r' {{The aim is to find\\ values of $x$ for which this equality is satisfied.}}',
+                    r' {{The aim is to find values\\ of $x$ for which this equality is satisfied.}}',
                     tex_environment="flushleft")\
             .next_to(desc2, DOWN, buff=0.4).to_edge(LEFT, buff=0.3)
 
         self.play(FadeIn(desc1, desc2, desc3[0]), run_time=2)
         self.play(FadeIn(desc3[2]), run_time=1)
+
+        desc4 = Tex(r'What follows is a method I worked out many years ago in high school\\'
+                    r'A method which really should not work.\\Somehow, though, it does.\\'
+                    r'Watch out for the crazy sequence of coincidences at the end!', tex_environment='flushleft')\
+            .next_to(desc3, DOWN, buff=0.5).align_to(desc3, LEFT)
+
+        self.play(FadeIn(desc4), run_time=1)
 
 
         Tex(r'How can we start to even try to solve a general quadratic')

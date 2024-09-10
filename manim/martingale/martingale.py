@@ -5,7 +5,7 @@ import random
 import csv
 import datetime
 import sys
-sys.path.append('../project/')
+sys.path.append('../abracadabra/')
 # noinspection PyUnresolvedReferences
 import abracadabra as abra
 

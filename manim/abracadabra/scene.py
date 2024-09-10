@@ -299,29 +299,14 @@ class Dice(Scene):
 
 class Test(Scene):
     def construct(self):
-        eq4 = MathTex(r'x=2').to_edge(UP, buff=1)
-        eq5 = MathTex(r"\mathbb E[{{W_A}} -& {{W_B}}\vert A]{{\mathbb P(A) }}{{ +}}"
-                      r"\\ & \mathbb E[{{W_A}} - {{W_B}}\vert B]{{\mathbb P(B)}} {{=}} 0",
-                      font_size=40).next_to(eq4, DOWN).align_to(eq4, UP)
-
-        eq5 = MathTex(r"\mathbb E[{{W_A}} - {{W_B}}\vert A]{{\mathbb P(A) }}{{ +}}"
-                      r" \mathbb E[{{W_A}} - {{W_B}}\vert B]{{\mathbb P(B)}} {{=}} 0",
-                      font_size=40)
-        eq5[7:].next_to(eq5[:7], DOWN, coor_mask=UP, buff=0.208).align_to(eq5[2], LEFT)
-        eq5.next_to(eq4, DOWN).align_to(eq4, UP)
-
-
-        self.add(eq5)
-        self.wait(1)
-        eq6 = MathTex(r"\mathbb E[{{W_A}} - {{W_B}}\vert A]{{\mathbb P(A)}}{{ = }} "
-                      r"\mathbb E[{{W_B}} - {{W_A}}\vert B]{{\mathbb P(B)}}", font_size=40)
-        eq6.shift(eq5[0].get_center()-eq6[0].get_center())
-        eq6[6:].shift(eq5[7][0].get_center() - eq6[7][0].get_center())
-        self.play(ReplacementTransform(eq5[:6] + eq5[-2] + eq5[7] + eq5[8] + eq5[9] + eq5[10] + eq5[11:13],
-                                       eq6[:6] + eq6[6] + eq6[7] + eq6[10] + eq6[9] + eq6[8] + eq6[11:13]),
-                  FadeOut(eq5[6], eq5[-1]),
-                  run_time=2)
-        self.wait(1)
+        txt = MathTex(r'\int_{-\infty}^\infty e^{-x^2}\,dx=\sqrt{\pi}')
+        self.add(txt)
+        self.play(txt.animate.to_edge(DOWN))
+        self.play(txt.animate.to_edge(RIGHT).move_to(ORIGIN, coor_mask=UP))
+        self.play(txt.animate.to_edge(UP).move_to(ORIGIN, coor_mask=RIGHT))
+        self.play(txt.animate.to_edge(LEFT).move_to(ORIGIN, coor_mask=UP))
+        self.play(txt.animate.move_to(ORIGIN))
+        self.add(txt)
 
 
 
