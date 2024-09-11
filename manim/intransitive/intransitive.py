@@ -115,24 +115,31 @@ class MaxIntrans(Scene):
         dpos = xpos_w * 0.45 / (n - 1)
 
         xlines = []
+        vlines_x = []
 
         for i in range(n):
             pos_l = xpos + i * xdy
             pos_r = pos_l + xpos_w
-            line = Arrow(pos_l, pos_r + RIGHT * 0.5, color=WHITE, stroke_width=5, z_index=0,
+            line = Arrow(pos_l + + LEFT * 0.2, pos_r + RIGHT * 0.5, color=WHITE, stroke_width=5, z_index=1,
                          max_tip_length_to_length_ratio=0.05)
             pos_c = (pos_l + pos_r) * 0.5
             if i == 0:
                 poss = [pos_c]
-                eqs = [MathTex(r'p_1')[0].next_to(pos_c, DOWN, buff=0.15)]
+                eqs = [MathTex(r'p_1', z_index=3)[0].next_to(pos_c, DOWN, buff=0.15)]
             else:
                 poss = [pos_c - dpos * i, pos_c + dpos * (n - i)]
-                eqs = [MathTex(r'p_{{{}}}'.format(i+1))[0].next_to(poss[0], DOWN, buff=0.15),
-                       MathTex(r'q_{{{}}}'.format(i+1))[0].next_to(poss[1], DOWN, buff=0.15)]
+                eqs = [MathTex(r'p_{{{}}}'.format(i+1), z_index=3)[0].next_to(poss[0], DOWN, buff=0.15),
+                       MathTex(r'q_{{{}}}'.format(i+1), z_index=3)[0].next_to(poss[1], DOWN, buff=0.15)]
 
-            dots = [Dot(pos, radius=0.1, color=RED, z_index=1) for pos in poss]
+            dots = [Dot(pos, radius=0.1, color=RED, z_index=2) for pos in poss]
             eqx = MathTex(r'X_{{{}}}'.format(i+1), font_size=40).next_to(pos_l, LEFT, buff=0.05)
             xlines.append(VGroup(*eqs, eqx, line, *dots))
+            vlines_x += poss
+
+        vtop = xlines[0][-1].get_center() * UP + UP * 0.5
+        vbottom = xlines[-1][-1].get_center() * UP + DOWN * 0.5
+        vlines = [DashedLine(x * RIGHT + vtop, x * RIGHT + vbottom, stroke_width=2).set_opacity(0.35)
+                  for x in vlines_x]
 
         x0pos = xlines[0].get_center()
         xlines[0].move_to(ORIGIN)
@@ -159,7 +166,7 @@ class MaxIntrans(Scene):
                   run_time=2)
         self.play(FadeIn(xlines[1][:2]), run_time=0.5)
 
-        eq1 = MathTex(r'\mathbb P(X_1\le X_2) = p_1q_2')[0].next_to(xlines[0], UP)
+        eq1 = MathTex(r'\mathbb P(X_1\le X_2) = p_1q_2', z_index=3)[0].next_to(xlines[0], UP)
         box = SurroundingRectangle(VGroup(xlines[1][4], xlines[1][5]), color=BLUE, corner_radius=0.25, stroke_width=6, z_index=3)
         box.shift(-xdy * 0.38 + RIGHT*0.1)
         box.stretch(1.5, dim=1)
@@ -194,12 +201,12 @@ class MaxIntrans(Scene):
         if False:
             self.add(ax, lines, labels, crv_yeqx, label_q, label_yeqx, graph, label_f)
         else:
-            self.play(FadeIn(ax, lines, labels),
+            self.play(FadeIn(ax, lines, labels, *vlines),
                       Group(xlines[0], xlines[1], eq4).animate.shift(xlineshift),
                       run_time=2)
-            self.play(FadeIn(label_q), run_time=0.2)
             self.play(Create(crv_yeqx), run_time=1)
             self.play(FadeIn(label_yeqx), run_time=0.5)
+            self.play(FadeIn(label_q), run_time=0.2)
             self.play(Create(graph), run_time=1)
             self.play(FadeIn(label_f), run_time=0.5)
 
