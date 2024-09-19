@@ -11,6 +11,9 @@ sys.path.append('../abracadabra/')
 import abracadabra as abra
 
 
+def color(col=GREEN, scale=1.0):
+    return ManimColor(col.to_rgb() * scale)
+
 class MaxIntrans(Scene):
     prob = 0.27
     skip = False
@@ -138,7 +141,8 @@ class MaxIntrans(Scene):
 
         vtop = xlines[0][-1].get_center() * UP + UP * 0.5
         vbottom = xlines[-1][-1].get_center() * UP + DOWN * 0.5
-        vlines = [DashedLine(x * RIGHT + vtop, x * RIGHT + vbottom, stroke_width=2).set_opacity(0.35)
+        vlines = [DashedLine(x * RIGHT + vtop, x * RIGHT + vbottom, stroke_width=2,
+                             dash_length=DEFAULT_DASH_LENGTH * 0.5).set_opacity(0.35)
                   for x in vlines_x]
 
         x0pos = xlines[0].get_center()
@@ -167,10 +171,10 @@ class MaxIntrans(Scene):
         self.play(FadeIn(xlines[1][:2]), run_time=0.5)
 
         eq1 = MathTex(r'\mathbb P(X_1\le X_2) = p_1q_2', z_index=3)[0].next_to(xlines[0], UP)
-        box = SurroundingRectangle(VGroup(xlines[1][4], xlines[1][5]), color=BLUE, corner_radius=0.25, stroke_width=6, z_index=3)
-        box.shift(-xdy * 0.38 + RIGHT*0.1)
-        box.stretch(1.5, dim=1)
-        box.rotate(-0.32)
+        box = SurroundingRectangle(VGroup(xlines[1][4], xlines[1][0], xlines[1][5], xlines[1][1]),
+                                   color=BLUE, corner_radius=0.35, stroke_width=6, z_index=5)
+        box.shift(-xdy * 0.53 + RIGHT*0.12)
+        box.rotate(-0.332)
         self.play(FadeIn(eq1[:-4], run_time=1))
         self.play(FadeIn(box), run_time=1)
         self.play(ReplacementTransform(xlines[0][0][:2].copy(), eq1[-4:-2]),
@@ -273,3 +277,142 @@ class MaxIntrans(Scene):
 
 
         self.wait(1)
+
+
+class DiceUnfold(ThreeDScene):
+    def construct(self):
+        pass
+
+
+class ABC_Cycle(Scene):
+    def __init__(self, *args, **kwargs):
+        if config.transparent:
+            print("transparent!")
+            config.background_color = WHITE
+        Scene.__init__(self, *args, *kwargs)
+
+    def construct(self):
+        rad = 0.4
+        h = 2
+
+        a = LabeledDot(Text("A", font="Helvetica", color=WHITE, weight=SEMIBOLD), radius=rad,
+                       color=color(DARK_BLUE, 0.8), stroke_color=WHITE, stroke_width=3)
+        b = LabeledDot(Text("B", font="Helvetica", color=WHITE, weight=SEMIBOLD), radius=rad,
+                       color=color(ORANGE, 0.8), stroke_color=WHITE, stroke_width=3)
+        c = LabeledDot(Text("C", font="Helvetica", color=WHITE, weight=SEMIBOLD), radius=rad,
+                       color=color(GREEN, 0.5), stroke_color=WHITE, stroke_width=3)
+
+        b_c = b.get_center()
+        a.move_to(b_c + LEFT * h)
+        c.move_to(b_c + RIGHT * h)
+        a_c = a.get_center()
+        c_c = c.get_center()
+
+        ab = Arrow(a_c + RIGHT * rad, b_c + LEFT * rad, color=WHITE, stroke_width=5, z_index=1, buff=0)
+        bc = Arrow(b_c + RIGHT * rad, c_c + LEFT * rad, color=WHITE, stroke_width=5, z_index=1, buff=0)
+        ca = Arrow(c_c + LEFT * rad, a_c + RIGHT * rad, color=WHITE, stroke_width=5, z_index=1, buff=0).set_opacity(0)
+
+        ur = (RIGHT + UP * math.sqrt(3)) * 0.5
+
+        b2 = b.copy().shift(UP * h * math.sqrt(3)/2)
+        b2_c = b2.get_center()
+        a2 = a.copy().move_to(b2_c + ur * DL * h)
+        c2 = c.copy().move_to(b2_c + ur * DR * h)
+        a2_c = a2.get_center()
+        c2_c = c2.get_center()
+
+        ab2 = Arrow(a2_c + ur * rad, b2_c + ur * DL * rad, color=WHITE, stroke_width=5, z_index=1, buff=0)
+        bc2 = Arrow(b2_c + ur * DR * rad, c2_c + ur * UL * rad, color=WHITE, stroke_width=5, z_index=1, buff=0)
+        ca2 = Arrow(c2_c + LEFT * rad, a2_c + RIGHT * rad, color=WHITE, stroke_width=5, z_index=1, buff=0)
+
+        self.wait(0.5)
+
+        self.play(LaggedStart(FadeIn(a, b), FadeIn(ab), lag_ratio=0.5), run_time=1)
+        self.play(LaggedStart(FadeIn(c), FadeIn(bc), lag_ratio=0.5), run_time=1)
+        self.wait(0.5)
+        self.play(ReplacementTransform(a, a2),
+                  ReplacementTransform(b, b2),
+                  ReplacementTransform(c, c2),
+                  ReplacementTransform(ab, ab2),
+                  ReplacementTransform(bc, bc2),
+                  ReplacementTransform(ca, ca2),
+                  run_time=2)
+        self.wait(0.5)
+
+
+class One(ThreeDScene):
+    def construct(self):
+        l = 2
+        w = 4
+        h = 1
+        rect_prism = Prism(dimensions=[l, w, h]).to_edge(LEFT, buff=1)
+        kwargs = {"stroke_color": BLUE_D, "fill_color": BLUE_B, "fill_opacity": 1}
+        bottom = Rectangle(width=w, height=l, **kwargs)
+        s1 = Rectangle(height=h, width=w, **kwargs).next_to(bottom, UP, buff=0)
+        s2 = Rectangle(height=h, width=w, **kwargs).next_to(bottom, DOWN, buff=0)
+        l1 = Rectangle(height=l, width=h, **kwargs).next_to(bottom, LEFT, buff=0)
+        l2 = Rectangle(height=l, width=h, **kwargs).next_to(bottom, RIGHT, buff=0)
+        top = Rectangle(width=w, height=l, **kwargs).next_to(bottom, LEFT, buff=0)
+        net = VGroup(top, bottom, s1, s2, l1, l2).rotate(-PI/2).to_edge(RIGHT, buff=1)
+
+        arrow = Line(
+            start=rect_prism.get_right(), end=net.get_left(), buff=0.2
+        ).add_tip()
+
+        self.begin_ambient_camera_rotation()
+        self.set_camera_orientation(phi=45*DEGREES, theta=-45*DEGREES)
+        self.play(Create(rect_prism))
+        self.play(
+            LaggedStart(Create(arrow), Transform(rect_prism.copy(), net)),
+            run_time=2,
+            lag_ratio=0.5
+        )
+
+        self.wait()
+        self.play(FadeOut(Group(*self.mobjects)))
+        self.stop_ambient_camera_rotation()
+
+class SeqChoice(Scene):
+    def __init__(self, *args, **kwargs):
+        if config.transparent:
+            print("transparent!")
+            config.background_color = WHITE
+        Scene.__init__(self, *args, *kwargs)
+
+    seq = 'HHTTTH'
+    seq = 'HTTTH'
+    show_choice = False
+    pause = 1.5/30
+
+    def construct(self):
+        txt1 = Text(self.seq[-2:], font='Helvetica', z_index=1, weight=SEMIBOLD, font_size=55)
+        txt1[0].set_color(YELLOW)
+        txt1[1].set_color(BLUE)
+        box1 = SurroundingRectangle(txt1, corner_radius=0.4, stroke_color=GREEN, fill_opacity=1,
+                                    fill_color=BLACK, stroke_width=6, buff=0.2)
+        choice = VGroup(txt1, box1)
+        n = len(self.seq)
+        coins = VGroup(*[abra.get_coin(x).scale(0.8) for x in self.seq]).arrange(RIGHT)\
+            .next_to(choice, DOWN).align_to(choice, LEFT)
+        flipped = []
+
+        self.wait(0.5)
+        if self.show_choice:
+            self.play(FadeIn(choice), run_time=0.5)
+            self.wait(0.5)
+        for x in coins:
+            flipped.append(abra.animate_flip(self, x).set_z_index(1))
+            if self.pause > 0:
+                self.wait(self.pause)
+        rect = SurroundingRectangle(VGroup(*flipped[-2:]), color=GREEN, fill_opacity=1, stroke_width=6,
+                                    corner_radius=0.2, buff=0.067, fill_color=BLACK)
+        self.play(FadeIn(rect), run_time=0.2)
+        self.wait(0.5)
+
+
+
+        self.add(choice)
+
+if __name__ == "__main__":
+    with tempconfig({"quality": "low_quality", "fps": 15, "preview": True}):
+        ABC_Cycle().render()
