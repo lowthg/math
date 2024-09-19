@@ -340,6 +340,110 @@ class ABC_Cycle(Scene):
         self.wait(0.5)
 
 
+def seqboxed(seq, font_size=55):
+    txt = Text(seq, font='Helvetica', weight=SEMIBOLD, font_size=font_size)
+    for i in range(len(seq)):
+        if seq[i] == 'H':
+            txt[i].set_color(BLUE).set_z_index(1)
+        else:
+            txt[i].set_color(YELLOW).set_z_index(1)
+    box = SurroundingRectangle(txt, corner_radius=0.4, stroke_color=GREEN, fill_opacity=1,
+                               fill_color=BLACK, stroke_width=6, buff=0.2, z_index=0)
+
+    return VGroup(txt, box)
+
+def seqarr(source:Mobject, dest, odds=1, label_size=50):
+    dx = dest.get_center() - source.get_center()
+    print(dx)
+    for i in range(len(dx)):
+        if math.fabs(dx[i]) < 0.01:
+            dx[i] = 0
+
+    arr_func = DoubleArrow if odds == 1 else Arrow
+    arr = arr_func(source.get_corner(dx), dest.get_corner(-dx), color=WHITE,
+                   stroke_width=5, z_index=1, buff=0)
+
+    if odds != 1:
+        if dx[1] != 0:
+            dir = RIGHT
+            buff = 0
+        else:
+            dir = UP
+            buff = -0.05
+        dir = RIGHT if dx[1] != 0 else UP
+        label = Tex(r'\bf {}'.format(odds), font_size=label_size,
+                    color=color(PURE_RED, 0.5)).next_to(arr, dir, buff=buff)
+        label.set_stroke(width=1, color=WHITE)
+        arr = VGroup(arr, label)
+    return arr
+
+
+class HT_Cycle(Scene):
+    def __init__(self, *args, **kwargs):
+        if config.transparent:
+            print("transparent!")
+            config.background_color = WHITE
+        Scene.__init__(self, *args, *kwargs)
+
+    def construct(self):
+        h = RIGHT * 2.5
+        v = DOWN * 2
+        th = seqboxed('TH')
+        c = th.get_center()
+        hh = seqboxed('HH').move_to(c + h)
+        ht = seqboxed('HT').move_to(c + h + v)
+        tt = seqboxed('TT').move_to(c + v)
+
+        hh_arr = seqarr(th, hh, 3)
+        ht_arr = seqarr(hh, ht, 1)
+        tt_arr = seqarr(ht, tt, 3)
+        th_arr = seqarr(tt, th, 1)
+
+        self.wait(0.5)
+        self.play(FadeIn(th, hh, hh_arr), run_time=1)
+        self.wait(0.05)
+        self.play(FadeIn(ht, ht_arr), run_time=1)
+        self.wait(0.05)
+        self.play(FadeIn(tt, tt_arr), run_time=1)
+        self.wait(0.05)
+        self.play(FadeIn(th_arr), run_time=1)
+        self.wait(0.5)
+
+
+class Penneys_Cycle(Scene):
+    def __init__(self, *args, **kwargs):
+        if config.transparent:
+            print("transparent!")
+            config.background_color = WHITE
+        Scene.__init__(self, *args, *kwargs)
+
+    def construct(self):
+        h = RIGHT * 2.5
+        v = DOWN * 1.5
+        font_size = 40
+        label_size = 45
+        hhh = seqboxed('HHH', font_size=font_size).to_edge(UL)
+        c = hhh.get_center()
+        thh = seqboxed('THH', font_size=font_size).move_to(c + v)
+        hht = seqboxed('HHT', font_size=font_size).move_to(c + v + h)
+        hth = seqboxed('HTH', font_size=font_size).move_to(c + h)
+        tth = seqboxed('TTH', font_size=font_size).move_to(c + v * 2)
+        htt = seqboxed('HTT', font_size=font_size).move_to(c + v * 2 + h)
+        tht = seqboxed('THT', font_size=font_size).move_to(c + v * 3)
+        ttt = seqboxed('TTT', font_size=font_size).move_to(c + v * 3 + h)
+
+        hhha = seqarr(thh, hhh, 7, label_size)
+        hhta = seqarr(thh, hht, 3, label_size)
+        htha = seqarr(hht, hth, 2, label_size)
+        htta = seqarr(hht, htt, 2, label_size)
+        thha = seqarr(tth, thh, 2, label_size)
+        thta = seqarr(tth, tht, 2, label_size)
+        ttha = seqarr(htt, tth, 3, label_size)
+        ttta = seqarr(htt, ttt, 7, label_size)
+
+        self.add(hhh, hht, hth, htt, thh, tht, tth, ttt,
+                 hhha, hhta, htha, htta, thha, thta, ttha, ttta)
+
 class One(ThreeDScene):
     def construct(self):
         l = 2
@@ -415,4 +519,4 @@ class SeqChoice(Scene):
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "fps": 15, "preview": True}):
-        ABC_Cycle().render()
+        HT_Cycle().render()
