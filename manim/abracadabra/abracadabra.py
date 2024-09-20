@@ -134,11 +134,11 @@ def animate_flip2(scene: Scene, coin, rate=0.1, nflips=1):
 _dice_faces = None
 
 
-def get_dice_faces():
+def get_dice_faces(color=WHITE, dot_color=BLACK):
     global _dice_faces
     if _dice_faces is None:
-        blank = RoundedRectangle(width=2, height=2, fill_color=WHITE, fill_opacity=1, corner_radius=0.2, stroke_color=GREY)
-        dot = Dot(radius=0.22, color=BLACK, z_index=1)
+        blank = RoundedRectangle(width=2, height=2, fill_color=color, fill_opacity=1, corner_radius=0.2, stroke_color=GREY)
+        dot = Dot(radius=0.22, color=dot_color, z_index=1)
         x = RIGHT * 0.54
         y = UP * 0.54
 

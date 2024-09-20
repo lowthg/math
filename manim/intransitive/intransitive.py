@@ -1,3 +1,4 @@
+import manim
 from manim import *
 import numpy as np
 import math
@@ -524,6 +525,202 @@ class Penneys_Method(Scene):
         self.wait(0.5)
 
 
+class Efron(Scene):
+    def __init__(self, *args, **kwargs):
+        if config.transparent:
+            print("transparent!")
+            config.background_color = WHITE
+        Scene.__init__(self, *args, *kwargs)
+
+    def construct(self):
+        face_scale = 0.3
+        z_index = 0
+        colors = [color(DARK_BLUE, 0.8), color(ORANGE, 0.8), color(RED, 0.8), color(GREEN, 0.5)]
+        faces = abra.get_dice_faces(dot_color=WHITE)
+        faces = [VGroup(faces[0][0], *faces[0][1:].copy().set_opacity(0))] + faces
+
+        arranged = [
+            [3, 3, 3, 3, 3, 3],
+            [6, 2, 6, 2, 2, 2],
+            [1, 1, 1, 5, 5, 5],
+            [0, 4, 0, 4, 4, 4]
+        ]
+        ordered = [
+            [0, 1, 2, 3, 4, 5],
+            [3, 1, 4, 5, 0, 2],
+            [0, 1, 2, 3, 4, 5],
+            [0, 2, 3, 1, 4, 5]
+        ]
+
+        numbers = [[]] * 4
+        dice = []
+
+        for i in range(len(arranged)):
+            f = [None] * 6
+            f[1] = faces[arranged[i][1]].copy().scale(face_scale)
+            f[0] = faces[arranged[i][0]].copy().scale(face_scale).next_to(f[1], LEFT, buff=0)
+            f[2] = faces[arranged[i][2]].copy().scale(face_scale).next_to(f[1], RIGHT, buff=0)
+            f[3] = faces[arranged[i][3]].copy().scale(face_scale).next_to(f[1], UP, buff=0)
+            f[4] = faces[arranged[i][4]].copy().scale(face_scale).next_to(f[1], DOWN, buff=0)
+            f[5] = faces[arranged[i][5]].copy().scale(face_scale).next_to(f[4], DOWN, buff=0)
+
+            f1 = []
+            for j in range(6):
+                x = f[ordered[i][j]]
+                x[0].set_fill(color=colors[i])
+                x[0].set_z_index(z_index)
+                x[1:].set_z_index(z_index + 1)
+                z_index += 2
+                f1.append(x)
+                numbers[i].append(arranged[i][ordered[i][j]])
+
+            dice.append(VGroup(*f1))
+
+        dice_g = VGroup(*dice[::-1]).arrange(RIGHT)
+
+        self.add(dice_g)
+
+        rows = []
+        numrows = []
+        for i in range(len(ordered)):
+            row = dice[i].copy().arrange(RIGHT, buff=0)
+            for f in row[:]:
+                f[0] = Rectangle(width=f[0].width, height=f[0].height, fill_color=f[0].fill_color, fill_opacity=1,
+                                 stroke_width=f[0].stroke_width, stroke_color=WHITE, z_index=f[0].z_index)\
+                    .move_to(f[0])
+            rows.append(row)
+
+            numrow = MathTex(r'{}{}{}{}{}{}'.format(*numbers[i]))[0].move_to(rows[i])
+            for j in range(6):
+                numrow[j].move_to(row[j], coor_mask=RIGHT)
+            numrows.append(numrow)
+
+        t = VGroup(*rows).arrange(DOWN, buff=0).next_to(dice[1], RIGHT)
+        self.wait(1)
+        for i in range(4):
+            self.play(ReplacementTransform(dice[i], rows[i]), run_time=2)
+
+        # self.wait(1)
+        # dots = []
+        # for i in range(4):
+        #     for j in range(6):
+        #         dots.append(rows[i][j][1:])
+        #         numrows[i][j].set_z_index(rows[i][j][1].get_z_index())
+        #         self.play(FadeOut(*dots), FadeIn(*numrows[i]), run_time=1)
+
+        self.wait(1)
+
+        #rcolor = manim.rgb_to_color([0, 255, 255])
+        rcolor = PURE_RED
+        r2 = SurroundingRectangle(rows[1][4:], stroke_width=8, stroke_color=rcolor,
+                                  corner_radius=0.15, buff=0, z_index=z_index, fill_opacity=0.5, fill_color=BLACK)
+        self.play(FadeIn(r2), run_time=1)
+        self.wait(0.5)
+
+
+        r1 = SurroundingRectangle(rows[1][:4], stroke_width=8, stroke_color=rcolor,
+                                  corner_radius=0.15, buff=0, z_index=z_index, fill_opacity=0.5, fill_color=BLACK)
+        r2.target = SurroundingRectangle(rows[2][3:], stroke_width=8, stroke_color=rcolor,
+                                  corner_radius=0.15, buff=0, z_index=z_index, fill_opacity=0.5, fill_color=BLACK)
+
+        self.play(FadeIn(r1), MoveToTarget(r2), run_time=1)
+        self.wait(0.5)
+        r2.target = SurroundingRectangle(rows[3][2:], stroke_width=8, stroke_color=rcolor,
+                                  corner_radius=0.15, buff=0, z_index=z_index, fill_opacity=0.5, fill_color=BLACK)
+        r1.target = SurroundingRectangle(rows[2][:3], stroke_width=8, stroke_color=rcolor,
+                                  corner_radius=0.15, buff=0, z_index=z_index, fill_opacity=0.5, fill_color=BLACK)
+        self.play(MoveToTarget(r1), MoveToTarget(r2), run_time=1)
+        self.wait(0.5)
+        r2.target = SurroundingRectangle(rows[0][:], stroke_width=8, stroke_color=rcolor,
+                                  corner_radius=0.15, buff=0, z_index=z_index, fill_opacity=0.5, fill_color=BLACK)
+        r1.target = SurroundingRectangle(rows[3][:2], stroke_width=8, stroke_color=rcolor,
+                                  corner_radius=0.15, buff=0, z_index=z_index, fill_opacity=0.5, fill_color=BLACK)
+        self.play(MoveToTarget(r1), MoveToTarget(r2), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(r1, r2), run_time=0.5)
+        self.wait(0.5)
+
+        # number lines
+
+        points = [[(3, '1')], [(2, '2/3'), (6, '1/3')], [(1, '1/2'), (5, '1/2')], [(0, '1/3'), (4, '2/3')]]
+        posl = rows[0].get_left() * RIGHT
+        posr = RIGHT * (config.frame_x_radius - 1)
+        dx = (posr - posl)/6
+
+        vlines = []
+        vtop = rows[0].get_top() * UP
+        vbottom = rows[-1].get_bottom() * UP
+        for i in range(7):
+            vlines.append(DashedLine(dx * i + vtop + posl, dx * i + vbottom + posl, stroke_width=4,
+                       dash_length=DEFAULT_DASH_LENGTH * 0.5, z_index=1).set_opacity(0.6))
+
+        lines = []
+        for i in range(len(colors)):
+            line = Arrow(posl - dx * 0.5, posr + RIGHT * 0.7, color=colors[i], stroke_width=8, z_index=2,
+                         max_tip_length_to_length_ratio=0.08, buff=0)
+            dots = []
+            for pos in points[i]:
+                dot = Dot(posl + dx * pos[0], radius=0.1, color=WHITE, z_index=3)
+                eq = MathTex(r'\bf ' + pos[1], z_index=3, font_size=30)[0].next_to(dot, DL, buff=0).shift(RIGHT*0.05)
+                dots.append(Group(dot, eq))
+            obj = Group(line, *dots)
+            obj.next_to(rows[i], ORIGIN, coor_mask=UP, submobject_to_align=obj[0])
+            lines.append(obj)
+
+        self.play(Group(*rows).animate.next_to(lines[0], LEFT, coor_mask=RIGHT, buff=1), FadeIn(*lines, *vlines),
+                  run_time=1)
+
+        for i in range(4):
+            self.wait(0.5)
+            dot1 = lines[i][1].get_corner(LEFT) + UP * 0.05
+            if i < 3:
+                l2 = lines[i+1][2] if i < 3 else lines[0][1]
+            else:
+                l1 = lines[0].copy()
+                l1.next_to(lines[i][0], ORIGIN, coor_mask=UP, submobject_to_align=l1[0])\
+                    .shift((lines[i][0].get_center() - lines[i-1][0].get_center())*UP)
+                l2 = l1[1]
+            dot2 = l2.get_corner(RIGHT)
+            dx = dot2 - dot1
+            h = np.linalg.norm(dx)
+            r = RoundedRectangle(width=h, height=0.65, corner_radius=0.3, stroke_color=rcolor, fill_color=BLACK,
+                                 fill_opacity=0.5, z_index=4)
+            r.rotate(math.atan(dx[1]/dx[0]))
+            r.move_to((dot1+dot2)/2)
+            if i == 0:
+                self.play(FadeIn(r), run_time=1)
+            elif i < 3:
+                self.play(ReplacementTransform(r0, r), run_time=1)
+            else:
+                self.play(ReplacementTransform(lines[0].copy(), l1), ReplacementTransform(r0, r), run_time=1)
+            r0 = r
+
+        self.wait(0.5)
+        self.play(FadeOut(r0, l1), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(*lines, *vlines), run_time=1)
+        self.wait(0.5)
+
+        # optimal
+        lastrow = rows[0].copy()
+        lastrow[0].set_z_index(z_index)
+        lastrow[1:].set_z_index(z_index + 1)
+        z_index += 2
+        self.play(lastrow.animate.move_to(rows[-1]), Group(*rows).animate.next_to(rows[-1], UP, buff=0), run_time=2)
+        r = SurroundingRectangle(Group(rows[0][2], lastrow[2]), stroke_width=8, stroke_color=rcolor,
+                                 corner_radius=0.15, buff=0, z_index=z_index, fill_opacity=0.5, fill_color=BLACK)
+        self.play(FadeIn(r), run_time=1)
+        self.wait(0.5)
+        r1 = SurroundingRectangle(Group(rows[2][2], rows[3][2]), stroke_width=8, stroke_color=rcolor,
+                                 corner_radius=0.15, buff=0, z_index=z_index, fill_opacity=0.5, fill_color=BLACK)
+        self.play(ReplacementTransform(r, r1), run_time=2)
+        r2 = SurroundingRectangle(rows[2][:3], stroke_width=8, stroke_color=rcolor,
+                                 corner_radius=0.15, buff=0, z_index=z_index, fill_opacity=0.5, fill_color=BLACK)
+        r3 = SurroundingRectangle(rows[3][2:], stroke_width=8, stroke_color=rcolor,
+                                 corner_radius=0.15, buff=0, z_index=z_index, fill_opacity=0.5, fill_color=BLACK)
+        self.wait(0.5)
+        self.play(FadeOut(r1), FadeIn(r2, r3), run_time=2)
+        self.wait(1)
 
 
 class One(ThreeDScene):
@@ -599,4 +796,4 @@ class SeqChoice(Scene):
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "fps": 15, "preview": True}):
-        ABC_Table().render()
+        Efron().render()
