@@ -340,6 +340,59 @@ class ABC_Cycle(Scene):
         self.wait(0.5)
 
 
+class ABC_Table(Scene):
+    def __init__(self, *args, **kwargs):
+        if config.transparent:
+            print("transparent!")
+            config.background_color = BLACK
+        Scene.__init__(self, *args, *kwargs)
+
+    def construct(self):
+        Tex.set_default(font_size=50)
+        w = 1.2
+        h1 = 0.9
+        h2 = 0.8
+        colors = [color(DARK_BLUE, 0.8), color(ORANGE, 0.8), color(GREEN, 0.5)]
+
+        headings = []
+        for i in range(3):
+            rec = Rectangle(width=w, height=h1, stroke_opacity=0, z_index=0, fill_opacity=1, fill_color=colors[i])
+            txt = Text('ABC'[i], font="Helvetica", color=WHITE, weight=SEMIBOLD, z_index=1).move_to(rec)
+            headings.append(VGroup(rec, txt))
+
+        rec2 = Rectangle(width=w, height=h2, stroke_opacity=0, z_index=0, fill_opacity=1, fill_color=BLACK)
+
+        rows = [headings] + [[rec2.copy() for _ in range(3)] for _ in range(3)]
+
+        ts = []
+        for row in rows:
+            ts.append(MobjectTable([row.copy()], include_outer_lines=True, v_buff=0, h_buff=0))
+
+        self.add(ts[0].to_edge(DOWN))
+
+        rows = [[3, 2, 1], [2, 1, 3], [1, 3, 2]]
+
+        self.wait(0.5)
+        ts[1].to_edge(DOWN)
+        t = ts[1].copy().next_to(ts[0], DOWN, buff=0)
+        self.play(ts[0].animate.next_to(ts[1], UP, buff=0), FadeIn(ts[1], target_position=t), run_time=1)
+        self.wait(0.5)
+        txt = [Tex(r'\bf {}'.format(rows[0][j]), z_index=1).move_to(ts[1][0][j]) for j in range(3)]
+        self.play(FadeIn(*txt), run_time=1)
+
+        done = [ts[0], ts[1]] + txt
+        for i in range(1, 3):
+            t = ts[i+1].copy().next_to(ts[i], DOWN, buff=0)
+            ts[i+1].to_edge(DOWN)
+            txt = [Tex(r'\bf {}'.format(rows[i][j]), z_index=1).move_to(ts[i+1][0][j]) for j in range(3)]
+            self.wait(0.5)
+            self.play(VGroup(*done).animate.next_to(ts[i+1], UP, buff=0),
+                      FadeIn(VGroup(ts[i+1], *txt), target_position=t), run_time=1)
+            done += [ts[i+1]] + txt
+
+        self.wait(0.5)
+
+
 def seqboxed(seq, font_size=55):
     txt = Text(seq, font='Helvetica', weight=SEMIBOLD, font_size=font_size)
     for i in range(len(seq)):
@@ -352,7 +405,8 @@ def seqboxed(seq, font_size=55):
 
     return VGroup(txt, box)
 
-def seqarr(source:Mobject, dest, odds=1, label_size=50):
+
+def seqarr(source:Mobject, dest, odds: (int, None) = 1, label_size=50):
     dx = dest.get_center() - source.get_center()
     print(dx)
     for i in range(len(dx)):
@@ -363,14 +417,8 @@ def seqarr(source:Mobject, dest, odds=1, label_size=50):
     arr = arr_func(source.get_corner(dx), dest.get_corner(-dx), color=WHITE,
                    stroke_width=5, z_index=1, buff=0)
 
-    if odds != 1:
-        if dx[1] != 0:
-            dir = RIGHT
-            buff = 0
-        else:
-            dir = UP
-            buff = -0.05
-        dir = RIGHT if dx[1] != 0 else UP
+    if odds != 1 and odds is not None:
+        dir, buff = (RIGHT, 0) if dx[1] != 0 else (UP, -0.05)
         label = Tex(r'\bf {}'.format(odds), font_size=label_size,
                     color=color(PURE_RED, 0.5)).next_to(arr, dir, buff=buff)
         label.set_stroke(width=1, color=WHITE)
@@ -444,6 +492,40 @@ class Penneys_Cycle(Scene):
         self.add(hhh, hht, hth, htt, thh, tht, tth, ttt,
                  hhha, hhta, htha, htta, thha, thta, ttha, ttta)
 
+
+class Penneys_Method(Scene):
+    def __init__(self, *args, **kwargs):
+        if config.transparent:
+            print("transparent!")
+            config.background_color = WHITE
+        Scene.__init__(self, *args, *kwargs)
+
+    def construct(self):
+        h = DOWN * 1.5
+        thh = seqboxed('THH', font_size=40)
+        c = thh.get_center()
+        tth = seqboxed('TTH', font_size=40).move_to(c + h)
+        arr = seqarr(tth, thh, None)
+        c2 = (thh[0][0].get_center() + tth[0][0].get_center()) * 0.5
+        h = thh[0][1].copy().move_to(c2)
+        t = tth[0][0].copy().move_to(c2)
+
+        self.add(thh)
+        self.wait(0.1)
+        self.play(LaggedStart(FadeIn(arr), FadeIn(tth[1:]), lag_ratio=0.2), run_time=1)
+        self.wait(0.5)
+        self.play(ReplacementTransform(thh[0][:2].copy(), tth[0][-2:]), run_time=2)
+        self.wait(0.5)
+        self.play(ReplacementTransform(thh[0][1].copy(), h), run_time=2)
+        self.wait(0.1)
+        self.play(*abra.fade_replace(h, t), run_time=2)
+        self.wait(0.1)
+        self.play(ReplacementTransform(t, tth[0][0]), run_time=2)
+        self.wait(0.5)
+
+
+
+
 class One(ThreeDScene):
     def construct(self):
         l = 2
@@ -513,10 +595,8 @@ class SeqChoice(Scene):
         self.play(FadeIn(rect), run_time=0.2)
         self.wait(0.5)
 
-
-
         self.add(choice)
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "fps": 15, "preview": True}):
-        HT_Cycle().render()
+        ABC_Table().render()
