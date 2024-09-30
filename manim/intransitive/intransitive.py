@@ -15,6 +15,15 @@ import abracadabra as abra
 def color(col=GREEN, scale=1.0):
     return ManimColor(col.to_rgb() * scale)
 
+class SceneAS(Scene):
+    transparent_color=WHITE
+    def __init__(self, *args, **kwargs):
+        if config.transparent:
+            print("transparent!")
+            config.background_color = self.transparent_color
+        Scene.__init__(self, *args, *kwargs)
+
+
 class MaxIntrans(Scene):
     prob = 0.27
     skip = False
@@ -525,13 +534,7 @@ class Penneys_Method(Scene):
         self.wait(0.5)
 
 
-class Efron(Scene):
-    def __init__(self, *args, **kwargs):
-        if config.transparent:
-            print("transparent!")
-            config.background_color = WHITE
-        Scene.__init__(self, *args, *kwargs)
-
+class Efron(SceneAS):
     def construct(self):
         face_scale = 0.3
         z_index = 0
@@ -721,6 +724,121 @@ class Efron(Scene):
         self.wait(0.5)
         self.play(FadeOut(r1), FadeIn(r2, r3), run_time=2)
         self.wait(1)
+
+
+class Medians(SceneAS):
+    transparent_color = BLACK
+    medians = [0, -1, -2, -3, 3, 2, 1, 0]
+    dotlabels = [r'M_1', r'M_2', '', r'M_i', r'M_{i+1}', '', r'M_n', r'M_1']
+    labels = [r'X_1', r'X_2', '', r'X_i', r'X_{i+1}', '', r'X_n', r'X_1']
+
+    def construct(self):
+        posl = RIGHT * config.frame_x_radius * 0.51
+        posr = RIGHT * config.frame_x_radius * 0.8
+        top = ORIGIN
+        bottom = DOWN * config.frame_y_radius * 0.9
+        n = len(self.medians)
+        medians = [m - min(self.medians) for m in self.medians]
+        max_m = max(medians)
+        dx = (posr - posl) / max_m
+        dy = (bottom - top) / n
+        lines = []
+        color = WHITE
+        dotcolor = RED
+        lines = []
+        for i in range(n):
+            y = top + (i+0.5) * dy
+            line = Arrow(posl - dx * 2 + y, posr + RIGHT * 0.7 + y + dx * 1.5, color=color, stroke_width=5, z_index=2,
+                         max_tip_length_to_length_ratio=0.05, buff=0)
+            dot = Dot(posl + dx * medians[i] + y, radius=0.1, color=dotcolor, z_index=3)
+            if len(self.dotlabels[i]) > 0:
+                eq = MathTex(r'\bf ' + self.dotlabels[i], z_index=3, font_size=25)[0].next_to(dot, DR, buff=0).shift(LEFT*0.45)
+                dot = Group(dot, eq)
+            objs = [line, dot]
+            if len(self.labels[i]) > 0:
+                label = MathTex(r'\bf ' + self.labels[i], z_index=3, font_size=30)[0]\
+                    .next_to(line.get_left() + LEFT * 0.5, RIGHT, buff=0)
+                label.shift(DOWN * 0.1)
+                objs.append(label)
+            obj = Group(*objs)
+            lines.append(obj)
+
+        vlines = []
+        for i in range(-1, 8):
+            vlines.append(DashedLine(dx * i + top + posl, dx * i + bottom + posl, stroke_width=4,
+                       dash_length=DEFAULT_DASH_LENGTH * 0.5, z_index=1).set_opacity(0.6))
+
+        gp = Group(*lines, *vlines)
+        eq = MathTex(r'\bf M_i={\rm Median}(X_i)', font_size=30).next_to(gp, UP, buff=0.1)
+        box = SurroundingRectangle(Group(gp, eq), fill_opacity=0.6, fill_color=BLACK, stroke_color=BLUE,
+                                   stroke_width=5, corner_radius=0.3, buff=0.1)
+        disp = Group(box, eq, *vlines, *lines)
+
+        self.add(disp)
+        self.wait(0.5)
+
+        dot1 = lines[3][1].get_corner(LEFT)
+        dot2 = lines[4][1].get_corner(RIGHT)
+        dx = dot2 - dot1
+        h = np.linalg.norm(dx)
+        r = RoundedRectangle(width=h, height=0.6, corner_radius=0.3, stroke_color=PURE_RED, z_index=4)
+        r.rotate(math.atan(dx[1] / dx[0]))
+        r.move_to((dot1 + dot2) / 2)
+        self.play(FadeIn(r))
+
+        MathTex.set_default(stroke_width=1.5)
+
+        eq2 = MathTex(r'\mathbb P(X_i\le X_{i+1})\ge\mathbb P(X_i\le M_i\le X_{i+1})')[0]
+        eq2.to_edge(DOWN).to_edge(LEFT, buff=0.05)
+        self.wait(0.5)
+        self.play(FadeIn(eq2[:10]), run_time=0.5)
+        self.wait(0.5)
+        self.play(FadeIn(eq2[10]), run_time=0.5)
+        self.wait(0.1)
+        self.play(FadeIn(eq2[11:]), run_time=0.5)
+
+        eq3 = MathTex(r'\ge\mathbb P(X_i\le M_i)\mathbb P(M_i\le X_{i+1})')[0]
+        eq3.next_to(eq2[10], ORIGIN, submobject_to_align=eq3[0])
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq2[11:18] + eq2[16:18].copy() + eq2[-6:],
+                                       eq3[1:8] + eq3[11:13] + eq3[-6:]),
+                  FadeIn(eq3[8:11]),
+                  run_time=2)
+
+        eq4 = MathTex(r'\ge\frac12\frac12')[0]
+        eq4.next_to(eq2[10], ORIGIN, submobject_to_align=eq4[0])
+        eq4[1:4].move_to(eq3[1:9], coor_mask=RIGHT)
+        eq4[4:].move_to(eq3[9:], coor_mask=RIGHT)
+        self.wait(0.5)
+        self.play(abra.fade_replace(eq3[1:9], eq4[1:4]),
+                  abra.fade_replace(eq3[9:], eq4[4:]))
+
+        eq5 = MathTex(r'\mathbb P(X_i\le X_{i+1})\ge\frac14')[0]
+        eq5.next_to(eq4[2], ORIGIN, submobject_to_align=eq5[12])
+        eq6 = eq5[11:13].copy()
+        eq7 = eq5[13].copy()
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq2[:10] + eq2[10] + eq4[1:3] + eq4[4:6],
+                                       eq5[:10] + eq5[10] + eq5[11:13] + eq6),
+                  abra.fade_replace(eq4[3], eq5[13]),
+                  abra.fade_replace(eq4[6], eq7),
+                  run_time=2)
+        self.remove(eq6, eq7)
+
+        eq8 = MathTex(r'>')[0].move_to(eq5[10])
+        self.wait(0.5)
+        self.play(abra.fade_replace(eq5[10], eq8[0]), run_time=0.5)
+        eq9 = MathTex(r'\mathbb P(X_i > X_{i+1}) < \frac34')[0].move_to(eq5)
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq5[:4] + eq5[5:10] + eq5[12:], eq9[:4] + eq9[5:10] + eq9[12:]),
+                  abra.fade_replace(eq5[4], eq9[4]),
+                  abra.fade_replace(eq8[0], eq9[10]),
+                  abra.fade_replace(eq5[11], eq9[11]),
+                  run_time=2
+                  )
+
+        self.wait(1)
+
 
 
 class One(ThreeDScene):
