@@ -933,6 +933,10 @@ class OptionalSampling(MartingaleDef):
         self.optional(mart_def, chart, ax, seq)
         self.wait(0.5)
 
+class RWPath(MartingaleDef):
+    def construct(self):
+        self.walk(LEFT * config.frame_x_radius + UP * config.frame_y_radius, skip=True)
+
 
 if __name__ == "__main__":
     with tempconfig({"quality": "high_quality", "fps": 30, "preview": True}):
