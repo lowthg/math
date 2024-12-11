@@ -840,7 +840,6 @@ class Medians(SceneAS):
         self.wait(1)
 
 
-
 class One(ThreeDScene):
     def construct(self):
         l = 2
