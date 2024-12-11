@@ -5,13 +5,14 @@ from scipy import linalg
 from colour import Color
 from mayavi import mlab
 
-def calc_p1(p0, rates):
-    M = np.diag(rates * -2) + np.diag(rates[1:], 1) + np.diag(rates[:-1], -1)
+def calc_p1(p0, rates, steps):
+    M = np.diag(-rates * (steps[:-1] + steps[1:])) + np.diag(rates[1:] * steps[1:-1], 1) + np.diag(rates[:-1] * steps[1:-1], -1)
     return np.matmul(linalg.expm(M), p0)
 
 
-p0 = np.array([0.5, 1, 0.2], 'float')
+p0 = np.array([1, 0, 1], 'float')
 p0 /= sum(p0)
+steps = np.array([1, 0.5, 1, 1], 'float')
 
 npts = 40
 rates1d = -np.log(np.linspace(1/npts, 1, npts)[::-1])
@@ -28,7 +29,7 @@ for i in range(nptsi):
     for j in range(nptsj):
         for k in range(nptsk):
             rates = np.array([rates1di[i], rates1dj[j], rates1dk[k]])
-            res[i][j][k] = calc_p1(p0, rates)
+            res[i][j][k] = calc_p1(p0, rates, steps)
 
 fig = mlab.figure(bgcolor=(1,1,1), fgcolor=(0,0,0))
 mlab.plot3d([0.0, 1.0], [0.0, 0.0], [0.0, 0.0], color=(0,0,0), tube_radius=0.001)
