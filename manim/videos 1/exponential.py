@@ -154,7 +154,7 @@ class ExpPosint(Scene):
 class ExpNat(ExpPosint):
 
     def create_def(self):
-        eq1 = MathTex(r'x\in\mathbb N, a\in\mathbb C').set_z_index(2)
+        eq1 = MathTex(r'x\in\mathbb N, a\in\mathbb C')[0].set_z_index(2)
         eq2 = MathTex(r'a^0=1')[0].next_to(eq1, DOWN).align_to(eq1, LEFT).set_z_index(2)
         eq3 = MathTex(r'a^{x+1}=a^x\;a')[0].next_to(eq2, DOWN).align_to(eq2, LEFT).set_z_index(2)
         rec2 = SurroundingRectangle(VGroup(eq1, eq2, eq3), stroke_opacity=0, fill_opacity=self.opacity,
@@ -223,6 +223,34 @@ class ExpNat(ExpPosint):
         self.wait(0.5)
         self.play(FadeOut(eq7, rect1), run_time=1)
 
-        eq8 = MathTex(r'a^1=a^{0+1}')
+        eq8 = MathTex(r'a^1=a^{0+1}')[0].set_z_index(2)
+        eq9 = MathTex(r'=a^0\;a')[0].set_z_index(2)
+        eq10 = MathTex(r'=1\;a')[0].set_z_index(2)
+        eq11 = MathTex(r'=a')[0].set_z_index(2)
+        rect2 = SurroundingRectangle(eq8, buff=0.2, fill_opacity=self.opacity, stroke_opacity=0,
+                                     corner_radius=0.2, fill_color=BLACK)
+        VGroup(rect2, eq8).to_edge(DL).shift(RIGHT*0.4)
+        eq9.next_to(eq8[2], ORIGIN, submobject_to_align=eq9[0])
+        eq10.next_to(eq8[2], ORIGIN, submobject_to_align=eq10[0])
+        eq11.next_to(eq8[2], ORIGIN, submobject_to_align=eq11[0])
+
+        self.play(FadeIn(rect2), run_time=0.5)
+        self.play(FadeIn(eq8), run_time=0.5)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq8[3:5] + eq8[3].copy(), eq9[1:3] + eq9[3]), FadeOut(eq8[5:7]), run_time=1.5)
+        eq10[1].move_to(eq9[1:3], coor_mask=RIGHT)
+        self.play(FadeOut(eq9[1:3]), FadeIn(eq10[1]), run_time=1.5)
+        self.play(ReplacementTransform(eq9[3], eq11[1]), FadeOut(eq10[1]), run_time=1.5)
+        self.wait(0.5)
+        self.play(FadeOut(rect2, eq8[:3], eq11[1]), run_time=1)
+
+
+
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq2[0], def2[0][0][0]),
+                  ReplacementTransform(def1[1:], def2[1:]),
+                  FadeOut(eq2[1:]), FadeIn(def2[0][0][1:3]), run_time=2)
+        self.wait(0.1)
+        self.play(FadeIn(def2[0][0][3:]), run_time=1)
 
         self.wait(0.5)
