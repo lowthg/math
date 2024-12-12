@@ -59,21 +59,28 @@ class ExpPosint(Scene):
         config.background_color = self.bgcolor
         Scene.__init__(self, *args, *kwargs)
 
+    def get_defbox(self, obj, props=False):
+        color = BLUE if props else RED
+        txt = r'properties' if props else r'definition'
+        rec1 = SurroundingRectangle(obj, stroke_opacity=0, fill_opacity=self.opacity, fill_color=BLACK,
+                                    corner_radius=0.2, buff=0.2)
+        rec2 = RoundedRectangle(width=rec1.width, height=rec1.height, fill_color=0, stroke_opacity=0.8,
+                                stroke_color=color, stroke_width=5, corner_radius=0.2).move_to(rec1).set_z_index(1)
+        top = rec2.get_subcurve(0.125, 0.25)
+        txt2 = Tex(txt, color=color, font_size=30)[0].move_to(top)
+        h = txt2.width/top.width*1.05
+        edge = VGroup(rec2.get_subcurve(0.1875 + h*0.0625, 1), rec2.get_subcurve(0, 0.1875 - h*0.0625))
+
+        return VGroup(rec1, edge, txt2)
+
     def create_def(self):
         eq1 = MathTex(r'x=1,2,3,\ldots')[0].set_z_index(2)
         eq3 = MathTex(r'a^1=a')[0].next_to(eq1, DOWN).align_to(eq1, LEFT).set_z_index(2)
         eq4 = MathTex(r'a^{x+1}=a^x\;a')[0].next_to(eq3, DOWN).align_to(eq3, LEFT).set_z_index(2)
-        gp2 = VGroup(eq1, eq3, eq4)
-        rec2 = SurroundingRectangle(gp2, stroke_opacity=0, fill_opacity=self.opacity, fill_color=BLACK, corner_radius=0.2,
-                                    buff=0.2)
-        rec4 = RoundedRectangle(width=rec2.width, height=rec2.height, fill_color=0, stroke_opacity=0.8,
-                                stroke_color=RED, stroke_width=5, z_index=2, corner_radius=0.2).move_to(rec2)
-        top = rec4.get_subcurve(0.125, 0.25)
-        txt2 = Tex(r'\bf definition', color=RED, font_size=30)[0].move_to(top)
-        h = txt2.width/top.width*1.05
-        edge1 = VGroup(rec4.get_subcurve(0.1875 + h*0.0625, 1), rec4.get_subcurve(0, 0.1875 - h*0.0625))
+        eqs = VGroup(eq1, eq3, eq4)
+        box = self.get_defbox(eqs)
 
-        return VGroup(VGroup(eq1, eq3, eq4), rec2, edge1, txt2).to_edge(UL, buff=0.1)
+        return VGroup(eqs, *box[:]).to_edge(UL, buff=0.1)
 
     def construct(self):
         definition = self.create_def()
@@ -157,21 +164,20 @@ class ExpNat(ExpPosint):
         eq1 = MathTex(r'x\in\mathbb N, a\in\mathbb C')[0].set_z_index(2)
         eq2 = MathTex(r'a^0=1')[0].next_to(eq1, DOWN).align_to(eq1, LEFT).set_z_index(2)
         eq3 = MathTex(r'a^{x+1}=a^x\;a')[0].next_to(eq2, DOWN).align_to(eq2, LEFT).set_z_index(2)
-        rec2 = SurroundingRectangle(VGroup(eq1, eq2, eq3), stroke_opacity=0, fill_opacity=self.opacity,
-                                    fill_color=BLACK, corner_radius=0.2, buff=0.2)
-        rec4 = RoundedRectangle(width=rec2.width, height=rec2.height, fill_color=0, stroke_opacity=0.8,
-                                stroke_color=RED, stroke_width=5, z_index=2, corner_radius=0.2).move_to(rec2)
-        top = rec4.get_subcurve(0.125, 0.25)
-        txt2 = Tex(r'\bf definition', color=RED, font_size=30)[0].move_to(top)
-        h = txt2.width/top.width*1.05
-        edge1 = VGroup(rec4.get_subcurve(0.1875 + h*0.0625, 1), rec4.get_subcurve(0, 0.1875 - h*0.0625))
+        gp = VGroup(eq1, eq2, eq3)
+        box = self.get_defbox(gp)
+        return VGroup(gp, *box[:]).to_edge(UL, buff=0.1)
 
-        return VGroup(VGroup(eq1, eq2, eq3), rec2, edge1, txt2).to_edge(UL, buff=0.1)
+    def create_properties(self):
+        eq1 = MathTex(r'a^1=a')[0].set_z_index(2)
+        box = self.get_defbox(eq1, props=True)
+        return VGroup(VGroup(eq1), *box[:]).to_edge(UR, buff=0.1)
 
     def construct(self):
         def1 = ExpPosint.create_def(self)
         def2 = self.create_def()
         self.add(def1)
+        props = self.create_properties()
         self.wait(0.5)
 
         eq1 = def1[0][0]
@@ -242,10 +248,13 @@ class ExpNat(ExpPosint):
         self.play(FadeOut(eq9[1:3]), FadeIn(eq10[1]), run_time=1.5)
         self.play(ReplacementTransform(eq9[3], eq11[1]), FadeOut(eq10[1]), run_time=1.5)
         self.wait(0.5)
-        self.play(FadeOut(rect2, eq8[:3], eq11[1]), run_time=1)
-
-
-
+        p2 = props.copy()
+        p2.shift(eq8[2].get_center()-p2[0][0][2].get_center())
+        self.play(ReplacementTransform(eq8[:3] + eq11[1] + rect2, p2[0][0][:3] + p2[0][0][3] + p2[1]),
+                  run_time=1)
+        self.play(FadeIn(p2[2:]), run_time=1.5)
+        self.wait(0.1)
+        self.play(p2.animate.move_to(props), run_time=2)
         self.wait(0.5)
         self.play(ReplacementTransform(eq2[0], def2[0][0][0]),
                   ReplacementTransform(def1[1:], def2[1:]),
