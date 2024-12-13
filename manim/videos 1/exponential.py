@@ -379,3 +379,112 @@ class PropsNat2(PropsNat):
                               FadeIn(props[0][3]), lag_ratio=0.5),
                   run_time=2)
         self.wait(0.5)
+
+class PropsNatPf(PropsNat2):
+    def construct(self):
+        defs = self.create_def()
+        props = self.create_properties()
+        self.add(defs, props)
+
+        self.wait(0.5)
+        eq1 = props[0][2].copy()
+        eq2 = MathTex(r'y=0:', color=BLUE)[0].set_z_index(2)
+        eq3 = MathTex(r'(a^x)^y{{=}}(a^x)^0{{=}}1{{=}}a^0{{=}}a^{x0}{{=}}a^{xy}').set_z_index(2)
+        eq3[3:5].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[3])
+        eq3[5:7].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[5])
+        eq3[7:9].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[7])
+        eq3[9:11].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[9])
+        eq4 = Tex(r'induction:', color=BLUE)[0].set_z_index(2)
+        eq5 = MathTex(r'(a^x)^{y+1}{{=}}(a^x)^y\;a^x{{=}}a^{xy}\;a^x{{=}}a^{xy+x}{{=}}a^{x(y+1)}').set_z_index(2)
+        eq5[3:5].next_to(eq5[1], ORIGIN, submobject_to_align=eq5[3])
+        eq5[5:7].next_to(eq5[1], ORIGIN, submobject_to_align=eq5[5])
+        eq5[7:9].next_to(eq5[1], ORIGIN, submobject_to_align=eq5[7])
+        eq5.move_to(eq3)
+        eq4.next_to(eq5, UP).align_to(eq5, LEFT)
+        eq2.next_to(eq5, UP).align_to(eq5, LEFT)
+        line = Line(eq5.get_left(), eq5.get_right(), buff=0, color=RED, stroke_width=5).next_to(eq4, UP, coor_mask=UP)
+        eq1.next_to(line, UP)
+
+        gp = VGroup(eq1, eq2, eq3, eq4, eq5, line).to_edge(DR)
+
+        box = SurroundingRectangle(gp, stroke_opacity=0, fill_opacity=self.opacity, fill_color=BLACK,
+                                   corner_radius=0.2, buff=0.2)
+
+        eq6 = props[0][3].copy().next_to(line, UP)
+        eq7 = MathTex(r'x=0:', color=BLUE)[0].set_z_index(1).move_to(eq2).align_to(eq2, LEFT)
+        eq8 = MathTex(r'(ab)^x{{=}}(ab)^0{{=}}1{{=}}1\;1{{=}}a^0\;b^0{{=}}a^x\;b^x').set_z_index(2)
+        eq8[3:5].next_to(eq8[1], ORIGIN, submobject_to_align=eq8[3])
+        eq8[5:7].next_to(eq8[1], ORIGIN, submobject_to_align=eq8[5])
+        eq8[7:9].next_to(eq8[1], ORIGIN, submobject_to_align=eq8[7])
+        eq8[9:11].next_to(eq8[1], ORIGIN, submobject_to_align=eq8[9])
+        eq8[4].move_to(eq8[2], coor_mask=RIGHT)
+        eq8[6][0].move_to(eq8[8][:2], coor_mask=RIGHT)
+        eq8[6][1].move_to(eq8[8][-2:], coor_mask=RIGHT)
+        eq8.move_to(eq3)
+        eq9 = MathTex(r'(ab)^{x+1}{{=}}(ab)^x\;ab{{=}}a^x\;b^x\;ab{{=}}a^x\;a\;b^x\;b{{=}}a^{x+1}\;b^{x+1}')\
+            .set_z_index(2)
+        eq9[3:5].next_to(eq9[1], ORIGIN, submobject_to_align=eq9[3])
+        eq9[5:7].next_to(eq9[1], ORIGIN, submobject_to_align=eq9[5])
+        eq9[7:9].next_to(eq9[1], ORIGIN, submobject_to_align=eq9[7])
+        eq9.move_to(eq3)
+
+        dt = 0.35
+
+        self.play(LaggedStart(FadeIn(box), FadeIn(eq1, line), lag_ratio=0.5), run_time=dt)
+        self.play(LaggedStart(FadeIn(eq2), ReplacementTransform((eq1[:5] + eq1[5]).copy(),
+                                                                eq3[0][:] + eq3[1][0]),
+                              lag_ratio=0.5), run_time=dt*2)
+        self.play(ReplacementTransform(eq3[0][:4].copy(), eq3[2][:4]),
+                  FadeOut(eq3[0][4].copy(), target_position=eq3[2][4]),
+                  FadeIn(eq3[2][4], target_position=eq3[0][4]), run_time=dt*2)
+        self.play(FadeOut(eq3[2]), FadeIn(eq3[4]), run_time=dt)
+        self.play(FadeOut(eq3[4]), FadeIn(eq3[6]), run_time=dt)
+        self.play(ReplacementTransform(eq3[6][:1] + eq3[6][1], eq3[8][:1] + eq3[8][2]),
+                  FadeIn(eq3[8][1]), run_time=dt)
+        self.play(ReplacementTransform(eq3[8][:2], eq3[10][:2]),
+                  FadeOut(eq3[8][2]), FadeIn(eq3[10][2]), run_time=dt)
+        self.wait(0.5)
+        self.play(FadeOut(eq2, eq3[:2], eq3[-1]), run_time=dt)
+        self.play(LaggedStart(FadeIn(eq4), ReplacementTransform((eq1[:5] + eq1[5]).copy(), eq5[0][:5] + eq5[1][0]),
+                              lag_ratio=0.5), run_time=dt*2)
+        self.play(FadeIn(eq5[0][5:]), run_time=dt)
+        self.play(ReplacementTransform(eq5[0][:5].copy() + eq5[0][1:3].copy(), eq5[2][:5] + eq5[2][5:7]), run_time=dt*2)
+        self.play(ReplacementTransform(eq1[6:].copy() + eq5[2][5:], eq5[4][:3] + eq5[4][3:]),
+                  FadeOut(eq5[2][:5]), run_time=dt*2)
+        self.play(ReplacementTransform(eq5[4][:3] + eq5[4][4], eq5[6][:3] + eq5[6][4]),
+                  FadeIn(eq5[6][3]), FadeOut(eq5[4][3], target_position=eq5[6][0]),
+                  run_time=dt)
+        self.play(ReplacementTransform(eq5[6][:2] + eq5[6][2:4], eq5[8][:2] + eq5[8][3:5]),
+                  FadeOut(eq5[6][4], target_position=eq5[8][5]), FadeIn(eq5[8][2], eq5[8][6]),
+                  FadeIn(eq5[8][5], target_position=eq5[6][4]), run_time=dt)
+        self.wait(0.5)
+        self.play(FadeOut(eq1, eq4, eq5[:2], eq5[8]), run_time=dt)
+
+        self.play(FadeIn(eq6), run_time=dt)
+        self.play(LaggedStart(FadeIn(eq7), ReplacementTransform((eq6[:5] + eq6[5]).copy(), eq8[0][:] + eq8[1][0]),
+                              lag_ratio=0.5), run_time=dt*2)
+        self.play(ReplacementTransform(eq8[0][:4].copy(), eq8[2][:4]),
+                  FadeOut(eq8[0][4].copy(), target_position=eq8[2][4]),
+                  FadeIn(eq8[2][4], target_position=eq8[0][4]), run_time=dt*2)
+        self.play(FadeOut(eq8[2]), FadeIn(eq8[4]), run_time=dt)
+        self.play(ReplacementTransform(eq8[4][:1].copy() + eq8[4][0], eq8[6][:1] + eq8[6][1]), run_time=dt)
+        self.play(FadeOut(eq8[6]), FadeIn(eq8[8]), run_time=dt)
+        self.play(ReplacementTransform(eq8[8][:1] + eq8[8][2], eq8[10][:1] + eq8[10][2]),
+                  FadeOut(eq8[8][1], eq8[8][3]), FadeIn(eq8[10][1], eq8[10][3]), run_time=dt)
+        self.wait(0.5)
+        self.play(FadeOut(eq7, eq8[:2], eq8[10]), run_time=dt)
+        self.play(LaggedStart(FadeIn(eq4), ReplacementTransform((eq6[:5]+eq6[5]).copy(), eq9[0][:5] + eq9[1][0]),
+                              lag_ratio=0.5), run_time=dt*2)
+        self.play(FadeIn(eq9[0][5:]), run_time=dt)
+        self.play(ReplacementTransform(eq9[0][:5].copy() + eq9[0][1:3].copy(), eq9[2][:5] + eq9[2][5:]), run_time=dt*2)
+        self.play(ReplacementTransform(eq6[6:].copy() + eq9[2][5:], eq9[4][:4] + eq9[4][4:]),
+                  FadeOut(eq9[2][:5]), run_time=dt*2)
+        self.play(ReplacementTransform(eq9[4][:2] + eq9[4][2:4] + eq9[4][4] + eq9[4][5],
+                                       eq9[6][:2] + eq9[6][3:5] + eq9[6][2] + eq9[6][5]), run_time=dt)
+        self.play(ReplacementTransform(eq9[6][:2] + eq9[6][3:5], eq9[8][:2] + eq9[8][4:6]),
+                  FadeOut(eq9[6][2], target_position=eq9[8][0]),
+                  FadeOut(eq9[6][5], target_position=eq9[8][4]),
+                  FadeIn(eq9[8][2:4], eq9[8][6:8]), run_time=dt)
+        self.wait(0.5)
+        self.play(FadeOut(eq6, line, eq4, eq9[:2], eq9[8], box), run_time=dt)
+        self.wait(0.5)
