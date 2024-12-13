@@ -380,6 +380,7 @@ class PropsNat2(PropsNat):
                   run_time=2)
         self.wait(0.5)
 
+
 class PropsNatPf(PropsNat2):
     def construct(self):
         defs = self.create_def()
@@ -487,4 +488,51 @@ class PropsNatPf(PropsNat2):
                   FadeIn(eq9[8][2:4], eq9[8][6:8]), run_time=dt)
         self.wait(0.5)
         self.play(FadeOut(eq6, line, eq4, eq9[:2], eq9[8], box), run_time=dt)
+        self.wait(0.5)
+
+
+class ExpInt(PropsNatPf):
+    def create_def(self):
+        eq1 = MathTex(r'x\in\mathbb Z, a\in\mathbb C\setminus\{0\}')[0].set_z_index(2)
+        eq2 = MathTex(r'a^0=1')[0].next_to(eq1, DOWN).align_to(eq1, LEFT).set_z_index(2)
+        eq3 = MathTex(r'a^{x+1}=a^x\;a')[0].next_to(eq2, DOWN).align_to(eq2, LEFT).set_z_index(2)
+        gp = VGroup(eq1, eq2, eq3)
+        box = self.get_defbox(gp)
+        return VGroup(gp, *box[:]).to_edge(UL, buff=0.1)
+
+    def construct(self):
+        defs1 = PropsNatPf.create_def(self)
+        props1 = PropsNatPf.create_properties(self)
+        defs = self.create_def()
+        self.add(defs1, props1)
+        self.wait(0.5)
+
+        eq1 = defs1[0][2].copy().to_edge(DL).shift(RIGHT*0.3)
+        eq1_1 = eq1.copy()
+        eq2 = MathTex(r'1{{=}}a^0{{=}}a^{-1+1}{{=}}a^{-1}\;a').set_z_index(2)
+        eq2.next_to(eq1[4], ORIGIN, submobject_to_align=eq2[5][0])
+        eq2[2:4].next_to(eq2[5], ORIGIN, submobject_to_align=eq2[3])
+        eq2[:2].next_to(eq2[5], ORIGIN, submobject_to_align=eq2[1])
+
+        eq3 = MathTex(r'a^{-(x+1)+1}{{=}}a^{-(x+1)}\;a').set_z_index(2)
+        eq3.next_to(eq1[4], ORIGIN, submobject_to_align=eq3[1][0])
+        box = SurroundingRectangle(VGroup(eq1, eq2), stroke_opacity=0, fill_opacity=self.opacity, fill_color=BLACK,
+                                   corner_radius=0.2, buff=0.2)
+
+        self.play(ReplacementTransform(defs1[0][0][:2] + defs1[0][0][3:7], defs[0][0][:2] + defs[0][0][3:7]),
+                  FadeIn(defs[0][0][2]), FadeOut(defs1[0][0][2]), run_time=1)
+        self.play(ReplacementTransform(defs1[0][2].copy(), eq1), run_time=2)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq1[:1] + eq1[2:4] + eq1[4] + eq1[5] + eq1[7],
+                                       eq2[4][:1] + eq2[4][3:5] + eq2[5][0] + eq2[6][0] + eq2[6][3]),
+                  FadeOut(eq1[1], eq1[6]), FadeIn(eq2[4][1:3], eq2[6][1:3]), run_time=1)
+        self.play(ReplacementTransform(eq2[4][:1], eq2[2][:1]), FadeOut(eq2[4][1:]), FadeIn(eq2[2][1]), run_time=1)
+        self.wait(0.1)
+        self.play(FadeOut(eq2[2]), FadeIn(eq2[0]), run_time=1)
+        self.wait(0.5)
+        self.play(ReplacementTransform(defs1[0][1:] + defs1[1:], defs[0][1:] + defs[1:]),
+                  FadeIn(defs[0][0][7:]), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(eq2[0], eq2[5:]), FadeIn(eq1_1), run_time=1)
+        self.wait(0.1)
         self.wait(0.5)
