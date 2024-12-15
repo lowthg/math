@@ -1042,7 +1042,7 @@ class ConvexRat(PropsRat):
         self.wait(0.1)
         dots4 = self.get_dots(ax, a, [1, 2], color=RED).set_z_index(5)
         line3 = Line(dots4[0], dots4[1], color=RED, stroke_width=6).set_z_index(4)
-        self.play(FadeIn(dots4), Create(line3), run_time=2)
+        self.play(FadeIn(dots4), Create(line3), run_time=1)
         self.wait(0.5)
         self.play(FadeOut(dots2, line1, line2, line3, dots4))
         self.wait(0.5)
