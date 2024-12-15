@@ -937,7 +937,7 @@ class ConvexRat(PropsRat):
         self.play(Create(dots), run_time=1)
         self.wait(0.1)
 
-#        self.animate_dots(ax, a, xvals, dots)
+        self.animate_dots(ax, a, xvals, dots)
 
         # convex
         x1 = 1.0
