@@ -583,14 +583,20 @@ class ExpInt(PropsNatPf):
 
 
 class PlotInt(ExpInt):
-    def get_graph(self, a):
+    def get_graph(self, a, shift=0.0):
         ax = Axes(x_range=[-5, 5.6], y_range=[0, a ** 5], z_index=2, x_length=6, y_length=3,
                   axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False, 'tick_size': 0.05,
                                "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
                                "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
                                },
                   x_axis_config={'include_ticks': True}).to_edge(DOWN, buff=0.2).set_z_index(2)
-        box = SurroundingRectangle(VGroup(ax), fill_color=BLACK, fill_opacity=self.opacity, corner_radius=0.2,
+        if shift == 0.0:
+            gp = ax
+        else:
+            l = Line(ax.get_bottom(), ax.get_bottom() + DOWN*shift)
+            gp = VGroup(ax, l).to_edge(DOWN, buff=0.2)
+
+        box = SurroundingRectangle(gp, fill_color=BLACK, fill_opacity=self.opacity, corner_radius=0.2,
                                    stroke_opacity=0)
         return ax, box
 
@@ -886,14 +892,14 @@ class ConvexRat(PropsRat):
         defs = PropsRat.create_def(self)
         eq1 = MathTex(r'x\in\mathbb R, a > 0,')[0].set_z_index(2)
         defs[0][1:].next_to(eq1, DOWN, buff=0.1).align_to(eq1, LEFT)
-        eq2 = Tex(r'continuous')[0].next_to(defs[0][-1], DOWN).align_to(eq1, LEFT)
+        eq2 = Tex(r'continuous')[0].next_to(defs[0][-1], DOWN).align_to(eq1, LEFT).set_z_index(2)
         gp = VGroup(eq1, *defs[0][1:], eq2)
         box = self.get_defbox(gp)
         return VGroup(gp, *box[:]).to_edge(UL, buff=0.1)
 
     def create_properties(self):
         props = PropsRat.create_properties(self)
-        eq = Tex(r'convex')[0].next_to(props[0][-1], DOWN).align_to(props[0][0], LEFT)
+        eq = Tex(r'convex')[0].next_to(props[0][-1], DOWN).align_to(props[0][0], LEFT).set_z_index(2)
         gp = VGroup(*props[0][:], eq)
         box = self.get_defbox(gp, props=True)
         return VGroup(gp, *box[:]).to_edge(UR, buff=0.1)
@@ -1065,6 +1071,126 @@ class ConvexRat(PropsRat):
         self.wait(0.5)
 
 
+class Logarithms(ConvexRat):
+    def do_addition(self):
+        eq1 = MathTex(r'3.141592')[0].set_z_index(2)
+        eq2 = MathTex(r'+4.669201')[0].set_z_index(2).next_to(eq1, DOWN)
+        eq2.next_to(eq1[1], ORIGIN, submobject_to_align=eq2[2], coor_mask=RIGHT)
+        line0 = Line(eq2[1].get_left(), eq2.get_right(), color=WHITE, stroke_width=5).next_to(eq2, DOWN, coor_mask=UP)
+        eq3 = MathTex(r'7.810793')[0].set_z_index(2).next_to(line0, DOWN).align_to(eq2[1], LEFT)
+        eq4 = MathTex(r'11', font_size=30)[0].set_z_index(2).move_to(eq3).shift(DOWN*0.3)
+        eq4[0].move_to(eq3[2:4], coor_mask=RIGHT)
+        eq4[1].move_to(eq3[3:5], coor_mask=RIGHT)
+        eq5 = VGroup(eq3[-1], eq3[-2], eq3[-3], eq3[-4], eq4[-1], eq3[-5], eq4[0], eq3[-6], eq3[-7], eq3[-8])
+        gp = VGroup(eq1, eq2, line0, eq5).to_edge(DOWN)
+        box = SurroundingRectangle(gp, fill_color=BLACK, fill_opacity=self.opacity, stroke_opacity=0, corner_radius=0.2)
+
+        self.play(FadeIn(box, eq1, eq2, line0), run_time=1)
+        self.wait(0.1)
+
+        for eq in eq5[:]:
+            self.play(Write(eq, run_time=linear), run_time=0.3)
+        self.wait(0.5)
+        self.play(FadeOut(box, gp), run_time=1)
+        self.wait(0.5)
+
+    def do_graph(self):
+        a = 1.5
+        ax, box = self.get_graph(a, shift=0.22)
+        graph = ax.plot(lambda x: a**x, (-5, 5, 0.05), color=BLUE, stroke_width=5).set_z_index(3)
+        self.play(FadeIn(box, ax, graph), run_time=1)
+        self.wait(0.5)
+
+        x = 4.0
+        y = a**x
+        pt1 = ax.coords_to_point(x, 0)
+        pt2 = ax.coords_to_point(x, y)
+        pt3 = ax.coords_to_point(0, y)
+        line1 = Line(pt1, pt2, color=GREY, stroke_width=5).set_z_index(1)
+        line2 = Line(pt2, pt3, color=GREY, stroke_width=5).set_z_index(1)
+
+        eqx = MathTex(r'x', font_size=40)[0].next_to(pt1, DOWN, buff=0.13)
+        eqlog = MathTex(r'\log_a x', font_size=40)[0].next_to(pt1, DOWN, buff=0.05)
+        eqax = MathTex(r'a^x', font_size=40)[0].next_to(pt3, LEFT, buff=0.13)
+        self.play(FadeIn(eqx), run_time=0.5)
+        self.wait(0.1)
+        self.play(Create(line1), run_time=1)
+        self.wait(0.1)
+        self.play(Create(line2), run_time=1)
+        self.play(FadeIn(eqax), run_time=0.5)
+        self.wait(0.1)
+        self.play(FadeOut(eqx, eqax, line1, line2), run_time=1)
+        self.wait(0.1)
+        eqx.next_to(pt3, LEFT, buff=0.13)
+        self.play(FadeIn(eqx), run_time=0.5)
+        self.wait(0.1)
+        self.play(Create(line2.reverse_direction()), run_time=1)
+        self.wait(0.1)
+        self.play(Create(line1.reverse_direction()), run_time=1)
+        self.wait(0.1)
+        self.play(FadeIn(eqlog), run_time=0.5)
+        self.wait(0.5)
+
+        gp = VGroup(ax, graph)
+        box.set_z_index(10)
+        ax.set_z_index(20)
+        graph.set_z_index(30)
+
+        self.play(LaggedStart(FadeOut(eqlog, eqx, line1, line2, rate_func=lambda t: min(2*t, 1)),
+                              AnimationGroup(gp.animate.rotate(axis=RIGHT+UP, angle=180*DEGREES,
+                                             about_point=ax.coords_to_point(-2, 5)).shift(DOWN*0.6+LEFT*2),
+                              box.animate.rotate(axis=RIGHT+UP, angle=180*DEGREES,
+                                                 about_point=ax.coords_to_point(-2, 5))
+                                             .shift(DOWN*0.6+LEFT*2).set_fill(opacity=0.8)),
+                              lag_ratio=0.5),
+                  run_time=2)
+        self.wait(0.5)
+        self.play(FadeOut(box, ax, graph), run_time=1)
+        self.wait(0.5)
+
+    def construct(self):
+        defs = self.create_def()
+        props = self.create_properties()
+        self.add(defs, props)
+        self.wait(0.5)
+
+        self.do_addition()
+        self.do_graph()
+
+        eq1 = MathTex(r'a^{\log_a x}=x')[0].set_z_index(2)
+
+        eq3 = MathTex(r'xy{{=}}a^{\log_ax}\;a^{\log_ay}{{=}}a^{\log_ax + \log_ay}')\
+            .set_z_index(2).next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq3[3:5].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[3])
+
+        gp = VGroup(eq1, eq3).move_to(ORIGIN).to_edge(DOWN)
+        box = SurroundingRectangle(gp, fill_color=BLACK, fill_opacity=self.opacity, stroke_opacity=0, corner_radius=0.2)
+
+        self.play(FadeIn(box, eq1), run_time=1)
+        self.wait(0.1)
+        self.play(FadeIn(eq3[:2]), run_time=1)
+        eq3_1 = eq3[0][0].copy()
+        eq3_2 = eq3[0][1].copy()
+        self.play(eq3_1.animate.move_to(eq3[2][:6], coor_mask=RIGHT),
+                  eq3_2.animate.move_to(eq3[2][6:], coor_mask=RIGHT),
+                  run_time=2)
+        self.play(abra.fade_replace(eq3_1, eq3[2][5]),
+                  abra.fade_replace(eq3_2, eq3[2][11]),
+                  FadeIn(eq3[2][:5], eq3[2][6:11]),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq3[2][:6] + eq3[2][7:12], eq3[4][:6] + eq3[4][7:12]),
+                  ReplacementTransform(eq3[2][6], eq3[4][0]),
+                  FadeIn(eq3[4][6]),
+                  run_time=2)
+        self.wait(0.5)
+        self.play(FadeOut(box, eq1, eq3[:2], eq3[4]), run_time=1)
+
+        self.wait(0.5)
+
+class LogRuler(Logarithms):
+    def construct(self):
+
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "fps": 15, "preview": True}):
-        PlotInt().render()
+        Logarithms().render()
