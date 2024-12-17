@@ -265,6 +265,143 @@ class ExpNat(ExpPosint):
         self.wait(0.5)
 
 
+class PropsNatNew(ExpNat):
+    def create_properties(self):
+        eq1 = MathTex(r'a^1=a')[0].set_z_index(2)
+        eq2 = MathTex(r'a^{x+y}=a^x\;a^y')[0].set_z_index(2).next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq3 = MathTex(r'(a^x)^y=a^{xy}')[0].set_z_index(2).next_to(eq2, DOWN).align_to(eq1, LEFT)
+        eq4 = MathTex(r'(ab)^x=a^x\;b^x')[0].set_z_index(2).next_to(eq3, DOWN).align_to(eq1, LEFT)
+        gp = VGroup(eq1, eq2, eq3, eq4)
+        box = self.get_defbox(gp, props=True)
+        return VGroup(gp, *box[:]).to_edge(UR, buff=0.1)
+
+    def construct(self):
+        prop1 = ExpNat.create_properties(self)
+        def1 = ExpNat.create_def(self)
+        props = self.create_properties()
+        self.add(prop1, def1)
+        self.wait(0.5)
+        box1 = self.get_defbox(VGroup(props[0][:2]), props=True)
+        self.play(LaggedStart(ReplacementTransform(prop1[1:] + prop1[0][0], box1[:] + props[0][0]),
+                              FadeIn(props[0][1]), lag_ratio=0.5), run_time=2)
+
+        self.wait(0.1)
+        eq1 = MathTex(r's_0,s_1,s_2,\ldots')[0].set_z_index(2)
+        eq2 = MathTex(r's_{n+1}=s_na')[0].set_z_index(2).move_to(eq1).align_to(eq1, LEFT)
+        eq3 = MathTex(r's_n=s_0a^n')[0].set_z_index(2).next_to(eq2, DOWN, buff=0.1).align_to(eq1, LEFT)
+        line1 = Line(eq1.get_left(), eq1.get_right(), color=RED, stroke_width=5).next_to(eq3, DOWN, coor_mask=UP)\
+            .set_z_index(2)
+        eq4 = MathTex(r's_y=a^{x+y}')[0].set_z_index(2).next_to(line1, DOWN, buff=0.1).align_to(eq1, LEFT)
+        eq5 = MathTex(r's_{y+1}{{=}}a^{x+y+1}{{=}}a^{x+y}a{{=}}s_ya').set_z_index(2).next_to(eq4, DOWN, buff=0.05).align_to(eq1, LEFT)
+        eq5[3:5].next_to(eq5[1], ORIGIN, submobject_to_align=eq5[3])
+        eq5[5:7].next_to(eq5[1], ORIGIN, submobject_to_align=eq5[5])
+        eq5[6][:2].move_to(eq5[4][:4], coor_mask=RIGHT)
+        eq6 = MathTex(r's_y{{=}}s_0 a^y{{=}}a^xa^y').set_z_index(2)
+        eq6.next_to(eq5[1], ORIGIN, submobject_to_align=eq6[1]).align_to(eq1, LEFT)
+        eq6[3:5].next_to(eq6[1], ORIGIN, submobject_to_align=eq6[3])
+
+        eq7 = MathTex(r's_y = a^{xy}')[0].set_z_index(2).next_to(line1, DOWN, buff=0.1).align_to(eq1, LEFT)
+        eq8 = MathTex(r's_{y+1}{{=}}a^{xy+x}{{=}}a^{xy}a^x{{=}}s_ya^x').set_z_index(2).next_to(eq7, DOWN, buff=0.05).align_to(eq1, LEFT)
+        eq8[3:5].next_to(eq8[1], ORIGIN, submobject_to_align=eq8[3])
+        eq8[5:7].next_to(eq8[1], ORIGIN, submobject_to_align=eq8[5])
+        eq8[6][:2].move_to(eq8[4][:3], coor_mask=RIGHT)
+        eq9 = MathTex(r's_y=s_0(a^x)^y')[0].set_z_index(2).move_to(eq8).align_to(eq1, LEFT)
+
+        eq10 = MathTex(r's_x = a^xb^x')[0].set_z_index(2).next_to(line1, DOWN, buff=0.1).align_to(eq1, LEFT)
+        eq11 = MathTex(r's_{x+1}{{=}}a^{x+1}b^{x+1}{{=}}a^xab^xb{{=}}a^xb^xab{{=}}s_xab').set_z_index(2).next_to(eq10, DOWN, buff=0.05).align_to(eq1, LEFT)
+        eq11[3:5].next_to(eq11[1], ORIGIN, submobject_to_align=eq11[3])
+        eq11[5:7].next_to(eq11[1], ORIGIN, submobject_to_align=eq11[5])
+        eq11[7:9].next_to(eq11[1], ORIGIN, submobject_to_align=eq11[7])
+        eq11[8][:2].move_to(eq11[6][:4], coor_mask=RIGHT)
+        eq11[4][3:].align_to(eq11[2][4:], LEFT)
+        eq12 = MathTex(r's_x=s_0(ab)^x')[0].set_z_index(2).move_to(eq11).align_to(eq1, LEFT)
+
+        gp = VGroup(line1, eq1, eq2, eq3, eq4, eq5, eq6, eq7, eq8, eq9, eq10, eq11, eq12).move_to(ORIGIN).to_edge(DOWN, buff=0.2)
+        line1 = Line(gp.get_left(), gp.get_right(), color=RED, stroke_width=5).set_z_index(2).move_to(line1, coor_mask=UP)
+        box3 = SurroundingRectangle(gp, fill_color=BLACK, fill_opacity=self.opacity, stroke_opacity=0, corner_radius=0.2)
+
+        self.play(FadeIn(box3, eq1), run_time=1)
+        self.wait(0.1)
+        self.play(FadeOut(eq1), FadeIn(eq2), run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeIn(eq3), run_time=1)
+        self.wait(0.1)
+        self.play(LaggedStart(FadeIn(line1), FadeIn(eq4), lag_ratio=0.5), run_time=1)
+        self.wait(0.1)
+        self.play(LaggedStart(ReplacementTransform((eq4[:2] + eq4[2] + eq4[3:7]).copy(),
+                                                   eq5[0][:2] + eq5[1][0] + eq5[2][:4]),
+                              FadeIn(eq5[0][2:4], eq5[2][4:6]), lag_ratio=0.5),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq5[2][:4], eq5[4][:4]),
+                  ReplacementTransform(eq5[2][0].copy(), eq5[4][-1]),
+                  FadeOut(eq5[2][4:]), run_time=2)
+        self.wait(0.1)
+        self.play(FadeOut(eq5[4][:4]), FadeIn(eq5[6][:2]), run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeOut(eq5[:2], eq5[4][-1], eq5[6][:2]),
+                  FadeIn(eq6[:3]), run_time=2)
+        self.wait(0.1)
+        self.play(FadeOut(eq6[2][:2]), FadeIn(eq6[4][:2]),
+                  ReplacementTransform(eq6[2][2:], eq6[4][2:]), run_time=2)
+        self.wait(0.5)
+        self.play(FadeOut(eq4, eq6[:2], eq6[4]), run_time=1)
+        self.wait(0.1)
+
+        box2 = self.get_defbox(props[0][:3], props=True)
+        self.play(LaggedStart(ReplacementTransform(box1, box2),
+                              FadeIn(props[0][2]), lag_ratio=0.5), run_time=2)
+        self.wait(0.1)
+        self.play(FadeIn(eq7), run_time=1)
+        self.wait(0.5)
+        self.play(LaggedStart(ReplacementTransform((eq7[:2] + eq7[2] + eq7[3:6]).copy(),
+                                                   eq8[0][:2] + eq8[1][0] + eq8[2][:3]),
+                              FadeIn(eq8[0][2:], eq8[2][3:]), lag_ratio=0.5),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq8[2][:3] + eq8[2][4] + eq8[2][0].copy(),
+                                       eq8[4][:3] + eq8[4][4] + eq8[4][3]),
+                  FadeOut(eq8[2][3]),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeOut(eq8[4][:3]), FadeIn(eq8[6][:2]), run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeOut(eq8[:2], eq8[4][3:], eq8[6][:2]), FadeIn(eq9), run_time=2)
+        self.wait(0.1)
+        self.play(FadeOut(eq9[3:5]), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(eq7, eq9[:3], eq9[5:]), run_time=1)
+        self.wait(0.1)
+
+        self.play(LaggedStart(ReplacementTransform(box2[:], props[1:]),
+                              FadeIn(props[0][3]), lag_ratio=0.5), run_time=2)
+        self.wait(0.1)
+        self.play(FadeIn(eq10), run_time=1)
+        self.wait(0.5)
+        self.play(LaggedStart(ReplacementTransform((eq10[:2] + eq10[2] + eq10[3:5] + eq10[5:7]).copy(),
+                                                   eq11[0][:2] + eq11[1][0] + eq11[2][:2] + eq11[2][4:6]),
+                              FadeIn(eq11[0][2:], eq11[2][2:4], eq11[2][6:8]), lag_ratio=0.5),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq11[2][:2] + eq11[2][4:6] + eq11[2][0].copy() + eq11[2][4].copy(),
+                                       eq11[4][:2] + eq11[4][3:5] + eq11[4][2] + eq11[4][-1]),
+                  FadeOut(eq11[2][2:4], eq11[2][6:8]),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq11[4][:2] + eq11[4][3:5] + eq11[4][2] + eq11[4][5],
+                                       eq11[6][:2] + eq11[6][2:4] + eq11[6][4] + eq11[6][5]),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeOut(eq11[6][:4]), FadeIn(eq11[8][:2]), run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeOut(eq11[:2], eq11[6][4:], eq11[8][:2]), FadeIn(eq12), run_time=2)
+        self.wait(0.1)
+        self.play(FadeOut(eq12[3:5]), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(box3, eq2, eq3, line1, eq10, eq12[:3], eq12[5:]), run_time=1)
+        self.wait(0.5)
+
+
 class PropsNat(ExpNat):
     def create_properties(self):
         eq1 = MathTex(r'a^1=a')[0].set_z_index(2)
@@ -492,7 +629,7 @@ class PropsNatPf(PropsNat2):
         self.wait(0.5)
 
 
-class ExpInt(PropsNatPf):
+class ExpInt(PropsNatNew):
     def create_def(self):
         eq1 = MathTex(r'x\in\mathbb Z, a\in\mathbb C\setminus\{0\}')[0].set_z_index(2)
         eq2 = MathTex(r'a^0=1')[0].next_to(eq1, DOWN).align_to(eq1, LEFT).set_z_index(2)
@@ -1190,6 +1327,7 @@ class Logarithms(ConvexRat):
 
 class LogRuler(Logarithms):
     def construct(self):
+        pass
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "fps": 15, "preview": True}):
