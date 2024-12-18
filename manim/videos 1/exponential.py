@@ -5,6 +5,7 @@ import random
 import csv
 import datetime
 import sys
+import scipy.interpolate
 
 sys.path.append('../abracadabra/')
 # noinspection PyUnresolvedReferences
@@ -268,7 +269,7 @@ class ExpNat(ExpPosint):
 class PropsNatNew(ExpNat):
     def create_properties(self):
         eq1 = MathTex(r'a^1=a')[0].set_z_index(2)
-        eq2 = MathTex(r'a^{x+y}=a^x\;a^y')[0].set_z_index(2).next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq2 = MathTex(r'a^{x+y}=a^xa^y')[0].set_z_index(2).next_to(eq1, DOWN).align_to(eq1, LEFT)
         eq3 = MathTex(r'(a^x)^y=a^{xy}')[0].set_z_index(2).next_to(eq2, DOWN).align_to(eq1, LEFT)
         eq4 = MathTex(r'(ab)^x=a^x\;b^x')[0].set_z_index(2).next_to(eq3, DOWN).align_to(eq1, LEFT)
         gp = VGroup(eq1, eq2, eq3, eq4)
@@ -405,7 +406,7 @@ class PropsNatNew(ExpNat):
 class PropsNat(ExpNat):
     def create_properties(self):
         eq1 = MathTex(r'a^1=a')[0].set_z_index(2)
-        eq2 = MathTex(r'a^{x+y}=a^x\;a^y')[0].set_z_index(2).next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq2 = MathTex(r'a^{x+y}=a^xa^y')[0].set_z_index(2).next_to(eq1, DOWN).align_to(eq1, LEFT)
         gp = VGroup(eq1, eq2)
         box = self.get_defbox(gp, props=True)
         return VGroup(gp, *box[:]).to_edge(UR, buff=0.1)
@@ -436,7 +437,7 @@ class PropsNat(ExpNat):
         eq3.next_to(eq2[4], ORIGIN, submobject_to_align=eq3[0])
         eq4 = MathTex(r'=a^x\;a^0')[0].set_z_index(2)
         eq4.next_to(eq2[4], ORIGIN, submobject_to_align=eq4[0])
-        eq5 = MathTex(r'=a^x\;a^y')[0].set_z_index(2)
+        eq5 = MathTex(r'=a^xa^y')[0].set_z_index(2)
         eq5.next_to(eq2[4], ORIGIN, submobject_to_align=eq5[0])
 
         self.play(LaggedStart(FadeIn(box1), FadeIn(eq1), lag_ratio=0.5), run_time=0.5)
@@ -468,13 +469,13 @@ class PropsNat(ExpNat):
         self.play(ReplacementTransform(eq6[9:10] + eq6[11:14], eq7[1:2] + eq7[2:5]),
                   FadeOut(eq6[10], eq6[14:]), FadeIn(eq7[5]), run_time=2)
 
-        eq8 = MathTex(r'=a^x\;a^y\;a')[0].set_z_index(2)
+        eq8 = MathTex(r'=a^xa^y\;a')[0].set_z_index(2)
         eq8.next_to(eq6[8], ORIGIN, submobject_to_align=eq8[0])
         self.wait(0.1)
         self.play(ReplacementTransform(eq1[-4:].copy() + eq7[5], eq8[1:5] + eq8[5]),
                   FadeOut(eq7[1:5]), run_time=1.5)
 
-        eq9 = MathTex(r'=a^x\;a^{y+1}')[0].set_z_index(2)
+        eq9 = MathTex(r'=a^xa^{y+1}')[0].set_z_index(2)
         eq9.next_to(eq6[8], ORIGIN, submobject_to_align=eq9[0])
         self.play(ReplacementTransform(eq8[1:5], eq9[1:5]),
                   FadeIn(eq9[5:]), FadeOut(eq8[-1], target_position=eq9[3]),
@@ -493,7 +494,7 @@ class PropsNat(ExpNat):
 class PropsNat2(PropsNat):
     def create_properties(self):
         eq1 = MathTex(r'a^1=a')[0].set_z_index(2)
-        eq2 = MathTex(r'a^{x+y}=a^x\;a^y')[0].set_z_index(2).next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq2 = MathTex(r'a^{x+y}=a^xa^y')[0].set_z_index(2).next_to(eq1, DOWN).align_to(eq1, LEFT)
         eq3 = MathTex(r'(a^x)^y=a^{xy}')[0].set_z_index(2).next_to(eq2, DOWN).align_to(eq1, LEFT)
         eq4 = MathTex(r'(ab)^x=a^x\;b^x')[0].set_z_index(2).next_to(eq3, DOWN).align_to(eq1, LEFT)
         gp = VGroup(eq1, eq2, eq3, eq4)
@@ -904,7 +905,7 @@ class PropsRat(PlotRat):
         eq1 = def1[0][0]
         eq2 = def1[0][1]
         eq3 = MathTex(r'a^1=a')[0].set_z_index(2).next_to(eq2, DOWN).align_to(eq1, LEFT)
-        eq4 = MathTex(r'a^{x+y}=a^x\;a^y')[0].set_z_index(2).next_to(eq3, DOWN).align_to(eq1, LEFT)
+        eq4 = MathTex(r'a^{x+y}=a^xa^y')[0].set_z_index(2).next_to(eq3, DOWN).align_to(eq1, LEFT)
         gp = VGroup(eq1, eq2, eq3, eq4)
         box = self.get_defbox(gp)
         return VGroup(gp, *box[:]).to_edge(UL, buff=0.1)
@@ -1325,9 +1326,385 @@ class Logarithms(ConvexRat):
 
         self.wait(0.5)
 
+
 class LogRuler(Logarithms):
+    def get_pos(self, x, corners, top=True):
+        res = RIGHT * (corners[0] * (1-x) + corners[1] * x)
+        res += UP * (corners[1] if top else corners[0])
+        return res
+
+    def get_tick(self, x, corners, top=True, length=1.0, width=1.0):
+        pos = self.get_pos(x, corners, top=top)
+        dir = DOWN if top else UP
+        return Line(pos, pos + dir * 0.15 * length, color=BLACK, stroke_width=4*width).set_z_index(1)
+
+    def get_markings(self, corners, xvals, yvals):
+        n = len(xvals)
+        ticks = []
+        labels = []
+        ticks2 = []
+        labels2 = []
+        for i in range(n):
+            x = xvals[i]/xvals[-1]
+            tick = self.get_tick(x, corners)
+            tick2 = self.get_tick(x, corners, top=False)
+            ticks.append(tick)
+            ticks2.append(tick2)
+            label = Tex(r'{}'.format(int(xvals[i])), color=BLACK, font_size=35)[0].next_to(tick, DOWN, buff=0.025).set_z_index(2)
+            label2 = Tex(r'{}'.format(int(yvals[i])), color=BLACK, font_size=35)[0].next_to(tick2, UP, buff=0.025).set_z_index(2)
+            labels.append(label)
+            labels2.append(label2)
+        ticks = VGroup(*ticks)
+        ticks2 = VGroup(*ticks2)
+        labels = VGroup(*labels)
+        labels2 = VGroup(*labels2)
+        return VGroup(ticks, labels, ticks2, labels2)
+
+    def get_log_markings(self, corners, yinterp):
+        major_x = np.concatenate((np.linspace(1.0, 10.0, 10), np.linspace(20.0, 100.0, 9)))
+        minor_x = np.concatenate((np.linspace(1.5, 9.5, 9), np.linspace(15.0, 95.0, 9)))
+        minor2 = np.linspace(1.1, 1.4, 4)
+        minor3 = np.linspace(11.0, 14.0, 4)
+        minor_x2 = np.concatenate((minor2, minor2 + 0.5, minor2 + 1.0, minor2 + 1.5, minor2 + 2.0, minor2 + 2.5,
+                                   np.array([4.25, 4.75, 5.25, 5.75, 6.25, 6.75, 7.25, 7.75])))
+        minor_x3 = np.concatenate((minor_x2, minor_x2 * 10))
+
+        ticks = []
+        labels = []
+        for x in major_x:
+            y = yinterp(x)
+            tick = self.get_tick(y, corners, top=False)
+            i = int(x)
+            j = i if i < 10 else i // 10
+            label = Tex(r'{}'.format(j), color=BLACK, font_size=35)[0].next_to(tick, UP, buff=0.025).set_z_index(2)
+            if i == 100:
+                label.next_to(tick, UP, buff=0.025, submobject_to_align=label[0])
+            ticks.append(tick)
+            labels.append(label)
+
+        for x in minor_x:
+            y = yinterp(x)
+            tick = self.get_tick(y, corners, top=False, length=0.8, width=0.8)
+            ticks.append(tick)
+
+        for x in minor_x3:
+            y = yinterp(x)
+            tick = self.get_tick(y, corners, top=False, length=0.5, width=0.6)
+            ticks.append(tick)
+
+        return VGroup(VGroup(*ticks), VGroup(*labels))
+
+    def get_linear_markings(self, corners, xvals, step=1, step2=1, scale=1.0):
+        ticks = []
+        labels = []
+        for i in range(len(xvals)):
+            if i % step == 0:
+                tick = self.get_tick(xvals[i], corners)
+                label = Tex(r'{:g}'.format(i*scale), color=BLACK, font_size=35)[0].next_to(tick, DOWN, buff=0.025).set_z_index(2)
+                labels.append(label)
+            elif i % step2 == 0:
+                tick = self.get_tick(xvals[i], corners, length=0.8, width=0.8)
+            else:
+                continue
+
+            ticks.append(tick)
+
+        return VGroup(VGroup(*ticks), VGroup(*labels))
+
+    def get_loglinear_markings(self, corners, yinterp, xvals, step=1, step2=1):
+        markings1 = self.get_linear_markings(corners, xvals, step=step, step2=step2)
+        markings2 = self.get_log_markings(corners, yinterp)
+        return VGroup(*markings1[:], *markings2[:])
+
+    def reflect_markings(self, markings):
+        top = markings.get_top()
+        bot = markings.get_bottom()
+        ticks = []
+        for tick in markings[0][:]:
+            ticks.append(tick.copy().align_to(bot, DOWN))
+        ticks2 = []
+        for tick in markings[2][:]:
+            ticks2.append(tick.copy().align_to(top, UP))
+        labels = []
+        for label in markings[1][:]:
+            dy = (top - label.get_top())[1]
+            labels.append(label.copy().align_to(bot, DOWN).shift(UP * dy))
+        labels2 = []
+        for label in markings[3][:]:
+            dy = (label.get_bottom() - bot)[1]
+            labels2.append(label.copy().align_to(top, UP).shift(DOWN * dy))
+
+        return VGroup(VGroup(*ticks), VGroup(*labels), VGroup(*ticks2), VGroup(*labels2))
+
+    def slide_add(self, corners, slide, yinterp, x1: float, x2: float, replace=True):
+        ruler = slide[0]
+        markings = slide[1]
+        ruler2 = ruler.copy()
+        markings2 = self.reflect_markings(markings)
+        shift = ruler.height + 0.04
+        slide_pos = slide.get_center()
+        slide2 = VGroup(ruler2, markings2, *slide[2:].copy())
+        self.play(slide.animate.shift(UP*shift), run_time=1)
+        self.play(FadeIn(slide2), run_time=1)
+
+        y1 = yinterp(x1)
+        y2 = yinterp(x2)
+        line0 = Line(self.get_pos(y1, corners, top=False), self.get_pos(y1, corners), color=RED_E, stroke_width=5)\
+            .set_z_index(5).shift(UP*shift)
+        line1 = Line(self.get_pos(y2, corners, top=False), self.get_pos(y2, corners), color=RED_E, stroke_width=5)\
+            .set_z_index(5)
+        self.wait(0.5)
+        self.play(FadeIn(line0, line1), run_time=1)
+        shift = self.get_pos(y1, corners) - self.get_pos(0, corners)
+        self.wait(0.1)
+        self.play(VGroup(slide2, line1).animate.shift(shift),
+                  run_time=2)
+        self.wait(0.5)
+        self.play(FadeOut(line0, line1, slide2), run_time=2)
+        if replace:
+            self.play(slide.animate.move_to(slide_pos), run_time=1)
+
     def construct(self):
-        pass
+        defs = Logarithms.create_def(self)
+        props = Logarithms.create_properties(self)
+        self.add(defs, props)
+        rcol = ManimColor(np.array([1., 1., .94]) * 0.7)
+        ruler = RoundedRectangle(width=10, height=1.2, fill_color=rcol, stroke_opacity=0, fill_opacity=1,
+                                 corner_radius=0.05).to_edge(DOWN, buff=0.2)
+        corners = (ruler.get_corner(DL) + RIGHT*0.1, ruler.get_corner(UR) + LEFT * 0.3)
+        self.wait(0.5)
+        self.play(FadeIn(ruler), run_time=1)
+
+        a = 2.0
+        eq1 = MathTex(r'a={:g}'.format(a), font_size=35, color=BLACK)[0].move_to(ruler).set_z_index(3)
+        self.play(FadeIn(eq1), run_time=1)
+        self.wait(0.5)
+        n = math.ceil(math.log(100.) / math.log(a))
+        xvals = np.linspace(0.0, n, n+1)
+        yvals = np.power(a, xvals)
+        markings = self.get_markings(corners, xvals, yvals)
+
+        self.play(FadeIn(markings[:2]), run_time=1)
+        self.wait(0.5)
+        self.play(FadeIn(markings[2:]), run_time=1)
+        self.wait(0.5)
+        slide = VGroup(ruler, markings, eq1)
+        yinterp = scipy.interpolate.interp1d(yvals, xvals/xvals[-1])
+        self.slide_add(corners, slide, yinterp, 4, 8)
+        self.wait(0.5)
+
+        markings_new = self.get_log_markings(corners, yinterp)
+        self.play(FadeIn(markings_new), FadeOut(markings[2:]), run_time=2)
+        slide = VGroup(ruler, VGroup(*markings[:2], *markings_new[:]), eq1)
+        self.slide_add(corners, slide, yinterp, 6.5, 5.5)
+
+        self.wait(0.1)
+        self.play(FadeOut(slide[1:]), run_time=1)
+
+        a = 1.1
+        eq1 = MathTex(r'a={:g}'.format(a), font_size=35, color=BLACK)[0].move_to(ruler).set_z_index(2)
+        self.play(FadeIn(eq1), run_time=1)
+        self.wait(0.5)
+        n = math.ceil(math.log(100.) / math.log(a))
+        xvals = np.linspace(0.0, n, n+1)
+        yvals = np.power(a, xvals)
+        yinterp = scipy.interpolate.interp1d(yvals, xvals/xvals[-1])
+        markings = self.get_loglinear_markings(corners, yinterp, xvals/xvals[-1], step=5, step2=1)
+        self.wait(0.1)
+        self.play(FadeIn(markings), run_time=1)
+        self.wait(0.5)
+        markings2 = self.get_linear_markings(corners, xvals/xvals[-1], step=5, step2=1, scale=0.1)
+        self.play(FadeOut(markings[:2]), FadeIn(markings2), run_time=1)
+        self.wait(0.5)
+        markings = VGroup(*markings2[:], *markings[2:])
+        self.slide_add(corners, VGroup(ruler, markings, eq1), yinterp, 6.5, 5.5)
+        self.wait(0.1)
+        self.play(FadeOut(markings, eq1), run_time=1)
+        self.wait(0.5)
+
+        a = 1.01
+        eq1 = MathTex(r'a={:g}'.format(a), font_size=35, color=BLACK)[0].move_to(ruler).set_z_index(3)
+        self.play(FadeIn(eq1), run_time=1)
+        self.wait(0.5)
+        n = math.ceil(math.log(100.) / math.log(a))
+        xvals = np.linspace(0.0, n, n+1)
+        yvals = np.power(a, xvals)
+        yinterp = scipy.interpolate.interp1d(yvals, xvals/xvals[-1])
+        markings = self.get_loglinear_markings(corners, yinterp, xvals/xvals[-1], step=50, step2=10)
+        self.wait(0.1)
+        self.play(FadeIn(markings), run_time=1)
+        self.wait(0.5)
+        markings2 = self.get_linear_markings(corners, xvals/xvals[-1], step=50, step2=10, scale=0.01)
+        self.play(FadeOut(markings[:2]), FadeIn(markings2), run_time=1)
+        self.wait(0.5)
+        markings = VGroup(*markings2[:], *markings[2:])
+        pos1 = ruler.get_center()
+        self.slide_add(corners, VGroup(ruler, markings, eq1), yinterp, 6.5, 5.5, replace=False)
+        self.wait(0.5)
+        shift = ruler.get_center() - pos1
+        x = 100/xvals[-1]
+        line1 = Line(self.get_pos(x, corners, top=False), self.get_pos(x, corners), color=RED_E, stroke_width=5).shift(shift)
+        self.play(FadeIn(line1), run_time=1)
+        self.wait(0.1)
+        eq2 = MathTex(r'e')[0].next_to(line1, DOWN, buff=0).shift(DOWN + LEFT*0.5)
+        arr1 = Arrow(eq2.get_corner(UR) + UR*0.05, line1.get_bottom() + DOWN*0.05, color=RED, stroke_width=5, buff=0)
+        self.play(FadeIn(eq2, arr1), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(ruler, markings, eq1, arr1, eq2, line1), run_time=1)
+
+        self.wait(0.5)
+
+
+class ExpDeriv(LogRuler):
+    def graph_eval(self, ax, a, x, xstr=r'x', ystr=r'a^x', size1=40):
+        pt0 = ax.coords_to_point(x, 0)
+        pt1 = ax.coords_to_point(x, a**x)
+        pt2 = ax.coords_to_point(0, a**x)
+        eqx = MathTex(xstr, font_size=size1)[0].next_to(pt0, DOWN, buff=0.13)
+        eqax = MathTex(ystr, font_size=40)[0].next_to(pt2, LEFT, buff=0.13)
+        line1 = Line(pt0, pt1, color=GREY, stroke_width=5).set_z_index(1)
+        line2 = Line(pt1, pt2, color=GREY, stroke_width=5).set_z_index(1)
+        return VGroup(eqx, line1, line2, eqax)
+
+    def construct(self):
+        def1 = self.create_def()
+        prop1 = self.create_properties()
+        self.add(def1, prop1)
+        self.wait(0.5)
+
+        a = 1.5
+        ax, _ = self.get_graph(a, shift=0.25)
+
+        eq1 = MathTex(r'a^x{{=}}\left(a^{x/n}\right)^n{{\approx}}\left(1+\frac{gx}{n}\right)^n',
+                      font_size=40).set_z_index(2)
+        eq1[3:5].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[3], coor_mask=RIGHT)
+        eq1.next_to(ax.coords_to_point(0, 6.7), LEFT, buff=0.2)
+
+        x0 = 4.
+        gev = self.graph_eval(ax, a, x0)
+        gp = VGroup(gev, ax, eq1)
+
+        box = SurroundingRectangle(gp, fill_color=BLACK, fill_opacity=self.opacity, stroke_opacity=0,
+                                   corner_radius=0.2)
+        VGroup(gp, box).to_edge(DOWN, buff=0.1)
+
+        graph = ax.plot(lambda x: a**x, (-5, 5, 0.05), color=BLUE, stroke_width=5).set_z_index(3)
+        self.play(FadeIn(box, ax, graph), run_time=1)
+
+        self.play(FadeIn(gev[0]), run_time=1)
+        self.wait(0.1)
+        self.play(Create(gev[1]), run_time=1)
+        self.wait(0.1)
+        self.play(Create(gev[2]), run_time=1)
+        self.wait(0.1)
+        self.play(FadeIn(gev[3]), run_time=1)
+        self.wait(0.1)
+
+        self.play(FadeIn(eq1[:3]), run_time=1)
+        self.wait(0.1)
+
+        gev1 = VGroup()
+        for i in range(2, 7):
+            xstr = r'x/{}'.format(i)
+            ystr = r'a^{{x/{} }}'.format(i)
+            gev0 = self.graph_eval(ax, a, x0/i, xstr=xstr, ystr=ystr, size1=34)
+            self.play(FadeIn(gev0), FadeOut(gev1), run_time=0.101)
+            gev1 = gev0
+            self.wait(0.2)
+
+        g = math.log(a)
+
+        line1 = Line(ax.coords_to_point(-1/g, 0), ax.coords_to_point(5, 1+5*g), color=RED, stroke_width=4).set_z_index(4)
+        self.play(FadeIn(line1), run_time=1)
+        self.wait(0.1)
+        eq2 = MathTex(r'g', color=RED, font_size=30).set_z_index(2).next_to(line1.get_end(), UP, buff=0.1).shift(LEFT*0.1)
+        self.play(FadeIn(eq2), run_time=0.5)
+        self.wait(0.5)
+
+        self.play(ReplacementTransform(eq1[2][5:7] + eq1[2][4:5] + eq1[2][0] + eq1[1][0],
+                                       eq1[4][7:9] + eq1[4][6:7] + eq1[4][0] + eq1[3][0]),
+                  abra.fade_replace(eq1[2][1], eq1[4][1:4]),
+                  abra.fade_replace(eq1[2][3], eq1[4][5]),
+                  abra.fade_replace(eq1[2][2], eq1[4][4]),
+                  run_time=1)
+        self.wait(0.1)
+        self.play(FadeOut(gev1), run_time=1)
+        self.wait(0.1)
+
+        hval = ValueTracker(4.0)
+
+        def g(neg=False):
+            def f():
+                h = hval.get_value()
+                if neg:
+                    h = -h
+                y = a**h
+                pt1 = ax.coords_to_point(h, 0)
+                pt2 = ax.coords_to_point(h, y)
+                str = r'-h' if neg else r'h'
+                eq1 = MathTex(str, font_size=40)[0].set_z_index(2)
+                eq1.next_to(pt1, DOWN, buff=0.05, submobject_to_align=eq1[-1])
+                line1 = Line(pt1, pt2, color=GREY, stroke_width=5).set_z_index(1)
+                g = (y-1) / h
+                pt3 = ax.coords_to_point(-1/g, 0)
+                pt4 = ax.coords_to_point(5, 1+g*5)
+                line2 = Line(pt3, pt4, color=RED, stroke_width=4).set_z_index(4)
+                str = r'g_{-h}' if neg else r'g_h'
+                eq2 = MathTex(str, color=RED, font_size=30).set_z_index(5).next_to(pt4, UP, buff=0.1).shift(LEFT*0.1)
+                if neg:
+                    eq2.next_to(pt4, DOWN, buff=0.1)
+                return VGroup(eq1, line1, VGroup(line2, eq2))
+            return f
+
+        vargrad = always_redraw(g())
+        self.play(FadeIn(vargrad[0]), run_time=0.5)
+        self.play(Create(vargrad[1]), run_time=0.5)
+        self.wait(0.1)
+        self.play(FadeIn(vargrad[2]), run_time=0.5)
+        self.wait(0.1)
+        self.play(FadeOut(eq2), run_time=0.5)
+        self.add(vargrad)
+        self.play(hval.animate.set_value(0.1), run_time=4)
+        self.wait(0.5)
+#        eq1 = MathTex(r'a^x = \left(a^{x/n}\right)^n')
+
+        eq3 = MathTex(r'g_h{{=}}\frac{e^h-1}{h}{{=}}e^h\frac{1-e^{-h}}{h}{{=}}e^hg_{-h}{{\sim}}g_{-h}', font_size=40).set_z_index(0)\
+            .move_to(ax.coords_to_point(0, 3)).align_to(eq1, LEFT)
+        eq3[3:5].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[3])
+        eq3[5:7].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[5])
+        eq3[7:9].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[7])
+        self.play(FadeIn(eq3[:3]), run_time=1)
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq3[2][:2] + eq3[2][2] + eq3[2][4:],
+                                       eq3[4][:2] + eq3[4][3] + eq3[4][7:]),
+                  FadeIn(eq3[4][2], target_mobject=eq3[2][0]),
+                  abra.fade_replace(eq3[2][3], eq3[4][4:7]),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq3[4][:2], eq3[6][:2]),
+                  FadeOut(eq3[4][2:]),
+                  FadeIn(eq3[6][2:], target_position=eq3[4][2:].get_center()*RIGHT+eq3[6][2:].get_center()*UP),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(FadeOut(vargrad, line1), run_time=1)
+        self.remove(vargrad)
+        self.wait(0.1)
+
+        hval.set_value(4)
+        vargrad1 = always_redraw(g())
+        vargrad2 = always_redraw(g(neg=True))
+        self.play(FadeIn(vargrad1, vargrad2), run_time=2)
+        self.wait(0.1)
+        self.play(hval.animate.set_value(0.1), run_time=4)
+        self.wait(0.1)
+        self.play(LaggedStart(AnimationGroup(FadeOut(eq3[6][:2]), abra.fade_replace(eq3[1], eq3[7])),
+                              ReplacementTransform(eq3[6][2:], eq3[8][:]), lag_ratio=0.6),
+                  run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(eq3[0], eq3[7:], vargrad1, vargrad2), run_time=1)
+
+
+        self.wait(0.5)
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "fps": 15, "preview": True}):
