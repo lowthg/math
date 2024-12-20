@@ -60,9 +60,11 @@ class ExpPosint(Scene):
         config.background_color = self.bgcolor
         Scene.__init__(self, *args, *kwargs)
 
-    def get_defbox(self, obj, props=False):
+    def get_defbox(self, obj, props=False, e=False):
         color = BLUE if props else RED
         txt = r'properties' if props else r'definition'
+        if e:
+            txt = r'$e^x$ ' + txt
         rec1 = SurroundingRectangle(obj, stroke_opacity=0, fill_opacity=0.7, fill_color=BLACK,
                                     corner_radius=0.2, buff=0.2)
         rec2 = RoundedRectangle(width=rec1.width, height=rec1.height, fill_color=0, stroke_opacity=0.8,
@@ -1558,8 +1560,8 @@ class LogRuler(Logarithms):
 class ExpDeriv(LogRuler):
     def create_properties(self):
         prop1 = LogRuler.create_properties(self)
-        eq1 = MathTex(r'\frac{d a^x}{dx}=a^xg')[0].set_z_index(2).next_to(prop1[0], DOWN).align_to(prop1[0][0], LEFT)
-        eq2 = MathTex(r'a^x=\lim_{n\to\infty}\left(1+\frac xng\right)^n', font_size=40)[0].next_to(eq1, DOWN).align_to(prop1[0][0], LEFT)
+        eq1 = MathTex(r'\frac{d a^x}{dx}=a^xg')[0].set_z_index(2).next_to(prop1[0], DOWN).set_z_index(2).align_to(prop1[0][0], LEFT)
+        eq2 = MathTex(r'a^x=\lim_{n\to\infty}\left(1+\frac xng\right)^n', font_size=40)[0].set_z_index(2).next_to(eq1, DOWN).align_to(prop1[0][0], LEFT)
         gp = VGroup(*prop1[0][:], eq1, eq2)
         box = self.get_defbox(gp, props=True)
         return VGroup(gp, *box[:]).to_edge(UR, buff=0.1)
@@ -1860,6 +1862,131 @@ class ExpDeriv(LogRuler):
                               FadeIn(props[0][-1][2:-9]), lag_ratio=0.33),
                   FadeOut(box2, circ1, eq1[0], eq1[-2:], eq15[1:4], eq16[0], eq16[4]),
                   run_time=2.5)
+
+        self.wait(0.5)
+
+
+class EulerE(ExpDeriv):
+    def create_properties(self):
+        return  LogRuler.create_properties(self)
+
+    def create_eprops(self):
+        eq1 = MathTex(r'\frac{de^x}{dx}=e^x')[0].set_z_index(2)
+        eq2 = MathTex(r'e^x=\lim_{n\to\infty}\left(1+\frac xn\right)^n', font_size=40)[0].set_z_index(2).next_to(eq1, DOWN).align_to(eq1, LEFT)
+        gp = VGroup(eq1, eq2)
+        box = self.get_defbox(gp, props=True, e=True)
+        return VGroup(gp, *box[:]).next_to(self.create_properties(), DOWN, buff=0.1).to_edge(RIGHT, buff=0.1)
+
+    def create_edef(self):
+        eq1 = MathTex(r'x\in\mathbb R, e^x\in\mathbb R')[0].set_z_index(2)
+        eq2 = MathTex(r'e^{x+y}=e^xe^y')[0].set_z_index(2).next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq3 = MathTex(r'e^x=1+x+o(x)', font_size=40)[0].set_z_index(2).next_to(eq2, DOWN).align_to(eq1, LEFT)
+        gp = VGroup(eq1, eq2, eq3)
+        box = self.get_defbox(gp, e=True)
+        return VGroup(gp, *box[:]).next_to(self.create_def(), DOWN, buff=0.1).to_edge(LEFT, buff=0.1)
+
+    def construct(self):
+        def1 = ExpDeriv.create_def(self)
+        prop1 = ExpDeriv.create_properties(self)
+        self.add(prop1, def1)
+        self.wait(0.5)
+
+        eq1 = MathTex('a^x {{=}} 1 + xg + o(x) {{=}} 1 + x \ln a+o(x)').set_z_index(2)
+        eq1[3:5].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[3])
+        eq1.move_to(ORIGIN)
+        eq2 = MathTex('(a^y)^x {{=}} a^{xy} {{=}} 1 + xy\ln a + o(xy)').set_z_index(2).next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq2[3:5].next_to(eq2[1], ORIGIN, submobject_to_align=eq2[3])
+        eq3 = MathTex(r'\ln(a^y)=y\ln a')[0].set_z_index(2).next_to(eq2, DOWN).align_to(eq1, LEFT)
+        eq4 = MathTex(r'e=a^{\frac1{\ln a}}')[0].set_z_index(2).next_to(eq2, DOWN).align_to(eq1, LEFT)
+        eq5 = MathTex(r'\ln e {{=}} \frac{\ln a}{\ln a} {{=}} 1').set_z_index(2)
+        eq5.next_to(eq4[1], ORIGIN, submobject_to_align=eq5[1][0]).align_to(eq1, LEFT)
+        eq5[4].move_to(eq5[2], coor_mask=RIGHT)
+
+        gp = VGroup(eq1,eq2,eq3,eq4,eq5)
+        gp.to_edge(DOWN, buff=0.2).next_to(prop1, LEFT, buff=0.2, coor_mask=RIGHT)
+        box = SurroundingRectangle(gp, corner_radius=0.2, fill_color=BLACK, fill_opacity=self.opacity, stroke_opacity=0)
+        self.play(FadeIn(eq1[:3], box), run_time=1)
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq1[2][:3] + eq1[2][-5:],
+                                       eq1[4][:3] + eq1[4][-5:]),
+                  FadeOut(eq1[2][3]), FadeIn(eq1[4][3:-5]),
+                  run_time=1)
+        self.wait(0.5)
+        self.play(FadeIn(eq2[:3]), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(eq2[2][0]), FadeIn(eq2[4][:2], eq2[4][-9:-3], eq2[4][-1]),
+                  ReplacementTransform(eq2[2][-1:]+eq2[2][-1:].copy(), eq2[4][3:4]+eq2[4][-2:-1]),
+                  abra.fade_replace(eq2[2][-2], eq2[4][2]),
+                  abra.fade_replace(eq2[2][-2].copy(), eq2[4][-3]),
+                  run_time=1)
+
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq2[0][:4].copy() + eq2[4][3:7].copy(), eq3[2:6] + eq3[-4:]),
+                  FadeIn(eq3[:2], eq3[6]), run_time=1)
+        self.wait(0.1)
+        self.play(LaggedStart(FadeOut(eq2[:2], eq2[4]), eq3.animate.next_to(eq1, DOWN, coor_mask=UP), FadeIn(eq4), lag_ratio=0.333), run_time=1.5)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq4[:1] + eq4[1] + eq4[2] + eq4[4],
+                                       eq5[0][-1:] + eq5[1][0] + eq5[2][2] + eq5[2][-4]),
+                  FadeOut(eq4[3], target_position=eq5[2][:3]),
+                  FadeIn(eq5[2][:2], eq5[0][:2]),
+                  abra.fade_replace(eq4[5:8], eq5[2][-3:]),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeOut(eq5[2]), FadeIn(eq5[4]), run_time=1)
+        self.wait(0.5)
+        eq6=MathTex(r'e=e')[0].set_z_index(2)
+        eq6.next_to(eq3[6], ORIGIN, submobject_to_align=eq6[1])
+        eq6[0].move_to(eq3[3], coor_mask=RIGHT)
+        eq6[2].move_to(eq3[-1], coor_mask=RIGHT)
+        self.play(FadeOut(eq3[3], eq3[-1]), FadeIn(eq6[0], eq6[2]), run_time=1)
+        self.wait(0.1)
+        self.play(FadeOut(eq3[-3:-1], eq6[2]), run_time=1)
+        eq7 = MathTex(r'e^{\ln y}=y')[0].set_z_index(2)
+        eq7.next_to(eq3[6], ORIGIN, submobject_to_align=eq7[-2]).align_to(eq1, LEFT)
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq6[:1] + eq3[4] + eq3[-5:-3],
+                                       eq7[:1] + eq7[3] + eq7[-2:]),
+                  abra.fade_replace(eq3[:2], eq7[1:3]),
+                  FadeOut(eq3[2], eq3[5]),
+                  run_time=1)
+        eq8=MathTex(r'e=e')[0].set_z_index(2)
+        eq8.next_to(eq1[1][0], ORIGIN, submobject_to_align=eq8[1])
+        eq8[0].move_to(eq1[0][0], coor_mask=RIGHT)
+        eq8[2].move_to(eq1[4][5], coor_mask=RIGHT)
+        self.wait(0.1)
+        self.play(FadeOut(eq1[0][0], eq1[4][5]), FadeIn(eq8[0], eq8[2]), run_time=1)
+        self.wait(0.1)
+        eq1_1 = MathTex(r'x+y')[0]
+        eq1_1.next_to(eq1[4][2], ORIGIN, submobject_to_align=eq1_1[0])
+        self.play(FadeOut(eq1[4][3:5], eq8[2]), eq1[4][6:].animate.align_to(eq1_1[1], LEFT), run_time=1)
+        self.wait(0.5)
+        eprop = self.create_eprops()
+        props = self.create_properties()
+        self.play(ReplacementTransform(prop1[0][:-2] + prop1[1:] + prop1[0][-2][0] + prop1[0][-2][2:7] + prop1[0][-2][-2]
+                                       + prop1[0][-1][1:-3] + prop1[0][-1][-2:],
+                                       props[0][:] + props[1:] + eprop[0][-2][0] + eprop[0][-2][2:7] + eprop[0][-2][-1]
+                                       + eprop[0][-1][1:-2] + eprop[0][-1][-2:]),
+                  abra.fade_replace(prop1[0][-2][1], eprop[0][-2][1]),
+                  abra.fade_replace(prop1[0][-2][7], eprop[0][-2][7]),
+                  FadeOut(prop1[0][-2][-1], target_position=prop1[0][-2][-1].get_center()-prop1[0][-2][-3].get_center()
+                          + eprop[0][-2][-2].get_center()),
+                  abra.fade_replace(prop1[0][-1][0], eprop[0][-1][0]),
+                  FadeOut(prop1[0][-1][-3], target_position=eprop[0][-1][-2]),
+                  FadeIn(eprop[1:]),
+                  run_time=2)
+        self.wait(0.5)
+        edef = self.create_edef()
+        self.play(FadeIn(edef[0][0], edef[1:]),
+                  ReplacementTransform((def1[0][-2][1:5] + def1[0][-2][6] + def1[0][-2][8]).copy(),
+                                       edef[0][1][1:5] + edef[0][1][6] + edef[0][1][8]),
+                  abra.fade_replace(def1[0][-2][0].copy(), edef[0][1][0]),
+                  abra.fade_replace(def1[0][-2][5].copy(), edef[0][1][5]),
+                  abra.fade_replace(def1[0][-2][7].copy(), edef[0][1][7]),
+                  ReplacementTransform(eq1[0][1:] + eq1[1] + eq1[4][:3] + eq1[4][-5:] + eq8[0],
+                                       edef[0][2][1:2] + edef[0][2][2] + edef[0][2][3:6] + edef[0][2][-5:] + edef[0][2][0]),
+                  FadeOut(eq5[:2], eq5[-1], eq7, box),
+                  run_time=2)
 
         self.wait(0.5)
 
