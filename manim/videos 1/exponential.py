@@ -271,7 +271,7 @@ class PropsNatNew(ExpNat):
         eq1 = MathTex(r'a^1=a')[0].set_z_index(2)
         eq2 = MathTex(r'a^{x+y}=a^xa^y')[0].set_z_index(2).next_to(eq1, DOWN).align_to(eq1, LEFT)
         eq3 = MathTex(r'(a^x)^y=a^{xy}')[0].set_z_index(2).next_to(eq2, DOWN).align_to(eq1, LEFT)
-        eq4 = MathTex(r'(ab)^x=a^x\;b^x')[0].set_z_index(2).next_to(eq3, DOWN).align_to(eq1, LEFT)
+        eq4 = MathTex(r'(ab)^x=a^xb^x')[0].set_z_index(2).next_to(eq3, DOWN).align_to(eq1, LEFT)
         gp = VGroup(eq1, eq2, eq3, eq4)
         box = self.get_defbox(gp, props=True)
         return VGroup(gp, *box[:]).to_edge(UR, buff=0.1)
@@ -496,7 +496,7 @@ class PropsNat2(PropsNat):
         eq1 = MathTex(r'a^1=a')[0].set_z_index(2)
         eq2 = MathTex(r'a^{x+y}=a^xa^y')[0].set_z_index(2).next_to(eq1, DOWN).align_to(eq1, LEFT)
         eq3 = MathTex(r'(a^x)^y=a^{xy}')[0].set_z_index(2).next_to(eq2, DOWN).align_to(eq1, LEFT)
-        eq4 = MathTex(r'(ab)^x=a^x\;b^x')[0].set_z_index(2).next_to(eq3, DOWN).align_to(eq1, LEFT)
+        eq4 = MathTex(r'(ab)^x=a^xb^x')[0].set_z_index(2).next_to(eq3, DOWN).align_to(eq1, LEFT)
         gp = VGroup(eq1, eq2, eq3, eq4)
         box = self.get_defbox(gp, props=True)
         return VGroup(gp, *box[:]).to_edge(UR, buff=0.1)
@@ -552,7 +552,7 @@ class PropsNatPf(PropsNat2):
 
         eq6 = props[0][3].copy().next_to(line, UP)
         eq7 = MathTex(r'x=0:', color=BLUE)[0].set_z_index(1).move_to(eq2).align_to(eq2, LEFT)
-        eq8 = MathTex(r'(ab)^x{{=}}(ab)^0{{=}}1{{=}}1\;1{{=}}a^0\;b^0{{=}}a^x\;b^x').set_z_index(2)
+        eq8 = MathTex(r'(ab)^x{{=}}(ab)^0{{=}}1{{=}}1\;1{{=}}a^0b^0{{=}}a^xb^x').set_z_index(2)
         eq8[3:5].next_to(eq8[1], ORIGIN, submobject_to_align=eq8[3])
         eq8[5:7].next_to(eq8[1], ORIGIN, submobject_to_align=eq8[5])
         eq8[7:9].next_to(eq8[1], ORIGIN, submobject_to_align=eq8[7])
@@ -561,7 +561,7 @@ class PropsNatPf(PropsNat2):
         eq8[6][0].move_to(eq8[8][:2], coor_mask=RIGHT)
         eq8[6][1].move_to(eq8[8][-2:], coor_mask=RIGHT)
         eq8.move_to(eq3)
-        eq9 = MathTex(r'(ab)^{x+1}{{=}}(ab)^x\;ab{{=}}a^x\;b^x\;ab{{=}}a^x\;a\;b^x\;b{{=}}a^{x+1}\;b^{x+1}')\
+        eq9 = MathTex(r'(ab)^{x+1}{{=}}(ab)^x\;ab{{=}}a^xb^x\;ab{{=}}a^xa\;b^xb{{=}}a^{x+1}b^{x+1}')\
             .set_z_index(2)
         eq9[3:5].next_to(eq9[1], ORIGIN, submobject_to_align=eq9[3])
         eq9[5:7].next_to(eq9[1], ORIGIN, submobject_to_align=eq9[5])
@@ -1556,6 +1556,14 @@ class LogRuler(Logarithms):
 
 
 class ExpDeriv(LogRuler):
+    def create_properties(self):
+        prop1 = LogRuler.create_properties(self)
+        eq1 = MathTex(r'\frac{d a^x}{dx}=a^xg')[0].set_z_index(2).next_to(prop1[0], DOWN).align_to(prop1[0][0], LEFT)
+        eq2 = MathTex(r'a^x=\lim_{n\to\infty}\left(1+\frac xng\right)^n', font_size=40)[0].next_to(eq1, DOWN).align_to(prop1[0][0], LEFT)
+        gp = VGroup(*prop1[0][:], eq1, eq2)
+        box = self.get_defbox(gp, props=True)
+        return VGroup(gp, *box[:]).to_edge(UR, buff=0.1)
+
     def graph_eval(self, ax, a, x, xstr=r'x', ystr=r'a^x', size1=40):
         pt0 = ax.coords_to_point(x, 0)
         pt1 = ax.coords_to_point(x, a**x)
@@ -1568,7 +1576,8 @@ class ExpDeriv(LogRuler):
 
     def construct(self):
         def1 = self.create_def()
-        prop1 = self.create_properties()
+        prop1 = LogRuler.create_properties(self)
+        props = self.create_properties()
         self.add(def1, prop1)
         self.wait(0.5)
 
@@ -1633,7 +1642,7 @@ class ExpDeriv(LogRuler):
 
         hval = ValueTracker(4.0)
 
-        def g(neg=False):
+        def gfunc(neg=False):
             def f():
                 h = hval.get_value()
                 if neg:
@@ -1656,7 +1665,7 @@ class ExpDeriv(LogRuler):
                 return VGroup(eq1, line1, VGroup(line2, eq2))
             return f
 
-        vargrad = always_redraw(g())
+        vargrad = always_redraw(gfunc())
         self.play(FadeIn(vargrad[0]), run_time=0.5)
         self.play(Create(vargrad[1]), run_time=0.5)
         self.wait(0.1)
@@ -1668,7 +1677,7 @@ class ExpDeriv(LogRuler):
         self.wait(0.5)
 #        eq1 = MathTex(r'a^x = \left(a^{x/n}\right)^n')
 
-        eq3 = MathTex(r'g_h{{=}}\frac{e^h-1}{h}{{=}}e^h\frac{1-e^{-h}}{h}{{=}}e^hg_{-h}{{\sim}}g_{-h}', font_size=40).set_z_index(0)\
+        eq3 = MathTex(r'g_h{{=}}\frac{a^h-1}{h}{{=}}a^h\frac{1-a^{-h}}{h}{{=}}a^hg_{-h}{{\sim}}g_{-h}', font_size=40).set_z_index(0)\
             .move_to(ax.coords_to_point(0, 3)).align_to(eq1, LEFT)
         eq3[3:5].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[3])
         eq3[5:7].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[5])
@@ -1691,8 +1700,8 @@ class ExpDeriv(LogRuler):
         self.wait(0.1)
 
         hval.set_value(4)
-        vargrad1 = always_redraw(g())
-        vargrad2 = always_redraw(g(neg=True))
+        vargrad1 = always_redraw(gfunc())
+        vargrad2 = always_redraw(gfunc(neg=True))
         self.play(FadeIn(vargrad1, vargrad2), run_time=2)
         self.wait(0.1)
         self.play(hval.animate.set_value(0.1), run_time=4)
@@ -1701,10 +1710,159 @@ class ExpDeriv(LogRuler):
                               ReplacementTransform(eq3[6][2:], eq3[8][:]), lag_ratio=0.6),
                   run_time=1)
         self.wait(0.5)
-        self.play(FadeOut(eq3[0], eq3[7:], vargrad1, vargrad2), run_time=1)
+        self.play(FadeOut(eq3[0], eq3[7:], vargrad1, vargrad2, gev), run_time=1)
+        self.remove(vargrad1, vargrad2)
 
+        varpos = ValueTracker(0.0)
+
+        def f_grad():
+            x = varpos.get_value()
+            y = a**x
+            g = y * math.log(a)
+            xr = 5.0
+            yr = g * (xr - x) + y
+            xl = x - y/g
+            yl = 0
+            if xl < -5.0:
+                xl = -5.0
+                yl = g * (xl - x) + y
+            line1 = Line(ax.coords_to_point(xl, yl), ax.coords_to_point(xr, yr), color=RED, stroke_width=4).set_z_index(4)
+            line2 = Line(ax.coords_to_point(x, 0), ax.coords_to_point(x, y), color=GREY, stroke_width=5).set_z_index(1)
+            dot1 = Dot(ax.coords_to_point(x, 0), color=YELLOW).set_z_index(5)
+            dot2 = Dot(ax.coords_to_point(x, y), color=YELLOW).set_z_index(5)
+
+            return VGroup(line1, line2, dot1, dot2)
+
+        grad_line = always_redraw(f_grad)
+        self.play(FadeIn(grad_line), run_time=0.5)
+        self.play(varpos.animate.set_value(5.0), run_time=1)
+        self.play(varpos.animate.set_value(-5.0), run_time=2)
+        self.play(varpos.animate.set_value(0.0), run_time=1)
+        self.play(FadeOut(grad_line), run_time=1)
+        self.remove(grad_line)
+        self.wait(0.5)
+        eq5 = MathTex(r'a^x\frac{a^{h}-1}{h}', font_size=40)[0].set_z_index(0)\
+            .move_to(ax.coords_to_point(0, 3)).align_to(eq1, LEFT).shift(RIGHT*0.2)
+        eq4 = MathTex(r'\frac{a^{x+h}-a^x}{h}', font_size=40)[0].set_z_index(0)
+        eq4.next_to(eq5[-2], ORIGIN, submobject_to_align=eq4[-2])
+        self.play(FadeIn(eq4), run_time=1)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq4[:2] + eq4[0].copy() + eq4[3:5] + eq4[-2:],
+                                       eq5[:2] + eq5[2] + eq5[3:5] + eq5[-2:]),
+                  ReplacementTransform(eq4[5:7], eq5[:2]),
+                  FadeIn(eq5[5]), FadeOut(eq4[2]), run_time=2)
+
+        eq6 = MathTex(r'a^xg')[0]
+        eq6.next_to(eq5[:2], ORIGIN, submobject_to_align=eq6[:2])
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq5[:2], eq6[:2]),
+                  FadeOut(eq5[2:]), FadeIn(eq6[2:]), run_time=1)
+        self.wait(0.5)
+        prop2 = props[0][:-1].copy()
+        box4 = self.get_defbox(prop2, props=True)
+        VGroup(prop2, box4).to_edge(UR, buff=0.1)
+        self.play(LaggedStart(ReplacementTransform(prop1[0][:] + prop1[1:],
+                                       prop2[:-1] + box4[:]),
+                              AnimationGroup(FadeIn(prop2[-1][:7]),
+                                             ReplacementTransform(eq6[:], prop2[-1][7:])),
+                              lag_ratio=0.5),
+                  run_time=3)
+        self.wait(0.5)
+        circ1 = abra.circle_eq(eq1).set_z_index(4)
+        self.play(FadeIn(circ1), run_time=0.5)
+        self.wait(0.5)
+        line1 = Line(ax.coords_to_point(-1/g, 0), ax.coords_to_point(5, 1+5*g), color=RED, stroke_width=4).set_z_index(4)
+        eq7 = MathTex(r'a^x\ge1+xg')[0].set_z_index(2)\
+            .move_to(ax.coords_to_point(0, 3))
+        eq8 = MathTex(r'a^{-x}\ge1-xg')[0].set_z_index(2)\
+            .next_to(eq7, DOWN, coor_mask=UP).align_to(eq1, LEFT)
+        eq7.next_to(eq8[3], ORIGIN, submobject_to_align=eq7[2], coor_mask=RIGHT)
+        self.play(FadeIn(eq7, line1), run_time=1)
+        self.wait(0.5)
+        self.play(ReplacementTransform((eq7[1:4] + eq7[0] + eq7[-2:]).copy(),
+                                       eq8[2:5] + eq8[0] + eq8[-2:]),
+                  abra.fade_replace(eq7[-3].copy(), eq8[-3]),
+                  FadeIn(eq8[1], target_mobject=eq7[1]), run_time=1)
+        self.wait(0.1)
+        self.play(FadeOut(ax, graph, line1), run_time=1)
+        eq9 = MathTex(r'a^{x}\le(1-xg)^{-1}')[0].set_z_index(2)
+        eq9.next_to(eq8[3], ORIGIN, submobject_to_align=eq9[2])
+        self.play(ReplacementTransform(eq8[:1] + eq8[2] + eq8[4:8],
+                                       eq9[:1] + eq9[1] + eq9[4:8]),
+                  FadeIn(eq9[3], eq9[-3:]),
+                  FadeOut(eq8[1]),
+                  abra.fade_replace(eq8[3], eq9[2]),
+                  run_time=1)
+        eq10 = MathTex(r'a^{\frac{x}{1+xg}}\le\left(1-\frac{xg}{1+xg}\right)^{-1}')[0].set_z_index(2)
+        eq10.align_to(box, DOWN).align_to(eq1, LEFT)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq9[:1] + eq9[2:8] + eq9[-3:],
+                                       eq10[:1] + eq10[7:13] + eq10[-3:]),
+                  FadeIn(eq10[2:7], eq10[-8:-3]),
+                  abra.fade_replace(eq9[1], eq10[1]),
+                  run_time=1)
+        self.wait(0.1)
+        eq11 = MathTex(r'\le\frac{1+xg}{1+xg-xg}')[0].set_z_index(2)
+        eq11.next_to(eq10[7], ORIGIN, submobject_to_align=eq11[0])
+        self.play(ReplacementTransform(eq10[-7:-3] + eq10[10:13] + eq10[-7:-3].copy(),
+                                       eq11[1:5] + eq11[10:13] + eq11[6:10]),
+                  ReplacementTransform(eq10[9], eq11[1]),
+                  FadeIn(eq11[5]),
+                  FadeOut(eq10[13], eq10[8], eq10[-3:]),
+                  run_time=1.5)
+        line1 = Line(eq11[8].get_corner(DL) + DL*0.1, eq11[9].get_corner(UR) + UR*0.1, stroke_width=4, color=RED)\
+            .set_z_index(3)
+        line2 = Line(eq11[11].get_corner(DL) + DL*0.1, eq11[12].get_corner(UR) + UR*0.1, stroke_width=4, color=RED)\
+            .set_z_index(3)
+        self.wait(0.1)
+        self.play(FadeIn(line1, line2), run_time=0.5)
+        self.wait(0.1)
+        self.play(FadeOut(line1, line2, eq11[7:13]), run_time=1)
+        self.wait(0.1)
+        eq12 = MathTex(r'\le 1+xg')[0].set_z_index(2)
+        eq12.next_to(eq10[7], ORIGIN, submobject_to_align=eq12[0])
+        self.play(FadeOut(eq11[5:7]), ReplacementTransform(eq11[1:5], eq12[1:]), run_time=1)
+        self.wait(0.5)
+        eq13 = MathTex(r'a^{\frac{x}{1+xg}} {{\le}} 1+xg {{\le}} a^x').set_z_index(2).move_to(box).shift(DOWN*0.2 + LEFT * 0.3)
+        self.play(ReplacementTransform(eq10[:7] + eq10[7] + eq12[1:], eq13[0][:] + eq13[1][:] + eq13[2][:]),
+                  ReplacementTransform(eq7[:2] + eq7[3:], eq13[4][:] + eq13[2][:]),
+                  abra.fade_replace(eq7[2], eq13[3][0]),
+                  run_time=2)
+        self.wait(0.1)
+        eq14 = MathTex(r'a^{\frac{x/n}{1+\frac xn g}} {{\le}} 1+\frac xng {{\le}} a^{x/n}').set_z_index(2)
+        eq14.next_to(eq13[1], ORIGIN, submobject_to_align=eq14[1])
+        self.play(ReplacementTransform(eq13[0][:2] + eq13[0][-5:-1] + eq13[0][-1] + eq13[1] + eq13[2][:3] + eq13[2][-1] + eq13[3] + eq13[4][:2],
+                                       eq14[0][:2] + eq14[0][-7:-3] + eq14[0][-1] + eq14[1] + eq14[2][:3] + eq14[2][-1] + eq14[3] + eq14[4][:2]),
+                  FadeIn(eq14[0][2:4], eq14[2][-3:-1], eq14[4][-2:], eq14[0][-3:-1]), run_time=1)
+        eq15 = MathTex(r'\left(a^{\frac{x/n}{1+\frac xng}}\right)^n {{\le}}\left(1+\frac xng\right)^n {{\le}}\left(a^{x/n}\right)^n').set_z_index(2)
+        eq15.next_to(eq14[2][:], ORIGIN, submobject_to_align=eq15[2][1:-2])
+        box2 = SurroundingRectangle(VGroup(gp, eq15), fill_color=BLACK, fill_opacity=self.opacity, stroke_opacity=0,
+                                    corner_radius=0.2)
+        self.wait(0.1)
+        self.play(LaggedStart(ReplacementTransform(box, box2),
+                              AnimationGroup(ReplacementTransform(eq14[0][:] + eq14[4][:] + eq14[2][:] + eq14[1] + eq14[3],
+                                                                  eq15[0][1:-2] + eq15[4][1:-2] + eq15[2][1:-2] + eq15[1] + eq15[3]),
+                                             FadeIn(eq15[0][0], eq15[0][-2:], eq15[2][0], eq15[2][-2:], eq15[4][0], eq15[4][-2:])),
+                  lag_ratio=0.5), run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeOut(eq15[0][0], eq15[0][-2], eq15[4][0], eq15[4][-2], eq15[0][3:5], eq15[4][3:5]),
+                  FadeOut(eq15[0][-1], target_position=eq15[0][3]),
+                  FadeOut(eq15[4][-1], target_position=eq15[4][3]),
+                  run_time=1)
+        eq16 = MathTex(r'a^{\frac{x}{1+\frac xng}} {{\le}}\left(1+\frac xng\right)^n {{\le}}a^{x}').set_z_index(2)
+        eq16.next_to(eq15[2], ORIGIN, submobject_to_align=eq16[2])
+        self.play(ReplacementTransform(eq15[0][1:3] + eq15[0][5:-2] + eq15[4][1:3],
+                                       eq16[0][:2] + eq16[0][2:] + eq16[4][:]), run_time=1)
+        self.wait(0.5)
+        self.play(LaggedStart(ReplacementTransform(box4[:] + prop2[:], props[1:] + props[0][:-1]),
+                              ReplacementTransform(eq15[2][:].copy() + eq16[4][:].copy(),
+                                                   props[0][-1][-9:] + props[0][-1][:2]),
+                              FadeIn(props[0][-1][2:-9]), lag_ratio=0.33),
+                  FadeOut(box2, circ1, eq1[0], eq1[-2:], eq15[1:4], eq16[0], eq16[4]),
+                  run_time=2.5)
 
         self.wait(0.5)
+
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "fps": 15, "preview": True}):
