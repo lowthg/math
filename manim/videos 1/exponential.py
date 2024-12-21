@@ -1991,6 +1991,146 @@ class EulerE(ExpDeriv):
         self.wait(0.5)
 
 
+class ExpSeries(EulerE):
+    def create_eprops(self):
+        prop1 = EulerE.create_eprops(self)
+        eq = MathTex(r'e^x=\sum_{n=0}^\infty \frac{x^n}{n!}', font_size=40)[0].set_z_index(2).next_to(prop1[0][-1], DOWN).align_to(prop1[0][0], LEFT)
+        gp = VGroup(*prop1[0][:], eq)
+        box = self.get_defbox(gp, props=True, e=True)
+        return VGroup(gp, *box[:]).next_to(self.create_properties(), DOWN, buff=0.1).to_edge(RIGHT, buff=0.1)
+
+    def construct(self):
+        prop1 = self.create_properties()
+        eprop1 = EulerE.create_eprops(self)
+        def1 = self.create_def()
+        edef = self.create_edef()
+        self.add(prop1, eprop1, def1, edef)
+        self.wait(0.5)
+
+        eq1 = MathTex(r'(1+x)^n {{=}} 1 + nx + \frac{n(n-1)}{2}x^2+\cdots+x^n '
+                      r'{{=}} 1 + \binom{n}{1}x+\binom{n}{2}x^2+\cdots+x^n').set_z_index(2)
+        eq1[3:5].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[3])
+        eq1.move_to(ORIGIN).to_edge(DOWN, buff=0.2)
+        eq2 = MathTex(r'(1+x)^n{{=}}\sum_{k=0}^n\binom{n}{k}x^k{{=}}\sum_{k=0}^n\frac{n(n-1)\cdots(n-(k-1))}{k!}x^k').set_z_index(2)
+        eq2[3:5].next_to(eq2[1], ORIGIN, submobject_to_align=eq2[3])
+        eq2.next_to(eq1[1], ORIGIN, submobject_to_align=eq2[1]).move_to(ORIGIN, coor_mask=RIGHT)
+        eq3 = MathTex(r'\left(1+\frac xn\right)^n{{=}}\sum_{k=0}^n\left(1-\frac1n\right)\cdots\left(1-\frac{k-1}{n}\right)\frac{x^k}{n^k}')
+        eq3.next_to(eq2[1], ORIGIN, submobject_to_align=eq3[1])
+        eq5 = MathTex(r'\left(1+\frac xn\right)^n{{=}}\sum_{k=0}^\infty\frac{x^k}{k!}').set_z_index(2)
+        eq5.next_to(eq3[1], ORIGIN, submobject_to_align=eq5[1]).move_to(ORIGIN, coor_mask=RIGHT)
+        gp = VGroup(eq1, eq2, eq3, eq5)
+        box = SurroundingRectangle(gp, corner_radius=0.2, fill_color=BLACK, fill_opacity=self.opacity, stroke_opacity=0)
+
+        self.play(FadeIn(box, eq1[:3]), run_time=1)
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq1[2][3:5],
+                                       eq1[4][6:8]),
+                  FadeOut(eq1[2][2], eq1[2][5:13]),
+                  FadeIn(eq1[4][2:6], eq1[4][8:12]),
+                  run_time=1)
+        self.wait(0.5)
+        eq2_1 = eq2[2][7].copy()
+        eq2_2 = eq2[2][-1].copy()
+        self.play(LaggedStart(AnimationGroup(
+                  ReplacementTransform(eq1[4][2:4] + eq1[4][5],
+                                       eq2[2][5:7] + eq2[2][8]),
+                  ReplacementTransform(eq1[4][8:10] + eq1[4][11],
+                                       eq2[2][5:7] + eq2[2][8]),
+                  ReplacementTransform(eq1[:2], eq2[:2]),
+                  ReplacementTransform(eq1[4][6], eq2[2][-2]),
+                  ReplacementTransform(eq1[2][-2], eq2[2][-2]),
+                  ReplacementTransform(eq1[2][-9], eq2[2][-2]),
+                  abra.fade_replace(eq1[2][-1], eq2[2][-1]),
+                  abra.fade_replace(eq1[2][-8], eq2_2),
+                  abra.fade_replace(eq1[4][4], eq2[2][7]),
+                  abra.fade_replace(eq1[4][10], eq2_1),
+                  FadeOut(eq1[2][1], eq1[4][7], eq1[2][-7:-2]),
+                  FadeOut(eq1[2][0], target_position=eq2[2][-2])),
+                  FadeIn(eq2[2][:5]),
+                  lag_ratio=0.5),
+                  run_time=2)
+        self.remove(eq2_1, eq2_2)
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq2[2][-2:], eq2[4][-2:]),
+                  FadeOut(eq2[2][5:-2], target_position=eq2[4][5:-2]),
+                  FadeIn(eq2[4][5:-2]),
+                  run_time=2)
+        self.wait(0.5)
+        eq3_2 = eq3[2][-5:].copy()
+        eq3[2][-5:].move_to(eq2[4][-2:], coor_mask=RIGHT)
+        self.play(ReplacementTransform(eq2[0][:4] + eq2[0][-2:],
+                                       eq3[0][:4] + eq3[0][-2:]),
+                  ReplacementTransform(eq2[4][-2:], eq3[2][-5:-3]),
+                  FadeIn(eq3[0][4:-2]),
+                  FadeIn(eq3[2][-3:]),
+                  run_time=1)
+        self.wait(0.1)
+        self.play(eq3[2][-2:].animate.move_to(eq2[4][-4:-2], coor_mask=RIGHT),
+                  eq2[4][-4:-2].animate.move_to(eq3[2][-2:], coor_mask=RIGHT),
+                  run_time=2)
+        self.wait(0.5)
+        eq4 = MathTex(r'\frac nn \frac{(n-1)}{n} \cdots \frac{(n-(k-1))}{n}')[0].set_z_index(2)
+        eq4[:3].next_to(eq2[4][5], ORIGIN, submobject_to_align=eq4[0])
+        eq4[3:10].next_to(eq2[4][7], ORIGIN, submobject_to_align=eq4[4])
+        eq4[10:13].move_to(eq2[4][11:14], coor_mask=RIGHT).move_to(eq2[4][-5], coor_mask=UP)
+        eq4[13:24].next_to(eq2[4][15], ORIGIN, submobject_to_align=eq4[14])
+        self.play(ReplacementTransform(eq2[4][5], eq4[0]),
+                  ReplacementTransform(eq2[4][6:11], eq4[3:8]),
+                  ReplacementTransform(eq2[4][11:14], eq4[10:13]),
+                  ReplacementTransform(eq2[4][14:23], eq4[13:22]),
+                  FadeOut(eq2[4][-5], eq3[2][-1]),
+                  FadeIn(eq4[1], eq4[8], eq4[22]),
+                  ReplacementTransform(eq3[2][-2], eq4[2]),
+                  ReplacementTransform(eq3[2][-2].copy(), eq4[9]),
+                  ReplacementTransform(eq3[2][-2].copy(), eq4[23]),
+                  run_time=2)
+        self.wait(0.5)
+        self.play(FadeOut(eq4[:3]),
+                  ReplacementTransform(eq4[5:7] + eq4[3] + eq4[8] + eq4[9] + eq4[7],
+                                       eq3[2][7:9] + eq3[2][5] + eq3[2][9] + eq3[2][10] + eq3[2][11]),
+                  abra.fade_replace(eq4[4], eq3[2][6]),
+                  ReplacementTransform(eq4[10:13], eq3[2][12:15]),
+                  ReplacementTransform(eq4[13:14] + eq4[15] + eq4[17:20] + eq4[22] + eq4[23] + eq4[21],
+                                       eq3[2][15:16] + eq3[2][17] + eq3[2][18:21] + eq3[2][21] + eq3[2][22] + eq3[2][23]),
+                  abra.fade_replace(eq4[14], eq3[2][16]),
+                  FadeOut(eq4[16], eq4[20]),
+                  ReplacementTransform(eq3[2][-5:-2], eq3_2[-5:-2]),
+                  eq2[4][-4:-2].animate.move_to(eq3_2[-2:], coor_mask=RIGHT),
+                  run_time=2)
+
+        self.wait(0.1)
+        self.play((eq3_2[-5:-2]+eq2[4][-4:-2]).animate.set_color(BLUE), run_time=1)
+        self.wait(0.5)
+        self.play((eq3_2[-5:-2]+eq2[4][-4:-2]).animate.set_color(WHITE),
+                  eq3[2][5:-5].animate.set_color(BLUE), run_time=1)
+        self.wait(0.5)
+        self.play(eq3[2][5:-5].animate.set_color(WHITE), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(eq3[2][5:-5]), run_time=1)
+        self.play(ReplacementTransform(eq3[0], eq5[0]),
+                  ReplacementTransform(eq2[1], eq5[1]),
+                  ReplacementTransform(eq2[2][1:5], eq5[2][1:5]),
+                  abra.fade_replace(eq2[2][0], eq5[2][0]),
+                  ReplacementTransform(eq3_2[-5:-2]+eq2[4][-4:-2], eq5[2][-5:-2] + eq5[2][-2:]),
+                  run_time=1)
+
+        self.wait(0.5)
+        eprop = self.create_eprops()
+        self.play(
+            ReplacementTransform(eprop1[1:], eprop[1:]),
+            FadeIn(eprop[0][-1][:2]),
+            FadeOut(eq5[0], box),
+            ReplacementTransform(eq5[1][0], eprop[0][-1][2]),
+            ReplacementTransform(eq5[2][:2] + eq5[2][3:6] + eq5[2][7:8] + eq5[2][9:],
+                                 eprop[0][-1][3:5] + eprop[0][-1][6:9] + eprop[0][-1][10:11] + eprop[0][-1][12:]),
+            abra.fade_replace(eq5[2][2], eprop[0][-1][5]),
+            abra.fade_replace(eq5[2][6], eprop[0][-1][9]),
+            abra.fade_replace(eq5[2][8], eprop[0][-1][11]),
+            run_time=2
+        )
+
+        self.wait(0.5)
+
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "fps": 15, "preview": True}):
         Logarithms().render()
