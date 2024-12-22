@@ -216,7 +216,8 @@ def animate_roll(scene, key, pos=ORIGIN, scale=0.3, right=False, slide=True):
     scene.remove(*f[1:])
     return f[0]
 
-def circle_eq(eq):
+
+def circle_eq(eq) -> ParametricFunction:
     points = [
         (eq.get_corner(UL) + eq.get_top()) * 0.5 + UP * 0.3,
         eq.get_corner(UR) + UR * 0.2 + RIGHT * 0.5,
