@@ -2534,13 +2534,13 @@ class EulerDemo(Scene):
             self.play(ReplacementTransform(demo[0][:], demo1[0][:-1], rate_func=linear),
                       ReplacementTransform(demo[-1], demo1[0][-1], rate_func=linear),
 #                      FadeIn(demo1[0][-1], rate_func= lambda t: max(t*2-1, 0.)),
-                      ReplacementTransform(demo[1][0], demo1[1][0]),
+                      ReplacementTransform(demo[1][0], demo1[1][0], rate_func=linear),
                       abra.fade_replace(demo[1][1:], demo1[1][1:]),
                       ReplacementTransform(demo[2][:7], demo1[2][:7]),
                       abra.fade_replace(demo[2][7:], demo1[2][7:]),
+                      rate_func=linear,
                       run_time=run_time)
             demo = demo1
-
 
         eq5.next_to(eq4[1], ORIGIN, submobject_to_align=eq5[1])
         self.play(ReplacementTransform(eq4[1], eq5[1]),
@@ -2575,6 +2575,64 @@ class EulerDemo(Scene):
 
         self.wait(0.5)
 
+
+class Taylor(ExpPosint):
+    def construct(self):
+        eq1 = MathTex(r'S_yf(x)=f(x+y)')[0].set_z_index(2)
+        eq2 = MathTex(r'\frac{dS_y}{dy}f(x){{=}}\frac{d}{dy}f(x+y){{=}}Df(x+y){{=}}S_yDf(x)').set_z_index(2)
+        eq2[3:5].next_to(eq2[1], ORIGIN, submobject_to_align=eq2[3])
+        eq2[5:7].next_to(eq2[1], ORIGIN, submobject_to_align=eq2[5])
+        eq2.next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq3 = MathTex(r'\frac{dS_y}{dy}{{=}}S_yD').set_z_index(2)
+        eq3.next_to(eq2[1], ORIGIN, submobject_to_align=eq3[1]).align_to(eq1, LEFT)
+        eq4 = MathTex(r'S_y{{=}}e^{yD}{{=}}\sum_{n=0}^\infty\frac{y^n}{n!}D^n').set_z_index(2)
+        eq4.next_to(eq2[1], ORIGIN, submobject_to_align=eq4[1]).align_to(eq1, LEFT)
+        eq4[3:5].next_to(eq4[1], ORIGIN, submobject_to_align=eq4[3])
+        eq5 = MathTex(r'S_yf(x){{=}}\sum_{n=0}^\infty\frac{y^n}{n!}D^nf(x)').set_z_index(2)
+        eq5.next_to(eq2[1], ORIGIN, submobject_to_align=eq5[1]).align_to(eq1, LEFT)
+        eq6 = MathTex(r'f(x+y){{=}}\sum_{n=0}^\infty\frac{y^n}{n!}f^{(n)}(x)').set_z_index(2)
+        eq6.next_to(eq5[1], ORIGIN, submobject_to_align=eq6[1])
+        gp = VGroup(eq1, eq2, eq3, eq4, eq5, eq6).to_edge(DOWN, buff=0.4)
+        box = SurroundingRectangle(gp, corner_radius=0.2, stroke_opacity=0, fill_opacity=self.opacity, fill_color=BLACK)
+        self.play(FadeIn(box, eq1), run_time=1)
+        self.wait(0.1)
+        self.play(FadeIn(eq2[0]), run_time=1)
+        self.wait(0.1)
+        self.play(FadeIn(eq2[1:3]), run_time=1)
+        self.wait(0.1)
+        self.play(FadeIn(eq2[4][0]), FadeOut(eq2[2][:4]),
+                  ReplacementTransform(eq2[2][-6:], eq2[4][-6:]),
+                  run_time=1)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq2[4][:4] + eq2[4][-1] + eq2[4][5], eq2[6][2:6] + eq2[6][-1] + eq2[6][1]),
+                  FadeOut(eq2[4][4]), FadeIn(eq2[6][0]),
+                  run_time=1)
+        self.wait(0.1)
+        self.play(LaggedStart(FadeOut(eq2[0][-4:], eq2[6][-4:]),
+                              ReplacementTransform(eq2[0][:-4] + eq2[6][:-4] + eq2[1], eq3[0][:] + eq3[2][:] + eq3[1]),
+                              lag_ratio=0.5),
+                  run_time=1.5)
+        self.wait(0.5)
+        self.play(FadeOut(eq3[0][0], eq3[0][3:]),
+                  abra.fade_replace(eq3[2][0], eq4[2][0]),
+                  ReplacementTransform(eq3[0][1:3] + eq3[1] + eq3[2][1:],
+                                       eq4[0][:] + eq4[1] + eq4[2][1:]),
+                  run_time=1)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq4[2][1:2] + eq4[2][2], eq4[4][5:6] + eq4[4][10]),
+                  FadeIn(eq4[4][:5], eq4[4][6:10], eq4[4][11:]),
+                  FadeOut(eq4[2][0], target_position=eq4[4][7].get_left()),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(LaggedStart(ReplacementTransform(eq4[0][:] + eq4[1] + eq4[4][:], eq5[0][:-4] + eq5[1] + eq5[2][:-4]),
+                  FadeIn(eq5[0][-4:], eq5[2][-4:]), lag_ratio=0.5), run_time=1.5)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq5[0][1:2] + eq5[0][2:5] + eq5[0][5] + eq5[1] + eq5[2][:-6] + eq5[2][-5] + eq5[2][-3:] + eq5[2][-4],
+                                       eq6[0][4:5] + eq6[0][:3] + eq6[0][5] + eq6[1] + eq6[2][:-7] + eq6[2][-5] + eq6[2][-3:] + eq6[2][-7]),
+                  FadeOut(eq5[0][0], eq5[2][-6]),
+                  FadeIn(eq6[0][-3], eq6[2][-6], eq6[2][-4]),
+                  run_time=1.5)
+        self.wait(0.5)
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "fps": 15, "preview": True}):
