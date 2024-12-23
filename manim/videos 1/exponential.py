@@ -2627,11 +2627,40 @@ class Taylor(ExpPosint):
         self.play(LaggedStart(ReplacementTransform(eq4[0][:] + eq4[1] + eq4[4][:], eq5[0][:-4] + eq5[1] + eq5[2][:-4]),
                   FadeIn(eq5[0][-4:], eq5[2][-4:]), lag_ratio=0.5), run_time=1.5)
         self.wait(0.1)
-        self.play(ReplacementTransform(eq5[0][1:2] + eq5[0][2:5] + eq5[0][5] + eq5[1] + eq5[2][:-6] + eq5[2][-5] + eq5[2][-3:] + eq5[2][-4],
-                                       eq6[0][4:5] + eq6[0][:3] + eq6[0][5] + eq6[1] + eq6[2][:-7] + eq6[2][-5] + eq6[2][-3:] + eq6[2][-7]),
-                  FadeOut(eq5[0][0], eq5[2][-6]),
-                  FadeIn(eq6[0][-3], eq6[2][-6], eq6[2][-4]),
+        self.play(ReplacementTransform(eq5[0][1:2] + eq5[0][2:5] + eq5[0][5] + eq5[1],
+                                       eq6[0][4:5] + eq6[0][:3] + eq6[0][5] + eq6[1]),
+                  FadeOut(eq5[0][0]),
+                  FadeIn(eq6[0][-3]),
+                  run_time=1)
+        self.wait(0.1)
+        self.play(ReplacementTransform(
+            eq5[2][:-6] + eq5[2][-5] + eq5[2][-3:] + eq5[2][-4],
+            eq6[2][:-7] + eq6[2][-5] + eq6[2][-3:] + eq6[2][-7]),
+                  FadeOut(eq5[2][-6]),
+                  FadeIn(eq6[2][-6], eq6[2][-4]),
                   run_time=1.5)
+        self.wait(0.5)
+
+
+class Year2025(ExpPosint):
+    def construct(self):
+        MathTex.set_default(font_size=80)
+        eq0 = MathTex(r'45^2').set_z_index(2)
+        eq1 = MathTex(r'45^2{{=}}45\cdot 45{{=}}2025').set_z_index(2)
+        eq1[3:5].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[3])
+        eq1.move_to(ORIGIN)
+        gp = VGroup(eq0, eq1).to_edge(DOWN, buff=1)
+        box = SurroundingRectangle(gp, corner_radius=0.2, stroke_opacity=0, fill_opacity=self.opacity, fill_color=BLACK)
+        box2 = SurroundingRectangle(eq1[:2] + eq1[4], corner_radius=0.2, stroke_opacity=0, fill_opacity=self.opacity, fill_color=BLACK)
+        self.wait(0.5)
+        self.play(FadeIn(box, eq0), run_time=1)
+        self.wait(0.1)
+        self.play(FadeIn(eq1[1]),
+                  ReplacementTransform(eq0[0][:] + eq0[0][:2].copy() + eq0[0][:2].copy(), eq1[0][:] + eq1[2][:2] + eq1[2][-2:]),
+                  FadeIn(eq1[2][2]),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeIn(eq1[-1]), FadeOut(eq1[2]), ReplacementTransform(box, box2), run_time=1.5)
         self.wait(0.5)
 
 if __name__ == "__main__":

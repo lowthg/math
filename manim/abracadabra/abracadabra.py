@@ -156,8 +156,8 @@ def get_dice_faces(color=WHITE, dot_color=BLACK):
     return _dice_faces
 
 
-def fade_replace(obj1, obj2):
-    return FadeOut(obj1, target_position=obj2.get_center()), FadeIn(obj2, target_position=obj1.get_center())
+def fade_replace(obj1, obj2, **kwargs):
+    return FadeOut(obj1, target_position=obj2.get_center(), **kwargs), FadeIn(obj2, target_position=obj1.get_center(), **kwargs)
 
 
 def animate_roll(scene, key, pos=ORIGIN, scale=0.3, right=False, slide=True):
