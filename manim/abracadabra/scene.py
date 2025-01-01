@@ -309,7 +309,84 @@ class Test(Scene):
         self.add(txt)
 
 
+class OddSum(Scene):
+    def construct(self):
+        n = 10
 
+        dx = 0.36
+        rects = []
+        for i in range(0, n):
+            j = 2*i + 1
+            rect = Rectangle(width=dx, height=dx * j, stroke_width=3, stroke_opacity=1, fill_opacity=0.5,
+                             fill_color=BLUE, stroke_color=BLUE).set_z_index(2)
+            if i > 0:
+                rect.move_to(rects[0]).shift(RIGHT * i * dx).align_to(rects[0], DOWN)
+            rects.append(rect)
+
+        eq = MathTex(r'123\cdots n', font_size=40)[0].next_to(rects[0], DOWN, buff=0.15)
+        eq2 = MathTex(r'\bf 135 2n-1', font_size=36, color=PURE_RED, stroke_color=BLACK, stroke_width=1.5)[0].set_z_index(4)
+        for i in range(-1, 3):
+            eq[i].move_to(rects[i], coor_mask=RIGHT)
+            tmp = eq2[i] if i >=0 else eq2[-4:]
+            if i >= 0:
+                eq2[i].move_to(rects[i]).rotate(90*DEGREES)
+            else:
+                eq2[-4:].move_to(rects[i].get_bottom()).shift(UP*n/2*dx).rotate(90*DEGREES)
+        eq[3:6].move_to((eq[2].get_right()+eq[-1].get_left())/2, coor_mask=RIGHT)
+
+        gp = VGroup(*rects, eq, eq2).move_to(ORIGIN).to_edge(DOWN, buff=0.2)
+        self.wait(0.5)
+        self.play(FadeIn(rects[0], eq[0], eq2[0]), run_time=0.5)
+        print(len(rects))
+        for i in range(1, n):
+            anims = [ReplacementTransform(rects[i-1].copy(), rects[i])]
+            if i < 3:
+                anims.append(FadeIn(eq[i], eq2[i]))
+            elif i == 3:
+                anims.append(FadeIn(eq[3:6]))
+            elif i == n-1:
+                anims.append(FadeIn(eq[-1], eq2[-4:]))
+
+            self.play( *anims, run_time=0.5)
+
+        rect = Rectangle(width=n*dx, height=n*dx, stroke_color=YELLOW, stroke_opacity=1, fill_opacity=0,
+                         stroke_width=6).align_to(rects[0], DL).set_z_index(10)
+        self.wait(0.2)
+        eq3 = MathTex(r'n', color=YELLOW).set_z_index(10).rotate(90*DEGREES).next_to(rect, LEFT, buff=0.2)
+        self.play(Create(rect, rate_func=linear), FadeIn(eq3, rate_func=lambda t: max(2*t-1, 0)), run_time=2)
+#        for r in gp:
+#            self.play(Create(r), run_time=0.5)
+
+        rects1 = []
+        rects2 = []
+        for i in range(n//2, n):
+            j = 2*i+1
+            rect1 = Rectangle(width=dx, height=dx * n, stroke_width=3, stroke_opacity=1, fill_opacity=0.5,
+                             fill_color=BLUE, stroke_color=BLUE).set_z_index(2)
+            rect2 = Rectangle(width=dx, height=dx * (j-n), stroke_width=3, stroke_opacity=1, fill_opacity=0.5,
+                             fill_color=BLUE, stroke_color=BLUE).set_z_index(2)
+            rect1.move_to(rects[i]).align_to(rects[i], DOWN)
+            rect2.move_to(rects[i]).align_to(rects[i], DOWN).shift(UP*dx*n)
+            self.add(rect1)
+            self.remove(rects[i])
+            rects1.append(rect1)
+            rects2.append(rect2)
+
+        gp = VGroup(*rects2)
+
+        angle = ValueTracker(0.)
+
+        def f():
+            t = angle.get_value()
+            return gp.copy().rotate(t, about_point=gp.get_corner(DL))
+
+        rect3 = always_redraw(f)
+        self.add(rect3)
+        self.wait(0.5)
+
+        self.play(angle.animate.set_value(180*DEGREES), run_time=3)
+
+        self.wait(0.5)
 
 
 if __name__ == "__main__":
