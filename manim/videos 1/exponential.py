@@ -79,7 +79,7 @@ class ExpPosint(Scene):
     def create_def(self):
         eq1 = MathTex(r'x=1,2,3,\ldots')[0].set_z_index(2)
         eq3 = MathTex(r'a^1=a')[0].next_to(eq1, DOWN).align_to(eq1, LEFT).set_z_index(2)
-        eq4 = MathTex(r'a^{x+1}=a^x\;a')[0].next_to(eq3, DOWN).align_to(eq3, LEFT).set_z_index(2)
+        eq4 = MathTex(r'a^{x+1}=a^xa')[0].next_to(eq3, DOWN).align_to(eq3, LEFT).set_z_index(2)
         eqs = VGroup(eq1, eq3, eq4)
         box = self.get_defbox(eqs)
 
@@ -166,7 +166,7 @@ class ExpNat(ExpPosint):
     def create_def(self):
         eq1 = MathTex(r'x\in\mathbb N, a\in\mathbb C')[0].set_z_index(2)
         eq2 = MathTex(r'a^0=1')[0].next_to(eq1, DOWN).align_to(eq1, LEFT).set_z_index(2)
-        eq3 = MathTex(r'a^{x+1}=a^x\;a')[0].next_to(eq2, DOWN).align_to(eq2, LEFT).set_z_index(2)
+        eq3 = MathTex(r'a^{x+1}=a^xa')[0].next_to(eq2, DOWN).align_to(eq2, LEFT).set_z_index(2)
         gp = VGroup(eq1, eq2, eq3)
         box = self.get_defbox(gp)
         return VGroup(gp, *box[:]).to_edge(UL, buff=0.1)
@@ -192,7 +192,7 @@ class ExpNat(ExpPosint):
                   run_time=1.5)
         self.wait(0.5)
 
-        eq3 = MathTex(r'a^{0+1}=a^0\;a')[0].set_z_index(2)
+        eq3 = MathTex(r'a^{0+1}=a^0a')[0].set_z_index(2)
         rect1 = SurroundingRectangle(eq3, buff=0.2, fill_opacity=self.opacity, stroke_opacity=0,
                                      corner_radius=0.2, fill_color=BLACK)
         VGroup(rect1, eq3).to_edge(DL).shift(RIGHT*0.4)
@@ -233,7 +233,7 @@ class ExpNat(ExpPosint):
         self.play(FadeOut(eq7, rect1), run_time=1)
 
         eq8 = MathTex(r'a^1=a^{0+1}')[0].set_z_index(2)
-        eq9 = MathTex(r'=a^0\;a')[0].set_z_index(2)
+        eq9 = MathTex(r'=a^0a')[0].set_z_index(2)
         eq10 = MathTex(r'=1\;a')[0].set_z_index(2)
         eq11 = MathTex(r'=a')[0].set_z_index(2)
         rect2 = SurroundingRectangle(eq8, buff=0.2, fill_opacity=self.opacity, stroke_opacity=0,
@@ -636,7 +636,7 @@ class ExpInt(PropsNatNew):
     def create_def(self):
         eq1 = MathTex(r'x\in\mathbb Z, a\in\mathbb C\setminus\{0\}')[0].set_z_index(2)
         eq2 = MathTex(r'a^0=1')[0].next_to(eq1, DOWN).align_to(eq1, LEFT).set_z_index(2)
-        eq3 = MathTex(r'a^{x+1}=a^x\;a')[0].next_to(eq2, DOWN).align_to(eq2, LEFT).set_z_index(2)
+        eq3 = MathTex(r'a^{x+1}=a^xa')[0].next_to(eq2, DOWN).align_to(eq2, LEFT).set_z_index(2)
         gp = VGroup(eq1, eq2, eq3)
         box = self.get_defbox(gp)
         return VGroup(gp, *box[:]).to_edge(UL, buff=0.1)
@@ -658,11 +658,11 @@ class ExpInt(PropsNatNew):
         self.wait(0.5)
 
         eq1 = defs1[0][2].copy().to_edge(DL)
-        eq2 = MathTex(r'1{{=}}a^0{{=}}a^{-1+1}{{=}}a^{-1}\;a').set_z_index(2)
+        eq2 = MathTex(r'1{{=}}a^0{{=}}a^{-1+1}{{=}}a^{-1}a').set_z_index(2)
         eq2.next_to(eq1[4], ORIGIN, submobject_to_align=eq2[5])
         eq2[2:4].next_to(eq2[5], ORIGIN, submobject_to_align=eq2[3])
         eq2[:2].next_to(eq2[5], ORIGIN, submobject_to_align=eq2[1])
-        eq3 = MathTex(r'a^{-(x+1)+1}{{=}}a^{-(x+1)}\;a').set_z_index(2)
+        eq3 = MathTex(r'a^{-(x+1)+1}{{=}}a^{-(x+1)}a').set_z_index(2)
         eq3.next_to(eq1[4], ORIGIN, submobject_to_align=eq3[1][0])
 
         VGroup(eq1, eq2, eq3).to_edge(DL)
@@ -934,7 +934,7 @@ class PropsRat(PlotRat):
         circ = abra.circle_eq(prop1[0][2]).set_z_index(3)
         self.play(Create(circ), run_time=1)
 
-        eq1 = MathTex(r'(a^x)^n{{=}}a^x\;a^x\cdots a^x{{=}}a^{x+x}\cdots a^x{{=}}a^{x+x+\cdots+x}{{=}}a^{xn}').set_z_index(2)
+        eq1 = MathTex(r'(a^x)^n{{=}}a^xa^x\cdots a^x{{=}}a^{x+x}\cdots a^x{{=}}a^{x+x+\cdots+x}{{=}}a^{xn}').set_z_index(2)
         eq1[3:5].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[3])
         eq1[5:7].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[5])
         eq1[7:9].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[7])
@@ -969,7 +969,7 @@ class PropsRat(PlotRat):
                   FadeOut(circ, def1[0][4], box1, eq1[:2], eq1[8]), run_time=2)
 
         self.wait(0.5)
-        eq3 = MathTex(r'a^{x+1}=a^x\;a^1')[0].set_z_index(2).to_edge(DOWN)
+        eq3 = MathTex(r'a^{x+1}=a^xa^1')[0].set_z_index(2).to_edge(DOWN)
         box2 = SurroundingRectangle(eq3, fill_color=BLACK, fill_opacity=self.opacity, stroke_opacity=0, corner_radius=0.2)
         eq4 = eq2.copy()
         self.play(FadeIn(box2), eq4.animate.next_to(eq3[4], ORIGIN, submobject_to_align=eq4[4]), run_time=2)
@@ -982,7 +982,7 @@ class PropsRat(PlotRat):
         eq5 = prop1[0][0]
         self.play(eq5.animate.move_to(def1[0][3]).align_to(def1[0][0], LEFT), FadeOut(def1[0][3], box2, eq3), run_time=2)
 
-        eq6 = MathTex(r'a^0\;a{{=}}a^0\;a^1{{=}}a^{0+1}{{=}}a^1').set_z_index(2)
+        eq6 = MathTex(r'a^0a{{=}}a^0a^1{{=}}a^{0+1}{{=}}a^1').set_z_index(2)
         eq6[3:5].next_to(eq6[1], ORIGIN, submobject_to_align=eq6[3])
         eq6[5:7].next_to(eq6[1], ORIGIN, submobject_to_align=eq6[5])
         eq6.move_to(ORIGIN).to_edge(DOWN)
@@ -1299,7 +1299,7 @@ class Logarithms(ConvexRat):
 
         eq1 = MathTex(r'a^{\log_a x}=x')[0].set_z_index(2)
 
-        eq3 = MathTex(r'xy{{=}}a^{\log_ax}\;a^{\log_ay}{{=}}a^{\log_ax + \log_ay}')\
+        eq3 = MathTex(r'xy{{=}}a^{\log_ax}a^{\log_ay}{{=}}a^{\log_ax + \log_ay}')\
             .set_z_index(2).next_to(eq1, DOWN).align_to(eq1, LEFT)
         eq3[3:5].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[3])
 
@@ -1586,7 +1586,7 @@ class ExpDeriv(LogRuler):
         a = 1.5
         ax, _ = self.get_graph(a, shift=0.25)
 
-        eq1 = MathTex(r'a^x{{=}}\left(a^{x/n}\right)^n{{\approx}}\left(1+\frac{gx}{n}\right)^n',
+        eq1 = MathTex(r'a^x{{=}}\left(a^{x/n}\right)^n{{\approx}}\left(1+\frac{x}{n}g\right)^n',
                       font_size=40).set_z_index(2)
         eq1[3:5].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[3], coor_mask=RIGHT)
         eq1.next_to(ax.coords_to_point(0, 6.7), LEFT, buff=0.2)
@@ -1632,11 +1632,12 @@ class ExpDeriv(LogRuler):
         self.play(FadeIn(eq2), run_time=0.5)
         self.wait(0.5)
 
-        self.play(ReplacementTransform(eq1[2][5:7] + eq1[2][4:5] + eq1[2][0] + eq1[1][0],
-                                       eq1[4][7:9] + eq1[4][6:7] + eq1[4][0] + eq1[3][0]),
-                  abra.fade_replace(eq1[2][1], eq1[4][1:4]),
-                  abra.fade_replace(eq1[2][3], eq1[4][5]),
-                  abra.fade_replace(eq1[2][2], eq1[4][4]),
+        self.play(ReplacementTransform(eq1[2][5:7] + eq1[2][4] + eq1[2][0] + eq1[1][0],
+                                       eq1[4][7:9] + eq1[4][5] + eq1[4][0] + eq1[3][0]),
+                  abra.fade_replace(eq1[2][1], eq1[4][1:3]),
+                  abra.fade_replace(eq1[2][3], eq1[4][4]),
+                  abra.fade_replace(eq1[2][2], eq1[4][3]),
+                  FadeIn(eq1[4][6]),
                   run_time=1)
         self.wait(0.1)
         self.play(FadeOut(gev1), run_time=1)
@@ -1771,7 +1772,7 @@ class ExpDeriv(LogRuler):
                   run_time=3)
         self.wait(0.5)
         circ1 = abra.circle_eq(eq1).set_z_index(4)
-        self.play(FadeIn(circ1), run_time=0.5)
+        self.play(Create(circ1), run_time=0.5)
         self.wait(0.5)
         line1 = Line(ax.coords_to_point(-1/g, 0), ax.coords_to_point(5, 1+5*g), color=RED, stroke_width=4).set_z_index(4)
         eq7 = MathTex(r'a^x\ge1+xg')[0].set_z_index(2)\
@@ -2427,12 +2428,12 @@ class EulerDemo(Scene):
 
         gp1 = VGroup(*parts)
         z1 *= (1 + 0.6 * (1-1/n)/abs(z1))
-        eq = MathTex(r'z^{{{}}}'.format(i), font_size=60, color=RED, z_index=6, stroke_width=1.4)[0].set_z_index(6)
+        eq = MathTex(r'z^{{{}}}'.format(n), font_size=60, color=RED, z_index=6, stroke_width=1.4)[0].set_z_index(6)
         eq.next_to(ax.coords_to_point(z1.real, z1.imag), ORIGIN, submobject_to_align=eq[0])
         shift = (ax.coords_to_point(0, 0) - eq.get_bottom())[1]+0.05
         eq.shift(UP * max(shift, 0.))
 
-        eq1 = MathTex(r'z=1+i\pi/{}'.format(i))[0].set_z_index(2)
+        eq1 = MathTex(r'z=1+i\pi/{}'.format(n))[0].set_z_index(2)
         eq1.next_to(ax.coords_to_point(w.real, w.imag), RIGHT)
         shift = (ax.coords_to_point(0, 0) - eq1.get_bottom())[1]+0.05
         eq1.shift(UP * max(shift, 0.))
@@ -2526,7 +2527,7 @@ class EulerDemo(Scene):
         demo = self.get_demoplot(ax, 1)
         self.play(FadeIn(demo[:-1]), run_time=1)
 
-        for i in range(2, 52):
+        for i in range(2, 51):
 #            self.wait(3/30 + 0.01)
             demo1 = self.get_demoplot(ax, i)
 
@@ -2662,6 +2663,257 @@ class Year2025(ExpPosint):
         self.wait(0.1)
         self.play(FadeIn(eq1[-1]), FadeOut(eq1[2]), ReplacementTransform(box, box2), run_time=1.5)
         self.wait(0.5)
+
+
+class ZeroNat(ExpPosint):
+    def construct(self):
+        eq = MathTex(r'\bf 0\!\in\!\mathbb N', stroke_width=1, stroke_color=BLACK, font_size=400)
+        self.add(eq)
+
+
+class ExpPi(ExpPosint):
+    bgcolor=WHITE
+    def construct(self):
+        eq = MathTex(r'e^{\pi}{{=}}eeee', font_size=100)
+        self.wait(0.1)
+        self.play(FadeIn(eq[0][0]), run_time=0.5)
+        self.wait(0.05)
+        self.play(FadeIn(eq[0][1]), run_time=0.5)
+        self.wait(0.1)
+        self.play(FadeIn(eq[1]), run_time=0.5)
+        self.wait(0.1)
+        self.play(FadeIn(eq[2][0]), run_time=0.5)
+        self.play(FadeIn(eq[2][1]), run_time=0.5)
+        self.play(FadeIn(eq[2][2]), run_time=0.5)
+        self.play(FadeIn(eq[2][3]), run_time=0.5)
+        self.wait(0.5)
+
+
+class Apown(ExpPosint):
+    bgcolor = WHITE
+
+    def construct(self):
+        eq = MathTex(r'a^n{{=}}aa\cdots a', font_size=100)
+        txt = MathTex(r'n\ {\rm copies\ of\ }a', font_size=60, color=RED, stroke_width=1.5)
+        br1 = BraceLabel(eq[2], r'', brace_direction=UP,
+                         label_constructor=abra.brace_label(txt),
+                         brace_config={'color': RED})
+        self.wait(0.1)
+        self.play(FadeIn(eq[0][0]), run_time=0.5)
+        self.wait(0.1)
+        self.play(FadeIn(eq[0][1]), run_time=0.5)
+        self.wait(0.1)
+        self.play(FadeIn(eq[1]), run_time=0.5)
+        self.wait(0.1)
+        self.play(LaggedStart(FadeIn(eq[2]), FadeIn(br1), lag_ratio=0.5), run_time=1)
+        self.wait(0.5)
+
+
+class Epii(ExpPosint):
+    def construct(self):
+        self.add(MathTex(r'e^{i\pi}+1=0', font_size=100))
+
+
+class PowS_im(ExpPosint):
+    def construct(self):
+        MathTex.set_default(color=BLACK, stroke_width=1.5)
+        self.add(MathTex(r'e^x=\sum_{n=0}^\infty\frac{x^n}{n!}', font_size=30))
+
+
+class Lim_im(ExpPosint):
+    def construct(self):
+        MathTex.set_default(color=BLACK, stroke_width=1.5)
+        self.add(MathTex(r'e^x=\lim_{n\to\infty}\left(1+\frac xn\right)^n', font_size=30))
+
+
+class Deriv_im(ExpPosint):
+    def construct(self):
+        self.add(MathTex(r'\frac{d}{dx}e^x=e^x', font_size=60))
+
+
+class Trig_im(ExpPosint):
+    def construct(self):
+        self.add(MathTex(r'e^{ix}=\cos x+i\sin x', font_size=60))
+
+
+class E_im(ExpPosint):
+    def construct(self):
+        eq = MathTex(r'e{{=}}2.7182818\ldots', font_size=100)
+        self.add(eq)
+
+
+class Outtro1(ExpPosint):
+    bgcolor = BLACK
+
+    def construct(self):
+        self.wait(0.5)
+        MathTex.set_default(font_size=60)
+        eq1 = MathTex(r'2025{{=}}45^2')
+        eq2 = MathTex(r'2025{{=}}(1+2+3+4+5+6+7+8+9)^2')
+        eq3 = MathTex(r'2025{{=}}1^3+2^3+3^3+4^3+5^3+6^3+7^3+8^3+9^3')
+        eq2.move_to(eq1)
+        eq3.move_to(eq1)
+        gp = VGroup(eq1, eq2, eq3).move_to(ORIGIN)
+#        eq3.next_to(eq2[1], ORIGIN, submobject_to_align=eq3[1])
+        self.play(FadeIn(eq1), run_time=1)
+        self.wait(3)
+        self.play(abra.fade_replace(eq1[2][:-1], eq2[2][:-1]),
+                  ReplacementTransform(eq1[2][-1], eq2[2][-1]),
+                  ReplacementTransform(eq1[:2], eq2[:2]),
+                  run_time=3)
+
+        j = 2
+        anims = [ReplacementTransform(eq2[2][1], eq3[2][0])]
+
+        for i in range(2, 18, 2):
+            anims.append(ReplacementTransform(eq2[2][i:i+2], eq3[2][j:j+2]))
+            j += 3
+        for i in range(1, 28, 3):
+            anims.append(FadeIn(eq3[2][i]))#, target_position=eq2[2][-1]))
+
+        self.wait(3)
+        self.play(FadeOut(eq2[2][0], eq2[2][-2]),
+                  ReplacementTransform(eq2[:2], eq3[:2]),
+                  FadeOut(eq2[2][-1]),#, target_position=eq3[2][-1]),
+                  *anims, run_time=3)
+        self.wait(3)
+        self.play(FadeOut(eq3), run_time=2)
+
+class EulerDemoThumb(Scene):
+    def get_demoplot(self, ax: Axes, n):
+        parts = []
+        z0 = 1. + 0j
+        w = 1. + 1j/n * math.pi
+        origin = ax.coords_to_point(0, 0)
+        p0 = ax.coords_to_point(z0.real, z0.imag)
+        for i in range(n):
+            z1 = z0 * w
+            p1 = ax.coords_to_point(z1.real, z1.imag)
+            line1 = Line(p0, p1, color=WHITE).set_z_index(3)
+            line2 = Line(p1, origin, color=WHITE).set_z_index(3)
+            dot = Dot(p1, color=BLUE, radius=DEFAULT_DOT_RADIUS*1).set_z_index(4)
+            parts.append(VGroup(line1, dot, line2))
+            p0 = p1
+            z0 = z1
+
+        line1 = Line(p0, p1, color=WHITE).set_z_index(3)
+        line2 = Line(p1, origin, color=WHITE).set_z_index(3)
+        dot = Dot(p1, color=BLUE, radius=DEFAULT_DOT_RADIUS*1).set_z_index(4)
+        extra = VGroup(line1, dot, line2)
+
+
+        gp1 = VGroup(*parts)
+        z1 *= (1 + 0.6 * (1-1/n)/abs(z1))
+        eq = MathTex(r'z^{{{}}}'.format(n), font_size=60, color=RED, z_index=6, stroke_width=1.4)[0].set_z_index(6)
+        eq.next_to(ax.coords_to_point(z1.real, z1.imag), ORIGIN, submobject_to_align=eq[0])
+        shift = (ax.coords_to_point(0, 0) - eq.get_bottom())[1]+0.05
+        eq.shift(UP * max(shift, 0.))
+
+        eq1 = MathTex(r'z=1+i\pi/{}'.format(n))[0].set_z_index(2)
+        eq1.next_to(ax.coords_to_point(w.real, w.imag), RIGHT)
+        shift = (ax.coords_to_point(0, 0) - eq1.get_bottom())[1]+0.05
+        eq1.shift(UP * max(shift, 0.))
+        return VGroup(gp1, eq, eq1, extra)
+
+    def construct(self):
+        y1m = config.frame_y_radius * 0.9
+        ym = 3.15
+        scale = 1.4
+        xm = ym * scale
+        ax = Axes(x_range=[-xm, xm], y_range=[-ym, ym], z_index=2, x_length=2 * y1m * scale, y_length=2 * y1m, tips=False,
+                  axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False, 'tick_size': 0.05
+                               }).set_z_index(2)
+
+        axlines = []
+        y = 0.5
+        while y < ym:
+            axlines.append(DashedLine(ax.coords_to_point(-xm, y), ax.coords_to_point(xm, y), color=GREY,
+                                      stroke_opacity=0.5, stroke_width=2, dash_length=DEFAULT_DASH_LENGTH * 0.5))
+            axlines.append(DashedLine(ax.coords_to_point(-xm, -y), ax.coords_to_point(xm, -y), color=GREY,
+                                      stroke_opacity=0.5, stroke_width=2, dash_length=DEFAULT_DASH_LENGTH * 0.5))
+            y += 0.5
+        x = 0.5
+        while x < xm:
+            axlines.append(DashedLine(ax.coords_to_point(x, -ym), ax.coords_to_point(x, ym), color=GREY,
+                                      stroke_opacity=0.5, stroke_width=2, dash_length=DEFAULT_DASH_LENGTH * 0.5))
+            axlines.append(DashedLine(ax.coords_to_point(-x, -ym), ax.coords_to_point(-x, ym), color=GREY,
+                                      stroke_opacity=0.5, stroke_width=2, dash_length=DEFAULT_DASH_LENGTH * 0.5))
+            x += 0.5
+
+        pts = []
+        eqs = []
+        for (x,y) in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+            pts.append(ax.coords_to_point(x, y))
+        dots = []
+        fs = 50
+        for pt in pts:
+            dots.append(Dot(pt, color=YELLOW).set_z_index(5))
+        eqs.append(MathTex(r'1', font_size=fs).set_z_index(2).next_to(dots[0], DOWN, buff=0.1))
+        eqt = MathTex(r'-1', font_size=fs).set_z_index(2)
+        eqs.append(eqt.next_to(dots[1], DOWN, buff=0.1, submobject_to_align=eqt[0][1]))
+        eqs.append(MathTex(r'i', font_size=fs).set_z_index(2).next_to(dots[2], LEFT, buff=0.1))
+        eqs.append(MathTex(r'-i', font_size=fs).set_z_index(2).next_to(dots[3], LEFT, buff=0.1))
+
+
+        fs = 100
+        fs2 = 60
+
+        demo = self.get_demoplot(ax, 11)
+        self.add(ax, *eqs, *dots, *axlines, demo[:-1])
+        return
+
+        self.play(FadeIn(demo[:-1]), run_time=1)
+
+        for i in range(2, 51):
+#            self.wait(3/30 + 0.01)
+            demo1 = self.get_demoplot(ax, i)
+
+            run_time = 2.0/i + 1.1/15
+            self.play(ReplacementTransform(demo[0][:], demo1[0][:-1], rate_func=linear),
+                      ReplacementTransform(demo[-1], demo1[0][-1], rate_func=linear),
+#                      FadeIn(demo1[0][-1], rate_func= lambda t: max(t*2-1, 0.)),
+                      ReplacementTransform(demo[1][0], demo1[1][0], rate_func=linear),
+                      abra.fade_replace(demo[1][1:], demo1[1][1:]),
+                      ReplacementTransform(demo[2][:7], demo1[2][:7]),
+                      abra.fade_replace(demo[2][7:], demo1[2][7:]),
+                      rate_func=linear,
+                      run_time=run_time)
+            demo = demo1
+
+        eq5.next_to(eq4[1], ORIGIN, submobject_to_align=eq5[1])
+        self.play(ReplacementTransform(eq4[1], eq5[1]),
+                  FadeOut(eq4[2]), FadeIn(eq5[2]),
+                  run_time=1.5)
+        self.wait(0.5)
+
+        angle = ValueTracker(0.0)
+        eq8 = MathTex(r'e^{it}', font_size=60)[0].set_z_index(11)
+        end = PI * 4 + 0.6
+        dt = PI/2
+
+        def rotfunc():
+            a = angle.get_value()
+            pos = (math.cos(a), math.sin(a))
+            pt = ax.coords_to_point(pos[0], pos[1])
+            dot = Dot(pt, color=GREEN, radius=DEFAULT_DOT_RADIUS*1.5).set_z_index(10).move_to(pt)
+            pt2 = ax.coords_to_point(pos[0] * 1.4, pos[1] * 1.4)
+            eq8.move_to(pt2)
+            if a < dt:
+                opacity = max(a/dt, 1.)
+            elif a > end-dt:
+                opacity = max((end-a)/dt, 1.)
+            else:
+                opacity=1.0
+            return VGroup(dot, eq8.copy()).set_opacity(opacity)
+
+        rotpt = always_redraw(rotfunc)
+        self.add(rotpt)
+        self.play(angle.animate(rate_func=linear).set_value(end), run_time=5.2)
+        self.remove(rotpt)
+
+        self.wait(0.5)
+
+
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "fps": 15, "preview": True}):
