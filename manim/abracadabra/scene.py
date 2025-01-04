@@ -1,6 +1,8 @@
 from manim import *
 import cv2
 import math
+import abracadabra as abra
+
 
 class CreateCircle(Scene):
     def construct(self):
@@ -389,8 +391,204 @@ class OddSum(Scene):
         self.wait(0.5)
 
 
+class SquareSum(ThreeDScene):
+    def create_blocks(self, n, h, gap1):
+        colors = [BLUE, TEAL, GREEN, YELLOW_E, RED, PINK, GOLD, MAROON, PURPLE]
+        cube = Prism((h, h, h), fill_color=BLUE, stroke_width=1, stroke_color=WHITE, stroke_opacity=1).set_z_index(1.0)
+
+        shifts = []
+        shift = 0.0
+        for i in range(n):
+            tmp = []
+            for j in range(i + 1):
+                tmp.append(shift)
+                shift += h
+            shifts.append(tmp)
+            shift += gap1
+
+        return VGroup(*[VGroup(*[VGroup(*[VGroup(*[
+            cube.copy().shift(UP * shifts[i][k] + RIGHT * shifts[j][l]).set_fill(color=colors[max(i, j)])
+            for l in range(j + 1)]) for k in range(i + 1)]) for j in range(n)]) for i in range(n)]).move_to(ORIGIN)
+
+    def do_init(self, n, blocks, skip=False, do_eqns=True):
+        h = blocks[0][0][0][0].width
+        eq1 = [MathTex(r'\bf {}'.format(i + 1), z_index=100.0)[0].set_z_index(100.0).move_to(blocks[0][i]) for i in range(n)]
+        maxh = max([x.height for x in eq1])
+        for i in range(n):
+            eq1[i].rotate(90 * DEGREES, axis=RIGHT).shift(OUT * (maxh/2 + h/2))
+
+        eq01 = MathTex(r'\bf 2025{{=}}45^2')
+        eq02 = MathTex(r'\bf 2025{{=}}(1+2+3+4+5+6+7+8+9)^2').set_z_index(0.0)
+        eq03 = MathTex(r'\bf 2025{{=}}1^3+2^3+3^3+4^3+5^3+6^3+7^3+8^3+9^3')
+        VGroup(eq01, eq02, eq03).to_edge(UP, buff=1)
+        self.add_fixed_in_frame_mobjects(eq01, eq02, eq03)
+        self.remove(eq01, eq02, eq03)
+
+        if skip:
+            self.add(blocks, *eq1, *eq02)
+            return eq02, eq03
+
+        if do_eqns:
+            self.play(FadeIn(eq01), run_time=1)
+            self.play(abra.fade_replace(eq01[2][:-1], eq02[2][:-1]),
+                      ReplacementTransform(eq01[2][-1], eq02[2][-1]),
+                      ReplacementTransform(eq01[:2], eq02[:2]),
+                      run_time=3)
+
+        row0 = blocks[0].copy().scale(1.7).move_to(ORIGIN).shift(RIGHT*h*5)
+        row0.shift(IN*maxh)
+        eq2 = [eq1[i].copy().move_to(row0[i]).shift(OUT * (maxh + h)) for i in range(n)]
+
+        gp1 = VGroup(blocks[0], VGroup(*eq1))
+        gp2 = VGroup(row0, VGroup(*eq2))
+
+        for i in range(n):
+            self.play(FadeIn(gp2[0][i], gp2[1][i]), run_time=0.5)
+
+        self.play(ReplacementTransform(gp2, gp1), run_time=1)
+
+        fps = config.frame_rate
+
+        for i in range(1, n):
+            self.add(blocks[i])
+            self.wait(1.0/15 + 0.01)
+
+        return eq02, eq03
+
+
+    def construct(self):
+        skip = False
+        do_eqns = False
+
+        n = 9
+        sum_n = (n*(n+1))//2
+        h = 7 / sum_n
+        phi = 60*DEGREES
+        theta = -110*DEGREES
+        self.set_camera_orientation(phi=phi, theta=theta)
+#        self.add(Arrow3D(ORIGIN, RIGHT, color=RED), Arrow3D(ORIGIN, UP, color=GREEN), Arrow3D(ORIGIN, OUT, color=YELLOW))
+
+        blocks = self.create_blocks(n, h, h)
+
+        eq1, eq2 = self.do_init(n, blocks, skip=False, do_eqns=do_eqns)
+
+        for i in range(n-1, 0, -1):
+            self.wait(0.5)
+            pos0 = blocks[0][i][0][0].get_center()
+            pos1 = blocks[i][i][0][0].get_center()
+            anims = []
+            shifts = []
+            for j in range(i):
+                x = blocks[i][j]
+                shifts.append(blocks[i][i][0][-1].get_center() - x[0][-1].get_center())
+                x.shift(OUT*h*(i-j)) if skip else anims.append(x.animate.shift(OUT*h*(i-j)))
+            self.wait(1) if skip else self.play(*anims, run_time=1)
+
+            anims = []
+            for j in range(i):
+                blocks[i][j].shift(shifts[j]) if skip else anims.append(blocks[i][j].animate.shift(shifts[j]))
+            self.wait(1) if skip else self.play(*anims, run_time=1)
+
+            if skip:
+                blocks[i][:i].rotate(90 * DEGREES, axis=OUT, about_point=blocks[i][i].get_center())
+                self.wait(1)
+            else:
+                ang = ValueTracker(0.0)
+
+                def f():
+                    x = ang.get_value()
+                    return blocks[i][:i].copy().rotate(x, axis=OUT, about_point=blocks[i][i].get_center())
+
+                rot = always_redraw(f)
+                self.remove(*blocks[i][:i])
+                self.add(rot)
+                self.play(ang.animate.set_value(90*DEGREES), run_time=1)
+                self.remove(rot)
+                self.add(*blocks[i][:i])
+                blocks[i][:i].rotate(90 * DEGREES, axis=OUT, about_point=blocks[i][i].get_center())
+
+            anims = []
+            shifts = []
+            for j in range(i):
+                x = blocks[j][i]
+                shifts.append(blocks[i][i][0][0].get_center() - x[0][0].get_center())
+                x.shift(OUT*h*(j+1)) if skip else anims.append(x.animate.shift(OUT*h*(j+1)))
+            self.wait(1) if skip else self.play(*anims, run_time=1)
+
+            t_shift = ValueTracker(0.0)
+            def f():
+                t = t_shift.get_value()
+                res = VGroup(*blocks[i][:i+1].copy()).shift((pos0-pos1)*t)
+                sblocks = []
+                for j in range(i):
+                    p0 = res[i-j-1][-1][0].get_center() + DOWN*h
+                    p1 = blocks[j][i][-1][0].get_center()
+                    shift = p0-p1
+                    shift[1] = min(shift[1], 0.0)
+                    sblocks.append(blocks[j][i].copy().shift(shift))
+
+                return VGroup(*res[:], *sblocks)
+
+            shifted = always_redraw(f)
+            self.remove(*blocks[i][:i+1], *[blocks[j][i] for j in range(i)])
+            self.add(shifted)
+            self.play(t_shift.animate.set_value(1.0), run_time=2)
+            self.remove(shifted)
+            cube = f()
+            self.add(cube)
+
+        if not skip and do_eqns:
+            self.play(ReplacementTransform(eq1[:2], eq2[:2]),
+                      FadeOut(eq1[2][0], eq1[2][-2:]),
+                      ReplacementTransform(eq1[2][1:1+2*n:2], eq2[2][0:3*n:3]),
+                      ReplacementTransform(eq1[2][2:2+2*(n-1):2], eq2[2][2:3*(n-1):3]),
+                      FadeIn(*eq2[2][1:1+3*n:3]),
+                      run_time=3)
+        self.wait(1)
+
+
+class SquareSumEq(Scene):
+    def __init__(self, *args, **kwargs):
+        if config.transparent:
+            print("transparent!")
+            config.background_color = WHITE
+        Scene.__init__(self, *args, *kwargs)
+
+    def construct(self):
+        eq01 = MathTex(r'\bf 2025{{=}}45^2')
+        eq02 = VGroup(*MathTex(r'\bf 2025{{=}}')[:], MathTex(r'(1+2+3+4+5+6+7+8+9)^2', font_size=28)[0])
+        spc = r'\hspace{-0.3em}'
+        spc2 = r'\hspace{-0.05em}'
+        eq03 = MathTex(r'1^3{0}+{1}2^3{0}+{1}3^3{0}+{1}4^3{0}+{1}5^3{0}+{1}6^3{0}+{1}7^3{0}+{1}8^3{0}+{1}9^3'.format(spc, spc2), font_size=28)[0]
+        VGroup(eq01, eq02, eq03).to_edge(UP, buff=1)
+        eq02[:2].move_to(ORIGIN, coor_mask=RIGHT)
+        eq02[2].move_to(ORIGIN).next_to(eq03[:2], DOWN*1.5, coor_mask=UP)
+        eq03.next_to(eq02[2][1], ORIGIN, submobject_to_align=eq03[0])
+        eq03.move_to(ORIGIN, coor_mask=RIGHT)
+
+        self.add(eq01)
+        self.wait(0.5)
+        self.play(abra.fade_replace(eq01[2][:-1], eq02[2][:-1]),
+                  ReplacementTransform(eq01[2][-1], eq02[2][-1]),
+                  ReplacementTransform(eq01[:2], eq02[:2]),
+                  run_time=2)
+        self.wait(1)
+        eq1 = eq02
+        eq2 = eq03
+        n = 9
+        self.play(FadeOut(eq1[2][0], eq1[2][-2:]),
+                  ReplacementTransform(eq1[2][1:1 + 2 * n:2], eq03[0:3 * n:3]),
+                  ReplacementTransform(eq1[2][2:2 + 2 * (n - 1):2], eq03[2:3 * (n - 1):3]),
+                  FadeIn(*eq03[1:1 + 3 * n:3]),
+                  run_time=2)
+
+
+class SquareSumEq2(Scene):
+    def construct(self):
+        self.add(MathTex(r'\left(\sum_{k=1}^nk\right)^2=\sum_{k=1}^nk^3'))
+
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "preview": True}):
-        Dice().render()
+        SquareSum().render()
 
 
