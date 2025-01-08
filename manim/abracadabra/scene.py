@@ -314,19 +314,19 @@ class Test(Scene):
 class OddSum(Scene):
     def construct(self):
         n = 10
-
+        fill_color = ManimColor(BLUE.to_rgb() * 0.5)
         dx = 0.36
         rects = []
         for i in range(0, n):
             j = 2*i + 1
-            rect = Rectangle(width=dx, height=dx * j, stroke_width=3, stroke_opacity=1, fill_opacity=0.5,
-                             fill_color=BLUE, stroke_color=BLUE).set_z_index(2)
+            rect = Rectangle(width=dx, height=dx * j, stroke_width=3, stroke_opacity=1, fill_opacity=1,
+                             fill_color=fill_color, stroke_color=BLUE).set_z_index(n+2-i)
             if i > 0:
                 rect.move_to(rects[0]).shift(RIGHT * i * dx).align_to(rects[0], DOWN)
             rects.append(rect)
 
         eq = MathTex(r'123\cdots n', font_size=40)[0].next_to(rects[0], DOWN, buff=0.15)
-        eq2 = MathTex(r'\bf 135 2n-1', font_size=36, color=PURE_RED, stroke_color=BLACK, stroke_width=1.5)[0].set_z_index(4)
+        eq2 = MathTex(r'\bf 135 2n-1', font_size=36, color=PURE_RED, stroke_color=BLACK, stroke_width=1.5)[0].set_z_index(20)
         for i in range(-1, 3):
             eq[i].move_to(rects[i], coor_mask=RIGHT)
             tmp = eq2[i] if i >=0 else eq2[-4:]
@@ -341,7 +341,7 @@ class OddSum(Scene):
         self.play(FadeIn(rects[0], eq[0], eq2[0]), run_time=0.5)
         print(len(rects))
         for i in range(1, n):
-            anims = [ReplacementTransform(rects[i-1].copy(), rects[i])]
+            anims = [ReplacementTransform(rects[i-1].copy().set_z_index(n+2-i), rects[i])]
             if i < 3:
                 anims.append(FadeIn(eq[i], eq2[i]))
             elif i == 3:
@@ -352,7 +352,7 @@ class OddSum(Scene):
             self.play( *anims, run_time=0.5)
 
         rect = Rectangle(width=n*dx, height=n*dx, stroke_color=YELLOW, stroke_opacity=1, fill_opacity=0,
-                         stroke_width=6).align_to(rects[0], DL).set_z_index(10)
+                         stroke_width=6).align_to(rects[0], DL).set_z_index(100)
         self.wait(0.2)
         eq3 = MathTex(r'n', color=YELLOW).set_z_index(10).rotate(90*DEGREES).next_to(rect, LEFT, buff=0.2)
         self.play(Create(rect, rate_func=linear), FadeIn(eq3, rate_func=lambda t: max(2*t-1, 0)), run_time=2)
@@ -363,10 +363,10 @@ class OddSum(Scene):
         rects2 = []
         for i in range(n//2, n):
             j = 2*i+1
-            rect1 = Rectangle(width=dx, height=dx * n, stroke_width=3, stroke_opacity=1, fill_opacity=0.5,
-                             fill_color=BLUE, stroke_color=BLUE).set_z_index(2)
-            rect2 = Rectangle(width=dx, height=dx * (j-n), stroke_width=3, stroke_opacity=1, fill_opacity=0.5,
-                             fill_color=BLUE, stroke_color=BLUE).set_z_index(2)
+            rect1 = Rectangle(width=dx, height=dx * n, stroke_width=3, stroke_opacity=1, fill_opacity=1,
+                             fill_color=fill_color, stroke_color=BLUE).set_z_index(2)
+            rect2 = Rectangle(width=dx, height=dx * (j-n), stroke_width=3, stroke_opacity=1, fill_opacity=1,
+                             fill_color=fill_color, stroke_color=BLUE).set_z_index(2)
             rect1.move_to(rects[i]).align_to(rects[i], DOWN)
             rect2.move_to(rects[i]).align_to(rects[i], DOWN).shift(UP*dx*n)
             self.add(rect1)
