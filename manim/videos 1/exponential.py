@@ -2914,6 +2914,196 @@ class EulerDemoThumb(Scene):
         self.wait(0.5)
 
 
+class EulerDemo_short(Scene):
+    def __init__(self, *args, **kwargs):
+        config.background_color = WHITE
+        Scene.__init__(self, *args, *kwargs)
+
+    def get_demoplot(self, ax: Axes, n):
+        parts = []
+        z0 = 1. + 0j
+        w = 1. + 1j/n * math.pi
+        origin = ax.coords_to_point(0, 0)
+        p0 = ax.coords_to_point(z0.real, z0.imag)
+        for i in range(n):
+            z1 = z0 * w
+            p1 = ax.coords_to_point(z1.real, z1.imag)
+            line1 = Line(p0, p1, color=WHITE).set_z_index(3)
+            line2 = Line(p1, origin, color=WHITE).set_z_index(3)
+            dot = Dot(p1, color=BLUE, radius=DEFAULT_DOT_RADIUS*1).set_z_index(4)
+            parts.append(VGroup(line1, dot, line2))
+            p0 = p1
+            z0 = z1
+
+        line1 = Line(p0, p1, color=WHITE).set_z_index(3)
+        line2 = Line(p1, origin, color=WHITE).set_z_index(3)
+        dot = Dot(p1, color=BLUE, radius=DEFAULT_DOT_RADIUS*1).set_z_index(4)
+        extra = VGroup(line1, dot, line2)
+
+
+        gp1 = VGroup(*parts)
+        z1 *= (1 + 0.6 * (1-1/n)/abs(z1))
+        eq = MathTex(r'z^{{{}}}'.format(n), font_size=50, color=RED, z_index=6, stroke_width=1.4)[0].set_z_index(6)
+        eq.next_to(ax.coords_to_point(z1.real, z1.imag), ORIGIN, submobject_to_align=eq[0])
+        shift = (ax.coords_to_point(0, 0) - eq.get_bottom())[1]+0.05
+        eq.shift(UP * max(shift, 0.))
+
+        eq1 = MathTex(r'z=1+\frac{{i\pi}}{{ {} }}'.format(n), font_size=35)[0].set_z_index(2)
+        eq1.next_to(ax.coords_to_point(w.real, w.imag), RIGHT)
+        shift = (ax.coords_to_point(0, 0) - eq1.get_bottom())[1]+0.05
+        eq1.shift(UP * max(shift, 0.))
+        return VGroup(gp1, eq, eq1, extra)
+
+    def eqns(self):
+        fs = 100
+        fs2 = 60
+        eq1 = MathTex(r'e^{i\pi}{{=}}\left(e^{\frac{i\pi}{n}}\right)^n', font_size=fs)
+        eq1.shift(-eq1[:3].get_center())
+        eq1_1 = eq1[0][:].copy().move_to(ORIGIN, coor_mask=RIGHT)
+        eq3 = MathTex(r'e^{i\pi}{{\approx}}\left(1+\frac{i\pi}{n}\ln e\right)^n', font_size=fs)
+        eq3.next_to(eq1[1], ORIGIN, submobject_to_align=eq3[1], coor_mask=UP)
+        eq4 = MathTex(r'e^{i\pi}{{\approx}}\left(1+\frac{i\pi}{n}\right)^n', font_size=fs)
+        eq4.next_to(eq1[1], ORIGIN, submobject_to_align=eq4[1], coor_mask=UP)
+        eq5 = MathTex(r'e^{i\pi}{{=}}-1', font_size=fs)
+        eq5.next_to(eq1[1], ORIGIN, submobject_to_align=eq5[1], coor_mask=UP)
+        eq6 = MathTex(r'e^{i\pi}+1 {{=}} 0', font_size=fs)
+        eq6.next_to(eq1[1], ORIGIN, submobject_to_align=eq6[1], coor_mask=UP)
+        self.play(FadeIn(eq1_1), run_time=1)
+        self.wait(0.5)
+        self.play(LaggedStart(AnimationGroup(
+            FadeIn(eq1[1]),
+            ReplacementTransform(eq1_1[:1].copy(), eq1[2][1:2]),
+            abra.fade_replace(eq1_1[1:3].copy(), eq1[2][2:4]),
+            ReplacementTransform(eq1_1, eq1[0]),
+            FadeIn(eq1[2][0], eq1[2][6:])),
+            FadeIn(eq1[2][4:6]), lag_ratio=0.5),
+            run_time=1.5)
+        self.wait(0.1)
+        eq2 = MathTex(r'e^{\frac{i\pi}{n}\ln e}', font_size=fs)[0].set_opacity(0).set_z_index(2)
+        eq2.next_to(eq1[2][2:-2], ORIGIN, submobject_to_align=eq2[1:5])
+        self.play(ReplacementTransform(eq1[2][:1] + eq1[2][4:-2] + eq1[2][-2:],
+                                       eq3[2][:1] + eq3[2][5:-5] + eq3[2][-2:]),
+                  abra.fade_replace(eq1[2][2:4], eq3[2][3:5]),
+                  FadeOut(eq1[2][1]), FadeIn(eq3[2][1:3]),
+                  abra.fade_replace(eq2[-3:], eq3[2][-5:-2]),
+                  ReplacementTransform(eq1[1], eq3[1]),
+                  ReplacementTransform(eq1[0], eq3[0]),
+                  run_time=1.5
+                  )
+        line = Line(eq3[2][-5:-2].get_corner(DL) + DL*0.2, eq3[2][-5:-2].get_corner(UR) + UR*0.2, color=RED, stroke_width=10)
+        self.wait(0.1)
+        self.play(FadeIn(line), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(line, eq3[2][-5:-2]),
+                  ReplacementTransform(eq3[:2] + eq3[2][:-5] + eq3[2][-2:], eq4[:2] + eq4[2][:-2] + eq4[2][-2:]), run_time=1)
+
+        self.wait(0.5)
+#        eq5.next_to(eq4[1], ORIGIN, submobject_to_align=eq5[1])
+        self.play(ReplacementTransform(eq4[1], eq5[1]),
+                  ReplacementTransform(eq4[0], eq5[0]),
+                  FadeOut(eq4[2]), FadeIn(eq5[2]),
+                  run_time=1.5)
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq5[0][:3] + eq5[1] + eq5[2][-1],
+                                       eq6[0][:3] + eq6[1] + eq6[0][-1]),
+                  abra.fade_replace(eq5[2][0], eq6[0][-2]),
+                  FadeIn(eq6[2]),
+                  run_time=1.5)
+
+    def plots(self):
+        y1m = config.frame_y_radius * 0.9
+        scale = 1.4
+        xm = 2.9
+        ym = 3.6
+        scale = config.frame_y_radius / ym * 0.9 * 2
+        ax = Axes(x_range=[-xm, xm], y_range=[-ym, ym], z_index=2, x_length= xm * scale, y_length=ym * scale, tips=False,
+                  axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False, 'tick_size': 0.05
+                               }).set_z_index(2)
+
+        axlines = []
+        y = 0.5
+        while y < ym:
+            axlines.append(DashedLine(ax.coords_to_point(-xm, y), ax.coords_to_point(xm, y), color=GREY,
+                                      stroke_opacity=0.5, stroke_width=2, dash_length=DEFAULT_DASH_LENGTH * 0.5))
+            axlines.append(DashedLine(ax.coords_to_point(-xm, -y), ax.coords_to_point(xm, -y), color=GREY,
+                                      stroke_opacity=0.5, stroke_width=2, dash_length=DEFAULT_DASH_LENGTH * 0.5))
+            y += 0.5
+        x = 0.5
+        while x < xm:
+            axlines.append(DashedLine(ax.coords_to_point(x, -ym), ax.coords_to_point(x, ym), color=GREY,
+                                      stroke_opacity=0.5, stroke_width=2, dash_length=DEFAULT_DASH_LENGTH * 0.5))
+            axlines.append(DashedLine(ax.coords_to_point(-x, -ym), ax.coords_to_point(-x, ym), color=GREY,
+                                      stroke_opacity=0.5, stroke_width=2, dash_length=DEFAULT_DASH_LENGTH * 0.5))
+            x += 0.5
+
+        pts = []
+        eqs = []
+        for (x,y) in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+            pts.append(ax.coords_to_point(x, y))
+        dots = []
+        fs = 50
+        for pt in pts:
+            dots.append(Dot(pt, color=YELLOW).set_z_index(5))
+        eqs.append(MathTex(r'1', font_size=fs).set_z_index(2).next_to(dots[0], DOWN, buff=0.1))
+        eqt = MathTex(r'-1', font_size=fs).set_z_index(2)
+        eqs.append(eqt.next_to(dots[1], DOWN, buff=0.1, submobject_to_align=eqt[0][1]))
+        eqs.append(MathTex(r'i', font_size=fs).set_z_index(2).next_to(dots[2], LEFT, buff=0.1))
+        eqs.append(MathTex(r'-i', font_size=fs).set_z_index(2).next_to(dots[3], LEFT, buff=0.1))
+
+        fs = 100
+        fs2 = 60
+
+
+        self.play(FadeIn(ax, *dots, *eqs, *axlines), run_time=2)
+
+        demo = self.get_demoplot(ax, 1)
+        self.play(FadeIn(demo[:-1]), run_time=1)
+
+        for i in range(2, 51):
+            demo1 = self.get_demoplot(ax, i)
+
+            run_time = 2.0/i + 1.1/15
+            self.play(ReplacementTransform(demo[0][:], demo1[0][:-1], rate_func=linear),
+                      ReplacementTransform(demo[-1], demo1[0][-1], rate_func=linear),
+#                      FadeIn(demo1[0][-1], rate_func= lambda t: max(t*2-1, 0.)),
+                      ReplacementTransform(demo[1][0], demo1[1][0], rate_func=linear),
+                      abra.fade_replace(demo[1][1:], demo1[1][1:]),
+                      ReplacementTransform(demo[2][:7], demo1[2][:7]),
+                      abra.fade_replace(demo[2][7:], demo1[2][7:]),
+                      rate_func=linear,
+                      run_time=run_time)
+            demo = demo1
+
+
+        angle = ValueTracker(0.0)
+        eq8 = MathTex(r'e^{it}', font_size=60)[0].set_z_index(11)
+        end = PI * 4 + 0.6
+        dt = PI/2
+
+        def rotfunc():
+            a = angle.get_value()
+            pos = (math.cos(a), math.sin(a))
+            pt = ax.coords_to_point(pos[0], pos[1])
+            dot = Dot(pt, color=GREEN, radius=DEFAULT_DOT_RADIUS*1.5).set_z_index(10).move_to(pt)
+            pt2 = ax.coords_to_point(pos[0] * 1.4, pos[1] * 1.4)
+            eq8.move_to(pt2)
+            if a < dt:
+                opacity = max(a/dt, 1.)
+            elif a > end-dt:
+                opacity = max((end-a)/dt, 1.)
+            else:
+                opacity=1.0
+            return VGroup(dot, eq8.copy()).set_opacity(opacity)
+
+        rotpt = always_redraw(rotfunc)
+        self.add(rotpt)
+        self.play(angle.animate(rate_func=linear).set_value(end), run_time=5.2)
+        self.remove(rotpt)
+
+        self.wait(0.5)
+
+    def construct(self):
+        self.eqns()
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "fps": 15, "preview": True}):
