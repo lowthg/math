@@ -419,6 +419,64 @@ class Rademacher(SceneOpacity):
         self.wait(0.5)
 
 
+class Uniform(SceneOpacity):
+    opacity = 0.7
+    def construct(self):
+        eq1 = Tex(r'$X$ is uniform on $[-1,1]$').set_z_index(1)
+        eq2 = MathTex(r'p_X(x)=\begin{cases} 1/2,& {\rm if\ }-1\le x\le 1,\\'
+                      r' 0,&{\rm otherwise}\end{cases}').set_z_index(1)\
+            .next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq3 = MathTex(r'\varphi_X(u){{=}}\frac12\int_{-1}^1e^{iux}\,dx'
+                      r'{{=}}\frac12\left[\frac{e^{iux} }{iu}\right]_{x=-1}^{x=1}'
+                      r'{{=}}\frac{e^{iu}-e^{-iu}}{2iu}'
+                      r'{{=}}\frac{\sin u}{u}'
+                      r'{{=}} {\rm sinc}\;u').set_z_index(1)\
+            .next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq3[3:5].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[3], coor_mask=RIGHT)
+        eq3[5:7].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[5], coor_mask=RIGHT)
+        eq3[7:9].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[7], coor_mask=RIGHT)
+        eq3[9:11].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[9], coor_mask=RIGHT)
+        VGroup(eq1, eq2, eq3).move_to(ORIGIN)
+        box1 = self.box(eq1, eq2, eq3)
+        self.add(box1, eq1)
+        self.wait(0.5)
+        self.play(FadeIn(eq2), run_time=1)
+        self.wait(0.5)
+        self.play(FadeOut(eq2), FadeIn(eq3[:3]), run_time=1)
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq3[2][:3] + eq3[2][7:11] + eq3[2][4] + eq3[2][5:7],
+                                       eq3[4][:3] + eq3[4][4:8] + eq3[4][-5] + eq3[4][-2:]),
+                  abra.fade_replace(eq3[2][8:10].copy(), eq3[4][9:11]),
+                  FadeIn(eq3[4][3], eq3[4][8], eq3[4][11], eq3[4][-4:-2], eq3[4][-7:-5]),
+                  FadeOut(eq3[2][3], eq3[2][-2:]),
+                  run_time=1.5)
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq3[4][9:11] + eq3[4][8] + eq3[4][2] + eq3[4][4:7] + eq3[4][4].copy() + eq3[4][5:7].copy(),
+                                       eq3[6][10:12] + eq3[6][8] + eq3[6][9] + eq3[6][:3] + eq3[6][4] + eq3[6][6:8]),
+                  FadeOut(eq3[4][0], eq3[4][3], eq3[4][-8:], eq3[4][7]),
+                  FadeIn(eq3[6][3]),
+                  FadeIn(eq3[6][5]),
+                  FadeOut(eq3[4][1], target_position=eq3[6][8]), run_time=1.5)
+        self.wait(0.5)
+        eqs = eq3[8][:4].copy().move_to(eq3[6][3], coor_mask=RIGHT)
+        self.play(FadeOut(eq3[6][9:11]),
+                  FadeOut(eq3[6][:8]),
+                  FadeIn(eqs),
+                  run_time=1.3)
+        self.play(ReplacementTransform(eqs, eq3[8][:4]),
+                  ReplacementTransform(eq3[6][8], eq3[8][4]),
+                  ReplacementTransform(eq3[6][-1], eq3[8][-1]),
+                  run_time=1)
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq3[8][:3] + eq3[8][3], eq3[10][:3] + eq3[10][4]),
+                  ReplacementTransform(eq3[8][5], eq3[10][4]),
+                  FadeIn(eq3[10][3], target_position=eq3[8][2]),
+                  FadeOut(eq3[8][4]),
+                  run_time=1.5)
+
+        self.wait(0.5)
+
+
 class CosInt(Scene):
     def construct(self):
         str = r'{{\int_{-\infty}^\infty 2\cos x\frac{\sin(x)}{x} }}'
