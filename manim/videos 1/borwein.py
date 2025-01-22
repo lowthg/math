@@ -90,11 +90,26 @@ class Intro(Scene):
         self.wait(0.5)
 
 
-class ProcessBW(Scene):
+class SceneOpacity(Scene):
+    opacity = 0.3
+
     def __init__(self, *args, **kwargs):
-        config.background_color = ManimColor(WHITE.to_rgb()*0.2)
+        config.background_color = ManimColor(WHITE.to_rgb()*(1-self.opacity))
         Scene.__init__(self, *args, *kwargs)
 
+    def box(self, *obj: Mobject, corner_radius=0.2, fill_color=BLACK, fill_opacity=None, stroke_opacity=0.,
+            buff=0.2, **kwargs):
+        if fill_opacity is None:
+            fill_opacity = self.opacity
+        return SurroundingRectangle(VGroup(*obj), corner_radius=corner_radius,
+                                    fill_color=fill_color,
+                                    fill_opacity=fill_opacity,
+                                    stroke_opacity=stroke_opacity,
+                                    buff=buff,
+                                    **kwargs)
+
+
+class ProcessBW(SceneOpacity):
     def construct(self):
         ax = Axes(x_range=[0, 7.3], y_range=[-1.2, 1.2], x_length=config.frame_x_radius * 1.6,
                   y_length=config.frame_y_radius,
@@ -127,7 +142,7 @@ class ProcessBW(Scene):
         eqS = MathTex(r'\bf S_0', font_size=50, fill_color=BLUE_C, stroke_width=1.5, stroke_color=BLUE_E)[0]\
             .set_z_index(50).next_to(dot0, RIGHT, buff=0.1)
         eqS0 = eqS.copy().next_to(dot0.copy().shift(dx*7), RIGHT, buff=0.1)
-        box = SurroundingRectangle(VGroup(ax, eqS0, ylabels), corner_radius=0.2, fill_color=BLACK, fill_opacity=0.8, stroke_opacity=0, buff=0.2)
+        box = self.box(ax, eqS0, ylabels)
 
         self.add(box, ax, *xlines, ylabels)
         self.wait(0.5)
@@ -186,19 +201,14 @@ class ProcessBW(Scene):
         self.wait(0.5)
 
 
-class BorweinProb(Scene):
+class BorweinProb(SceneOpacity):
     opacity = 0.7
-
-    def __init__(self, *args, **kwargs):
-        config.background_color=ManimColor(WHITE.to_rgb()*(1-self.opacity))
-        Scene.__init__(self, *args, **kwargs)
 
     def construct(self):
         eq = MathTex(r'\int_{-\infty}^\infty{\rm sinc}(x){\rm sinc}\left(\frac x3\right)\cdots{\rm sinc}'
                      r'\left(\frac x{2n+1}\right)dx {{=}} \pi{{\mathbb P(\lvert S_n\rvert < 1)}}',
                      font_size=35).set_z_index(1)
-        box = SurroundingRectangle(eq, fill_color=BLACK, fill_opacity=self.opacity, stroke_opacity=0,
-                                   corner_radius=0.1, buff=0.15)
+        box = self.box(eq, buff=0.15)
         self.add(eq[0], box)
         self.wait(0.5)
         self.play(FadeIn(eq[1]), run_time=0.5)
@@ -212,7 +222,7 @@ class BorweinProb(Scene):
 class Density(Scene):
     def construct(self):
         xrange = 2.5
-        ax = Axes(x_range=[-xrange, xrange + 0.15], y_range=[0, 1], x_length=config.frame_x_radius * 1.3,
+        ax = Axes(x_range=[-xrange, xrange + 0.15], y_range=[0, 1], x_length=config.frame_x_radius * 1.4,
                   y_length=config.frame_y_radius * 0.7,
                   axis_config={'color': WHITE, 'stroke_width': 4, 'include_ticks': False,
                                "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
@@ -244,25 +254,168 @@ class Density(Scene):
         areag.add_updater(f)
         self.add(areag)
 
-        self.play(Create(graph, rate_func=linear), run_time=1)
+        eqp = MathTex(r'p_X', font_size=50)[0].set_z_index(8).next_to(ax.coords_to_point(-1.5, p(-1.5)), DOWN, buff=0.25)
+
+        self.play(Create(graph, rate_func=linear), FadeIn(eqp), run_time=1)
         areag.remove_updater(f)
+
+
 
         a = -0.5
         b = 1.5
+        pta = ax.coords_to_point(a, 0)
+        ptb = ax.coords_to_point(b, 0)
+        eqab = MathTex(r'a', r'b', font_size=40).set_z_index(20)
+        eqab[0].next_to(pta, DOWN, buff=0.1)
+        eqab[1].next_to(ptb, DOWN, buff=0.1)
+        linel = Line(pta, ax.coords_to_point(a, p(a)), stroke_width=5, stroke_color=RED).set_z_index(8)
+        liner = Line(ptb, ax.coords_to_point(b, p(b)), stroke_width=5, stroke_color=RED).set_z_index(8)
+        self.wait(0.5)
+        self.play(LaggedStart(FadeIn(eqab),
+                              AnimationGroup(Create(linel, rate_func=linear), Create(liner, rate_func=linear)),
+                              lag_ratio=0.5), run_time=1)
+
         areal = ax.get_area(graph, color=areacol, x_range=(-xrange, a), opacity=0.7, stroke_width=0).set_z_index(5)
         areac = ax.get_area(graph, color=areacol, x_range=(a, b), opacity=0.7, stroke_width=0).set_z_index(5)
         arear = ax.get_area(graph, color=areacol, x_range=(b, xrange), opacity=0.7, stroke_width=0).set_z_index(5)
         self.add(areal, arear, areac)
         self.remove(areag)
 
-        pta = ax.coords_to_point(a, 0)
-        ptb = ax.coords_to_point(b, 0)
-        linel = Line(pta, ax.coords_to_point(a, p(a)), stroke_width=5, stroke_color=RED).set_z_index(8)
-        liner = Line(ax.coords_to_point(b, 0), ax.coords_to_point(b, p(b)), stroke_width=5, stroke_color=RED).set_z_index(8)
+        eqint = MathTex(r'\mathbb P(a\le X\le b){{=}}\int_a^bp_X(x)dx', font_size=40).set_z_index(20)
+        eqint[1:].next_to(eqint[0], DOWN).align_to(eqint[0], LEFT)
+        eqint.next_to((pta + ptb)/2, UP, buff=0.2).next_to(pta, RIGHT, buff=0.15, coor_mask=RIGHT)
+        eqint[1:].shift(RIGHT*0.2)
 
+        self.play(FadeIn(eqint[0]), run_time=0.5)
         self.wait(0.5)
-        self.play(LaggedStart(AnimationGroup(Create(linel, rate_func=linear), Create(liner, rate_func=linear)),
-                              areac.animate.set_fill(color=BLUE_E).set_opacity(0.9), lag_ratio=0.5), run_time=1)
+        self.play(FadeIn(eqint[1:]), areac.animate.set_fill(color=BLUE_E).set_opacity(0.9), run_time=1)
+        self.wait(0.5)
+        areag2 = VGroup(linel, liner, eqab)
+
+        tval = ValueTracker(0.0)
+
+        def f():
+            t = tval.get_value()
+            a1 = -xrange * t + a * (1-t)
+            b1 = xrange * t + b * (1-t)
+            pta = ax.coords_to_point(a1, 0)
+            ptb = ax.coords_to_point(b1, 0)
+            eqab[0].move_to(pta, coor_mask=RIGHT)
+            eqab[1].move_to(ptb, coor_mask=RIGHT)
+            obj = VGroup(
+                ax.get_area(graph, color=areacol, x_range=(-xrange, a1), opacity=0.7, stroke_width=0).set_z_index(5),
+                ax.get_area(graph, color=BLUE_E, x_range=(a1, b1), opacity=0.9, stroke_width=0).set_z_index(5),
+                ax.get_area(graph, color=areacol, x_range=(b1, xrange), opacity=0.7, stroke_width=0).set_z_index(5),
+                Line(pta, ax.coords_to_point(a1, p(a1)), stroke_width=5, stroke_color=RED).set_z_index(8),
+                Line(ptb, ax.coords_to_point(b1, p(b1)), stroke_width=5, stroke_color=RED).set_z_index(8),
+                eqab)
+            return obj
+
+        self.remove(areal, areac, arear, linel, liner, eqab)
+        areag2 = always_redraw(f)
+        self.add(areag2)
+        self.wait(0.1)
+#        areag2.add_updater(f, call_updater=True)
+        self.play(tval.animate(rate_func=linear).set_value(1.0), run_time=2)
+        self.remove(areag2)
+        areag2 = f()
+        self.add(areag2)
+        self.play(FadeOut(areag2[0], areag2[2:]), run_time=0.5)
+        self.wait(0.5)
+
+        eqint2 = MathTex(r'\int_{-\infty}^\infty p_X(x)dx {{=}} 1', font_size=40).set_z_index(40).move_to(ax.coords_to_point(0, 0))
+        eqint2.next_to(eqint[1], ORIGIN, submobject_to_align=eqint2[1], coor_mask=UP)
+        self.play(LaggedStart(AnimationGroup(
+            ReplacementTransform(eqint[2][3:] + eqint[1] + eqint[2][0], eqint2[0][4:] + eqint2[1] + eqint2[0][0]),
+            abra.fade_replace(eqint[2][2], eqint2[0][2:4]),
+            abra.fade_replace(eqint[2][1], eqint2[0][1]),
+            FadeOut(eqint[0])), FadeIn(eqint2[2]), lag_ratio=0.5), run_time=1.5)
+        self.wait(0.5)
+
+
+class Characteristic(SceneOpacity):
+    opacity = 0.7
+
+    def construct(self):
+        eq1 = MathTex(r'\varphi_X(u){{=}}\mathbb E\left[e^{iuX}\right]{{=}}\int_{-\infty}^\infty e^{iux}p_X(x)\,dx').set_z_index(1)
+        eq1[3:].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[3], coor_mask=RIGHT)
+#        eq2 = MathTex(r'p_X(x){{=}}\frac1{2\pi}\int_{-\infty}^\infty e^{-iux}\varphi_X(u)du').next_to(eq1, DOWN).align_to(eq1, LEFT)
+
+        box = self.box(eq1)
+
+        self.add(box)
+        self.wait(0.5)
+        self.play(FadeIn(eq1[0]), run_time=0.5)
+        self.wait(0.5)
+        self.play(FadeIn(eq1[1]), run_time=0.5)
+        self.wait(0.5)
+        self.play(FadeIn(eq1[2][:2], eq1[2][-1]), run_time=0.8)
+        self.wait(0.1)
+        self.play(FadeIn(eq1[2][2]), run_time=0.4)
+        self.wait(0.1)
+        self.play(FadeIn(eq1[2][3]), run_time=0.4)
+        self.wait(0.1)
+        self.play(FadeIn(eq1[2][4]), run_time=0.4)
+        self.wait(0.1)
+        self.play(FadeIn(eq1[2][5]), run_time=0.4)
+        self.wait(0.1)
+        self.play(eq1[0][3].animate(rate_func=there_and_back).set_color(RED).scale(1.5), run_time=1)
+        self.play(eq1[2][4].animate(rate_func=there_and_back).set_color(RED).scale(1.5), run_time=1)
+        self.wait(0.5)
+
+        self.play(FadeOut(eq1[2][:2], eq1[2][-1]),
+                  FadeIn(eq1[4][:4], eq1[4][-7:]),
+                  ReplacementTransform(eq1[2][2:5], eq1[4][4:7]),
+                  abra.fade_replace(eq1[2][5], eq1[4][7]),
+                  run_time=1.5)
+        self.wait(0.5)
+
+
+class Rademacher(SceneOpacity):
+    opacity = 0.7
+    def construct(self):
+        eq1 = Tex(r'$X$ is Rademacher').set_z_index(1)
+        eq2 = MathTex(r'\mathbb P(X=1){{=}}\mathbb P(X=-1){{=}}\frac12').set_z_index(1)
+        eq2.next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq3 = MathTex(r'\varphi_X(u){{=}}\mathbb E[e^{iuX}]{{=}}\frac12\left(e^{iu1}+e^{iu(-1)}\right)'
+                      r'{{=}}\frac12\left(e^{iu}+e^{-iu}\right)'
+                      r'{{=}}\cos u').set_z_index(1)
+        eq3.next_to(eq2, DOWN).align_to(eq1, LEFT)
+        eq3[3:].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[3], coor_mask=RIGHT)
+        eq3[5:].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[5], coor_mask=RIGHT)
+        eq3[7:].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[7], coor_mask=RIGHT)
+        box1 = self.box(eq1, eq2)
+        box2 = self.box(eq1, eq2, eq3)
+        self.add(box1, eq1)
+        self.wait(0.5)
+        self.play(FadeIn(eq2[:3]), run_time=1)
+        self.wait(0.2)
+        self.play(FadeIn(eq2[3]), run_time=0.5)
+        self.wait(0.2)
+        self.play(FadeIn(eq2[4]), run_time=0.5)
+        self.wait(0.5)
+        self.play(LaggedStart(ReplacementTransform(box1, box2), FadeIn(eq3[:3]), lag_ratio=0.3), run_time=1)
+        self.wait(0.5)
+        self.play(LaggedStart(AnimationGroup(
+            abra.fade_replace(eq3[2][0], eq3[4][:3]),
+            abra.fade_replace(eq3[2][1], eq3[4][3]),
+            abra.fade_replace(eq3[2][-1], eq3[4][-1]),
+            abra.fade_replace(eq3[2][5], eq3[4][7]),
+            abra.fade_replace(eq3[2][5].copy(), eq3[4][12:16]),
+            ReplacementTransform(eq3[2][2:5], eq3[4][9:12]),
+            ReplacementTransform(eq3[2][2:5].copy(), eq3[4][4:7])),
+            FadeIn(eq3[4][8], run_time=0.2), lag_ratio=0.6), run_time=2)
+        self.wait(0.2)
+        eq3_1 = eq3[6][-5:-1].copy()
+        eq3_1.next_to(eq3[4][-8], ORIGIN, submobject_to_align=eq3_1[0], coor_mask=RIGHT)
+        self.play(FadeOut(eq3[4][7], eq3[4][12], eq3[4][14:16]),
+                  ReplacementTransform(eq3[4][-7:-5] + eq3[4][-4], eq3_1[2:4] + eq3_1[1]),
+                  run_time=1)
+        self.play(ReplacementTransform(eq3[4][:7] + eq3[4][8:10] + eq3_1[1:] + eq3[4][-1],
+                                       eq3[6][:7] + eq3[6][7:9] + eq3[6][9:12] + eq3[6][-1]),
+                  run_time=1.5)
+        self.wait(0.2)
+        self.play(FadeOut(eq3[6]), FadeIn(eq3[8]), run_time=1)
         self.wait(0.5)
 
 
