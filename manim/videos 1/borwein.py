@@ -476,6 +476,102 @@ class Uniform(SceneOpacity):
 
         self.wait(0.5)
 
+class UniformInt(SceneOpacity):
+    opacity = 0.7
+    def construct(self):
+        eq1 = Tex(r'$X$ is uniform on $\{-n, -n+1,\ldots,n\}$').set_z_index(1)
+        eq2 = MathTex(r'\mathbb P(X=-n)=\mathbb P(X=-n+1)=\cdots=\mathbb P(X=n){{=}}\frac1{2n+1}').set_z_index(1)
+        eq2.next_to(eq1, DOWN)#.align_to(eq1, LEFT)
+        eq3 = MathTex(r'\varphi_X(u){{=}}\mathbb E\left[e^{iuX}\right]'
+                      r'{{=}}\frac1{2n+1}\sum_{k=-n}^ne^{iuk}'
+                      r'{{=}}\frac1{2n+1}\sum_{k=0}^{2n}e^{iu(k-n)}'
+                      r'{{=}}\frac1{2n+1}\frac{e^{-iun}(e^{iu(2n+1)}-1)}{e^{iu}-1}'
+                      r'{{=}}\frac1{2n+1}\frac{e^{-iu(n+1/2)}(e^{iu(2n+1)}-1)}{e^{-iu/2}(e^{iu}-1)}'
+                      r'{{=}}\frac1{2n+1}\frac{(e^{iu(n+1/2)}-e^{-iu(n+1/2)})/2i}{(e^{iu/2}-e^{-iu/2})/2i}'
+                      r'{{=}}\frac{\sin(u(n+1/2))}{(2n+1)\sin(u/2)}'
+                      ).set_z_index(1).next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq3[3:5].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[3])
+        eq3[5:7].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[5])
+        eq3[7:9].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[7])
+        eq3[9:11].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[9])
+        eq3[11:13].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[11])
+        eq3[13:15].next_to(eq3[1], ORIGIN, submobject_to_align=eq3[13])
+
+        box1 = self.box(eq1, eq2)
+        box2 = self.box(eq1, eq3[:10])
+        box3 = self.box(eq1, eq3)
+        box4 = self.box(eq1, eq3[:2], eq3[14])
+        self.add(box1, eq1)
+        self.wait(0.5)
+        self.play(FadeIn(eq2[0]), run_time=1)
+        self.wait(0.2)
+        self.play(FadeIn(eq2[1]), run_time=0.5)
+        self.wait(0.2)
+        self.play(FadeIn(eq2[2]), run_time=1)
+
+        self.wait(0.5)
+        self.play(LaggedStart(AnimationGroup(FadeIn(eq3[:3]), FadeOut(eq2)),
+                              ReplacementTransform(box1, box2), lag_ratio=0.3), run_time=1.5)
+        self.wait(0.5)
+        self.play(abra.fade_replace(eq3[2][:2], eq3[4][:12]),
+                  ReplacementTransform(eq3[2][2:5], eq3[4][12:15]),
+                  FadeOut(eq3[2][-1]),
+                  abra.fade_replace(eq3[2][-2], eq3[4][-1]),
+                  run_time=1.5)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq3[4][:6] + eq3[4][6] + eq3[4][7:10] + eq3[4][12:15] + eq3[4][15],
+                                       eq3[6][:6] + eq3[6][7] + eq3[6][8:11] + eq3[6][12:15] + eq3[6][16]),
+                  FadeIn(eq3[6][6], eq3[6][15], eq3[6][17:20]),
+                  abra.fade_replace(eq3[4][10:12], eq3[6][11]),
+                  run_time=1.5)
+        self.wait(0.2)
+        self.play(LaggedStart(
+            FadeOut(eq3[6][8:12], eq3[6][15:17], eq3[6][19]),
+            ReplacementTransform(eq3[6][:6] + eq3[6][6:8] + eq3[6][12] + eq3[6][13:15] + eq3[6][17] + eq3[6][18]
+                                       + eq3[6][12:15].copy() + eq3[6][12:15].copy(),
+                                       eq3[8][:6] + eq3[8][16:18] + eq3[8][6] + eq3[8][8:10] + eq3[8][7] + eq3[8][10]
+                                       + eq3[8][12:15] + eq3[8][25:28]),
+            FadeIn(eq3[8][11], eq3[8][15], eq3[8][18:25], eq3[8][28:]),
+            lag_ratio=0.3), run_time=1.5)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq3[8][:10] + eq3[8][10] + eq3[8][11:25] + eq3[8][25:30],
+                                       eq3[10][:10] + eq3[10][11] + eq3[10][17:31] + eq3[10][38:43]),
+                  FadeIn(eq3[10][10], eq3[10][16], eq3[10][37], eq3[10][43]),
+                  ReplacementTransform(box2, box3),
+                  run_time=1)
+        self.play(FadeIn(eq3[10][12:16], eq3[10][31:37]), run_time=1.5)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq3[10][:6] + eq3[10][6:17] + eq3[10][17] + eq3[10][18:22] + eq3[10][26:28]
+                                       + eq3[10][29] + eq3[10][31:37] + eq3[10][37:41] + eq3[10][41] + eq3[10][43],
+                                       eq3[12][:6] + eq3[12][18:29] + eq3[12][6] + eq3[12][7:11] + eq3[12][16:18]
+                                       + eq3[12][29] + eq3[12][41:47] + eq3[12][34:38] + eq3[12][40] + eq3[12][47]),
+                  abra.fade_replace(eq3[10][22:26], eq3[12][11:16]),
+                  FadeOut(eq3[10][28], target_position=eq3[12][18]),
+                  FadeOut(eq3[10][42], target_position=eq3[12][41]),
+                  FadeIn(eq3[12][38:40], target_position=eq3[10][40]),
+                  run_time=1.5)
+        self.wait(0.2)
+        self.play(FadeIn(eq3[12][30:33], eq3[12][48:51]),
+                  ReplacementTransform(eq3[10][30], eq3[12][33]),
+                  run_time=1)
+        self.wait(0.2)
+        sin1 = eq3[14][:13].copy().move_to(eq3[12][6:30], coor_mask=RIGHT)
+        sin2 = eq3[14][20:28].copy().move_to(eq3[12][34:48], coor_mask=RIGHT)
+        self.play(FadeOut(eq3[12][6:33], eq3[12][34:51]),
+                  FadeIn(sin1, sin2),
+                  run_time=1.5)
+        self.wait(0.2)
+        self.play(ReplacementTransform(box3, box4),
+                  ReplacementTransform(sin1 + sin2 + eq3[12][2:6] + eq3[12][33],
+                                       eq3[14][:13] + eq3[14][20:28] + eq3[14][15:19] + eq3[14][13]),
+                  FadeOut(eq3[12][:2]),
+                  FadeIn(eq3[14][14], eq3[14][19]),
+                  run_time=1.5)
+        self.wait(0.5)
+
+
+
+
 
 class CosInt(Scene):
     def construct(self):
