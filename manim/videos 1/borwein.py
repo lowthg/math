@@ -110,8 +110,15 @@ class SceneOpacity(Scene):
 
 
 class ProcessBW(SceneOpacity):
+    opacity = 0.7
+
     def construct(self):
-        ax = Axes(x_range=[0, 7.3], y_range=[-1.2, 1.2], x_length=config.frame_x_radius * 1.6,
+        self.animprocess()
+
+    def animprocess(self, yrange=None, n0=3, n1=17, do_extreme=True, iredlines=7, fast=False):
+        if yrange is None:
+            yrange = [-1.2, 1.2]
+        ax = Axes(x_range=[0, (n1-n0)/2 + 0.3], y_range=yrange, x_length=config.frame_x_radius * 1.6,
                   y_length=config.frame_y_radius,
                   axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': True, 'tick_size': 0.05,
                                "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
@@ -123,9 +130,9 @@ class ProcessBW(SceneOpacity):
         dy = ax.coords_to_point(0, 1) - origin
         xlines = []
         y = 0.
-        posx = origin + dx * 7.15
+        posx = origin + dx * ((n1-n0)/2 + 0.15)
         u = [0.5, -0.05, 0.6, 0.2, -0.92, -0.1, 0.6]
-        for i in range(3, 17, 2):
+        for i in range(n0, n1, 2):
             y += 1/i
             xlines.append(DashedLine(origin + dy * y, posx + dy * y, color=WHITE, stroke_width=1).set_z_index(15))
             xlines.append(DashedLine(origin - dy * y, posx - dy * y, color=WHITE, stroke_width=1).set_z_index(15))
@@ -141,16 +148,17 @@ class ProcessBW(SceneOpacity):
         dot0 = Dot(color=BLUE, radius=0.15).set_z_index(50).move_to(origin)
         eqS = MathTex(r'\bf S_0', font_size=50, fill_color=BLUE_C, stroke_width=1.5, stroke_color=BLUE_E)[0]\
             .set_z_index(50).next_to(dot0, RIGHT, buff=0.1)
-        eqS0 = eqS.copy().next_to(dot0.copy().shift(dx*7), RIGHT, buff=0.1)
+        eqS0 = eqS.copy().next_to(dot0.copy().shift(dx*(n1-n0)/2), RIGHT, buff=0.1)
         box = self.box(ax, eqS0, ylabels)
 
         self.add(box, ax, *xlines, ylabels)
         self.wait(0.5)
         self.play(FadeIn(dot0, eqS), run_time=0.5)
-        self.wait(0.5)
+        if not fast:
+            self.wait(0.5)
         pts = [dot0.get_center(), dot0.get_center()]
         polycol = ManimColor(GREY.to_rgb() * 0.8)
-        for i in range(3, 17, 2):
+        for i in range(n0, n1, 2):
             pts1 = []
             lines = []
             polys = []
@@ -168,10 +176,13 @@ class ProcessBW(SceneOpacity):
                            stroke_color=BLUE_E)[0].set_z_index(50).next_to(dot0.target, RIGHT, buff=0.1)
             pathline = Line(dot0.get_center(), dot0.target.get_center(), color=BLUE, stroke_width=4).set_z_index(15)
             # [ 1, 1/n ], orthogonal [ 1, -n]
-            eq = MathTex(r'1/{}'.format(i), font_size=30, color=PURPLE_B, stroke_width=1.5)[0].set_z_index(45).move_to(lines[-1]).shift((LEFT + UP*i)/math.pow(1+i*i, 0.5) * 0.25)
-            self.wait(0.25)
+            eqstr = r'1/{}'.format(i) if i != 1 else r'1'
+            eq = MathTex(eqstr.format(i), font_size=30, color=PURPLE_B, stroke_width=1.5)[0].set_z_index(45).move_to(lines[-1]).shift((LEFT + UP*i)/math.pow(1+i*i, 0.5) * 0.25)
+            if not fast:
+                self.wait(0.25)
             self.play(FadeIn(*lines, *polys, eq), run_time=0.6)
-            self.wait(0.25)
+            if not fast:
+                self.wait(0.25)
             poly = Polygon(pts[0], pts1[0], pts1[-1], pts[-1], fill_opacity=1, fill_color=polycol, stroke_opacity=1, stroke_color=polycol).set_z_index(7)
             lines[0].set_z_index(10)
             lines[-1].set_z_index(10)
@@ -182,7 +193,7 @@ class ProcessBW(SceneOpacity):
             self.play(*anims, run_time=0.6)
             self.remove(*polys)
 
-            if i == 7:
+            if i == iredlines:
                 self.wait(0.5)
                 self.play(FadeIn(*redlines), run_time=0.5)
                 self.wait(0.5)
@@ -190,15 +201,21 @@ class ProcessBW(SceneOpacity):
             pts = [pts1[0], dot0.get_center(), pts1[-1]]
             eqS = eqS1
 
-        self.wait(0.5)
-        dot1 = dot0.copy().move_to(origin)
-        self.play(FadeIn(dot1), run_time=0.5)
-        for i in range(3, 17, 2):
-            dot1.generate_target().shift(dx + dy/i)
-            self.play(MoveToTarget(dot1, rate_func=linear, run_time=0.3))
+        if do_extreme:
+            self.wait(0.5)
+            dot1 = dot0.copy().move_to(origin)
+            self.play(FadeIn(dot1), run_time=0.5)
+            for i in range(n0, n1, 2):
+                dot1.generate_target().shift(dx + dy/i)
+                self.play(MoveToTarget(dot1, rate_func=linear, run_time=0.3))
 
 
         self.wait(0.5)
+
+
+class ProcessSum(ProcessBW):
+    def construct(self):
+        self.animprocess(yrange=[-2.2, 2.2], n0=1, n1=11, do_extreme=False, iredlines=-1)
 
 
 class BorweinProb(SceneOpacity):
@@ -336,9 +353,21 @@ class Density(Scene):
 class Characteristic(SceneOpacity):
     opacity = 0.7
 
-    def construct(self):
+    @staticmethod
+    def eq1():
         eq1 = MathTex(r'\varphi_X(u){{=}}\mathbb E\left[e^{iuX}\right]{{=}}\int_{-\infty}^\infty e^{iux}p_X(x)\,dx').set_z_index(1)
         eq1[3:].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[3], coor_mask=RIGHT)
+        return eq1
+
+    def eq1asFT(self, eq1):
+        self.play(FadeOut(eq1[2][:2], eq1[2][-1]),
+                  FadeIn(eq1[4][:4], eq1[4][-7:]),
+                  ReplacementTransform(eq1[2][2:5], eq1[4][4:7]),
+                  abra.fade_replace(eq1[2][5], eq1[4][7]),
+                  run_time=1.5)
+
+    def construct(self):
+        eq1 = self.eq1()
 #        eq2 = MathTex(r'p_X(x){{=}}\frac1{2\pi}\int_{-\infty}^\infty e^{-iux}\varphi_X(u)du').next_to(eq1, DOWN).align_to(eq1, LEFT)
 
         box = self.box(eq1)
@@ -362,12 +391,7 @@ class Characteristic(SceneOpacity):
         self.play(eq1[0][3].animate(rate_func=there_and_back).set_color(RED).scale(1.5), run_time=1)
         self.play(eq1[2][4].animate(rate_func=there_and_back).set_color(RED).scale(1.5), run_time=1)
         self.wait(0.5)
-
-        self.play(FadeOut(eq1[2][:2], eq1[2][-1]),
-                  FadeIn(eq1[4][:4], eq1[4][-7:]),
-                  ReplacementTransform(eq1[2][2:5], eq1[4][4:7]),
-                  abra.fade_replace(eq1[2][5], eq1[4][7]),
-                  run_time=1.5)
+        self.eq1asFT(eq1)
         self.wait(0.5)
 
 
@@ -570,7 +594,265 @@ class UniformInt(SceneOpacity):
         self.wait(0.5)
 
 
+class SincPlot(Scene):
+    def construct(self):
+        xlen = config.frame_x_radius * 1.8
+        ylen = config.frame_y_radius * 1.65
 
+        def get_sinc(n):
+            def f(x):
+                res = 1.0
+                for i in range(1, 2*n+3, 2):
+                    res *= math.sin(x/i)*i/x
+                return res
+            return f
+
+        xrange = 20.0
+        ax = Axes(x_range=[-xrange, xrange * 1.05, 20], y_range=[-0.5, 1.1], z_index=2, x_length=xlen, y_length=ylen,
+                  axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False, 'tick_size': 0.05,
+                               "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               },
+                  x_axis_config={'include_ticks': True, 'length': 20}).set_z_index(2)
+
+        def get_f(n):
+            def f(x):
+                return math.sin(x)/(2*n+1)/math.sin(x/(2*n+1))
+            return f
+
+        linew = 4
+        graph = ax.plot(lambda x: math.sin(x)/x, (-xrange, xrange, 0.05), color=RED, stroke_width=linew).set_z_index(10)
+
+        labels = MathTex(r'{\rm sinc}(u)', r'\varphi_X(u)').set_z_index(30)
+        labels[1].next_to(labels[0], DOWN, buff=0.2).align_to(labels[0], LEFT)
+        labels.move_to(ax.coords_to_point(15, 0.8))
+        line1 = Line(labels[0].get_left() + LEFT * 0.1, labels[0].get_left() + LEFT * 0.4, color=RED, stroke_width=linew).set_z_index(30)
+        line2 = Line(labels[1].get_left() + LEFT * 0.1, labels[1].get_left() + LEFT * 0.4, color=BLUE, stroke_width=linew).set_z_index(30)
+        eq1 = MathTex(r'n=1')[0].set_z_index(30).next_to(labels, DOWN).align_to(labels, LEFT)
+
+        box1 = SurroundingRectangle(VGroup(line1, line2, labels, eq1), fill_color=BLACK, fill_opacity=0.8,
+                                    corner_radius=0.1, stroke_width=3, stroke_color=WHITE, stroke_opacity=1,
+                                    buff=0.2).set_z_index(25)
+
+        eqr = Tex(r'${\rm sinc}$ range: $[-20, 20]$', r'$\varphi_X$ range: $[-20\sqrt{2n+1}, 20\sqrt{2n+1}]$', font_size=35)
+        eqr[1].next_to(eqr[0], DOWN, buff=0.1).align_to(eqr[0], LEFT)
+        eqr.move_to(ax.coords_to_point(10, 0)).align_to(ax, DOWN)
+
+        self.add(ax, graph, labels[0], line1, box1, eqr)
+
+        self.wait(0.5)
+
+        graph1 = ax.plot(get_f(1), (-xrange, xrange, 0.05), color=BLUE, stroke_width=linew).set_z_index(20)
+        self.play(FadeIn(graph1, line2, labels[1], eq1), run_time=1)
+
+
+        dt = [2.5, 1.5, 1, 1, 0.6]
+        for i in range(2, 11):
+            graph2 = ax.plot(get_f(i), (-xrange, xrange, 0.05), color=BLUE, stroke_width=linew).set_z_index(20)
+            eq2 = MathTex(r'n={}'.format(i))[0].set_z_index(30).align_to(eq1, DL)
+            self.wait(0.5)
+            self.play(ReplacementTransform(graph1, graph2),
+                      ReplacementTransform(eq1[:2], eq2[:2]),
+                      FadeIn(eq2[2:]),
+                      FadeOut(eq1[2:]),
+                      run_time=dt[min(i, len(dt)) - 1])
+            graph1 = graph2
+            eq1 = eq2
+
+        self.wait(0.5)
+
+
+class FourierInvert(Characteristic):
+    opacity = 0.7
+
+    def construct(self):
+        eq1 = self.eq1()
+        eq2 = MathTex(r'p_X(x){{=}}\frac1{2\pi}\int_{-\infty}^\infty e^{-iux}\varphi_X(u)\,du')\
+            .set_z_index(10).next_to(eq1, DOWN).align_to(eq1, LEFT)
+
+        box1 = self.box(eq1)
+        box2 = self.box(eq1, eq2)
+
+        self.add(box1, eq1[:3])
+        self.wait(0.5)
+        self.eq1asFT(eq1)
+        self.wait(0.5)
+
+        self.play(LaggedStart(AnimationGroup(ReplacementTransform((eq1[0][:] + eq1[1] + eq1[4][:5] + eq1[4][5:8] + eq1[4][8:13] + eq1[4][13]).copy(),
+                                       eq2[2][13:18] + eq2[1] + eq2[2][4:9] + eq2[2][10:13] + eq2[0][:] + eq2[2][18]),
+                  abra.fade_replace(eq1[4][-1].copy(), eq2[2][-1]),
+                  ReplacementTransform(box1, box2),
+                  FadeIn(eq2[2][9], target_position=eq1[4][5])),
+                  FadeIn(eq2[2][:4]), lag_ratio=0.4),
+                  run_time=2)
+        self.wait(0.5)
+        eq3 = MathTex(r'p_X(0){{=}}\frac1{2\pi}\int_{-\infty}^\infty\varphi_X(u)\,du{{=}}e^{-iu0}{{=}}1').set_z_index(10)
+        eq3.next_to(eq2[1], ORIGIN, submobject_to_align=eq3[1])
+        eq3[4].next_to(eq2[2][8], ORIGIN, submobject_to_align=eq3[4][0])
+        eq3[6].move_to(eq2[2][8:12], coor_mask=RIGHT)
+        self.play(ReplacementTransform(eq2[0][:3] + eq2[0][4],
+                                       eq3[0][:3] + eq3[0][4]),
+                  abra.fade_replace(eq2[0][3], eq3[0][3]),
+                  abra.fade_replace(eq2[2][12], eq3[4][-1]),
+                  run_time=1)
+        self.play(FadeOut(eq2[2][8:12], eq3[4][-1]),
+                  FadeIn(eq3[6]),
+                  run_time=1)
+        self.play(ReplacementTransform(eq2[2][:8] + eq2[2][13:20] + eq2[1],
+                                       eq3[2][:8] + eq3[2][8:15] + eq3[1]),
+                  FadeOut(eq3[6]),
+                  run_time=1)
+        self.wait(0.5)
+
+
+class Independent(SceneOpacity):
+    opacity = 0.7
+    def construct(self):
+        eq1 = MathTex(r'\varphi_{X_1+X_2+\cdots+X_n}(u){{=}}\mathbb E\left[e^{iu(X_1+X_2+\cdots+X_n)}\right]'
+                      r'{{=}}\mathbb E\left[e^{iuX_1+iuX_2+\cdots+iuX_n}\right]'
+                      r'{{=}}\mathbb E\left[e^{iuX_1}e^{iuX_2}\cdots e^{iuX_n}\right]'
+                      r'{{=}}\mathbb E\left[e^{iuX_1}\right]\mathbb E\left[e^{iuX_2}\right]\cdots\mathbb E\left[e^{iuX_n}\right]'
+                      r'{{=}}\varphi_{X_1}(u)\varphi_{X_2}(u)\cdots\varphi_{X_n}(u)')
+        eq1[3:5].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[3], coor_mask=RIGHT)
+        eq1[5:7].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[5], coor_mask=RIGHT)
+        eq1[7:9].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[7], coor_mask=RIGHT)
+        eq1[9:11].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[9], coor_mask=RIGHT)
+        eq1.set_z_index(10).move_to(ORIGIN)
+        eq2 = eq1[10].copy()
+        eq2[:6].move_to(eq1[8][:8], coor_mask=RIGHT)
+        eq2[6:12].move_to(eq1[8][8:16], coor_mask=RIGHT)
+        eq2[12:15].move_to(eq1[8][16:19], coor_mask=RIGHT)
+        eq2[15:21].move_to(eq1[8][19:27], coor_mask=RIGHT)
+
+        box1 = self.box(eq1[:2], eq1[10])
+        box2 = self.box(eq1)
+        box3 = box1.copy()
+
+        self.add(box1, eq1[:2], eq1[10])
+        self.wait(0.5)
+        self.play(FadeOut(eq1[10]), run_time=1)
+        self.play(ReplacementTransform(box1, box2), FadeIn(eq1[2]), run_time=1)
+        self.wait(0.5)
+
+        self.play(ReplacementTransform(eq1[2][:3] + eq1[2][3:5] + eq1[2][3:5].copy() + eq1[2][3:5].copy(),
+                                       eq1[4][:3] + eq1[4][3:5] + eq1[4][8:10] + eq1[4][17:19]),
+                  ReplacementTransform(eq1[2][6:9] + eq1[2][9:12] + eq1[2][16:18] + eq1[2][12:16],
+                                       eq1[4][5:8] + eq1[4][10:13] + eq1[4][19:21] + eq1[4][13:17]),
+                  FadeOut(eq1[2][5], eq1[2][-2]),
+                  abra.fade_replace(eq1[2][-1],  eq1[4][-1]),
+                  run_time=2)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq1[4][:7] + eq1[4][-5:] + eq1[4][2].copy() + eq1[4][2].copy(),
+                                       eq1[6][:7] + eq1[6][-5:] + eq1[6][7] + eq1[6][15]),
+                  ReplacementTransform(eq1[4][8:12] + eq1[4][13:16],
+                                       eq1[6][8:12] + eq1[6][12:15]),
+                  FadeOut(eq1[4][7], eq1[4][12], eq1[4][16]),
+                  run_time=2)
+        self.wait(0.2)
+        self.play(LaggedStart(ReplacementTransform(eq1[6][:7] + eq1[6][7:12] + eq1[6][12:15] + eq1[6][15:],
+                                       eq1[8][:7] + eq1[8][10:15] + eq1[8][16:19] + eq1[8][21:]),
+                  FadeIn(eq1[8][7:10], eq1[8][15], eq1[8][19:21]), lag_ratio=0.4),
+                  run_time=2)
+        self.wait(0.2)
+        self.play(FadeOut(eq1[8][:8], eq1[8][8:16], eq1[8][19:27]),
+                  FadeIn(eq2[:6], eq2[6:12], eq2[15:21]),
+                  ReplacementTransform(eq1[8][16:19], eq2[12:15]),
+                  run_time=1.5)
+        self.play(ReplacementTransform(eq2, eq1[10]),
+                  ReplacementTransform(box2, box3), run_time=1.5)
+        self.wait(0.5)
+
+
+class ScaleChar(SceneOpacity):
+    opacity = 0.7
+
+    def construct(self):
+        eq1 = MathTex(r'\varphi_{cX}(u){{=}}\mathbb E\left[e^{iu cX}\right]'
+                      r'{{=}}\mathbb E\left[e^{icuX}\right]'
+                      r'{{=}}\varphi_X(cu)')
+        eq1[3:5].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[3], coor_mask=RIGHT)
+        eq1[5:7].next_to(eq1[1], ORIGIN, submobject_to_align=eq1[5], coor_mask=RIGHT)
+        eq1.move_to(ORIGIN).set_z_index(10)
+        box = self.box(eq1)
+        self.add(box, eq1[:3])
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq1[2][:4] + eq1[2][6:] + eq1[2][4] + eq1[2][5],
+                                       eq1[4][:4] + eq1[4][6:] + eq1[4][5] + eq1[4][4]),
+                  run_time=1)
+#        pos = eq1[6].get_center()
+#        eq1[6].move_to(eq1[4], coor_mask=RIGHT)
+        self.play(FadeOut(eq1[4]), FadeIn(eq1[6]), run_time=2)
+#        self.play(eq1[6].animate.move_to(pos), run_time=1)
+        self.wait(0.5)
+
+
+class SeqChar(SceneOpacity):
+    opacity=0.7
+
+    def construct(self):
+        eq1 = MathTex(r'X_0,X_1,X_2,\ldots')[0].set_z_index(10)
+        eq2 = MathTex(r'X_0\sim U([-1,1])')[0].next_to(eq1, DOWN).set_z_index(10).align_to(eq1, LEFT)
+        eq3 = MathTex(r'X_1\sim U([-1/3,1/3])')[0].next_to(eq1, DOWN).set_z_index(10).align_to(eq1, LEFT)
+        eq4 = MathTex(r'X_n\sim U([-1/(2n+1),1/(2n+1)])')[0].next_to(eq1, DOWN).set_z_index(10).align_to(eq1, LEFT)
+        eq5 = MathTex(r'\varphi_{X_0}(u)={\rm sinc}(u)')[0].set_z_index(10).next_to(eq4, DOWN).align_to(eq1, LEFT)
+        eq6 = MathTex(r'\varphi_{X_n}(u)={\rm sinc}(u/(2n+1))')[0].set_z_index(10).next_to(eq4, DOWN).align_to(eq1, LEFT)
+        eq7 = MathTex(r'S_n=X_0+X_1+X_2+\cdots+X_n')[0].set_z_index(10).align_to(eq1, DL)
+        eq8 = MathTex(r'\varphi_{S_n}(u){{=}}\varphi_{X_0}(u)\varphi_{X_1}(u)\cdots\varphi_{X_n}(u)'
+                      r'{{=}}{\rm sinc}(u){\rm sinc}(u/3)\cdots{\rm sinc}(u/(2n+1))')
+        eq8[3:5].next_to(eq8[1], ORIGIN, submobject_to_align=eq8[3], coor_mask=RIGHT)
+        eq8.set_z_index(10).next_to(eq7, DOWN).align_to(eq7, LEFT)
+
+        gp = VGroup(eq1, eq2, eq3, eq4, eq5, eq6, eq7, eq8)
+        gp.move_to(ORIGIN)
+        box = self.box(gp)
+        box2 = self.box(eq7, eq8)
+
+        self.add(box)
+        self.wait(0.5)
+        self.play(FadeIn(eq1[:2]), run_time=0.5)
+        self.wait(0.2)
+        self.play(FadeIn(eq1[2:5]), run_time=0.5)
+        self.wait(0.2)
+        self.play(FadeIn(eq1[5:8]), run_time=0.5)
+        self.wait(0.2)
+        self.play(FadeIn(eq1[8:]), run_time=0.5)
+        self.wait(0.5)
+        self.play(FadeIn(eq2), run_time=1)
+        self.wait(0.2)
+        self.play(LaggedStart(AnimationGroup(ReplacementTransform(eq2[:1] + eq2[2:8] + eq2[8:10] + eq2[10:],
+                                       eq3[:1] + eq3[2:8] + eq3[10:12] + eq3[14:]),
+                  abra.fade_replace(eq2[1], eq3[1])),
+                  FadeIn(eq3[8:10], eq3[12:14]), lag_ratio=0.4),
+                  run_time=1.5)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq3[:1] + eq3[2:9] + eq3[10:13] + eq3[14:],
+                                       eq4[:1] + eq4[2:9] + eq4[15:18] + eq4[24:]),
+                  abra.fade_replace(eq3[1], eq4[1]),
+                  abra.fade_replace(eq3[9:10], eq4[9:15]),
+                  abra.fade_replace(eq3[13:14], eq4[18:24]),
+                  run_time=1.5)
+        self.wait(0.2)
+        self.play(FadeIn(eq5), run_time=1.5)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq5[:2] + eq5[3:13] + eq5[13],
+                                       eq6[:2] + eq6[3:13] + eq6[20]),
+                  abra.fade_replace(eq5[2], eq6[2]),
+                  FadeIn(eq6[13:20]),
+                  run_time=1.5)
+        self.wait(0.5)
+        self.play(LaggedStart(AnimationGroup(ReplacementTransform(eq1[:2] + eq1[3:5] + eq1[6:8] + eq1[9:12],
+                                       eq7[3:5] + eq7[6:8] + eq7[9:11] + eq7[12:15]),
+                  abra.fade_replace(eq1[2], eq7[5]),
+                  abra.fade_replace(eq1[5], eq7[8]),
+                  abra.fade_replace(eq1[8], eq7[11]),
+                  FadeIn(eq7[:3])), FadeIn(eq7[15:]), lag_ratio=0.5),
+                  run_time=2)
+        self.wait(0.5)
+        self.play(FadeOut(eq4), run_time=1)
+        self.play(FadeIn(eq8[:3]), run_time=1)
+        self.wait(0.5)
+        self.play(FadeIn(eq8[4]), FadeOut(eq8[2], eq6), ReplacementTransform(box, box2), run_time=1.5)
+        self.wait(0.5)
 
 
 class CosInt(Scene):
