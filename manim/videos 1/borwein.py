@@ -115,11 +115,11 @@ class ProcessBW(SceneOpacity):
     def construct(self):
         self.animprocess()
 
-    def animprocess(self, yrange=None, n0=3, n1=17, do_extreme=True, iredlines=7, fast=False):
+    def animprocess(self, yrange=None, n0=3, n1=17, do_extreme=True, iredlines=7, fast=False, thumb=False, yscale=1):
         if yrange is None:
             yrange = [-1.2, 1.2]
         ax = Axes(x_range=[0, (n1-n0)/2 + 0.3], y_range=yrange, x_length=config.frame_x_radius * 1.6,
-                  y_length=config.frame_y_radius,
+                  y_length=config.frame_y_radius * yscale,
                   axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': True, 'tick_size': 0.05,
                                "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
                                "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
@@ -144,12 +144,14 @@ class ProcessBW(SceneOpacity):
         ylabels[0].next_to(origin - dy, LEFT)
         ylabels[1].next_to(origin, LEFT)
         ylabels[2].next_to(origin + dy, LEFT)
+        if thumb:
+            ylabels.set_opacity(0)
 
         dot0 = Dot(color=BLUE, radius=0.15).set_z_index(50).move_to(origin)
         eqS = MathTex(r'\bf S_0', font_size=50, fill_color=BLUE_C, stroke_width=1.5, stroke_color=BLUE_E)[0]\
             .set_z_index(50).next_to(dot0, RIGHT, buff=0.1)
         eqS0 = eqS.copy().next_to(dot0.copy().shift(dx*(n1-n0)/2), RIGHT, buff=0.1)
-        box = self.box(ax, eqS0, ylabels)
+        box = VMobject() if thumb else self.box(ax, eqS0, ylabels)
 
         self.add(box, ax, *xlines, ylabels)
         if iredlines == 0:
@@ -821,9 +823,9 @@ class SincPlot(Scene):
                                     corner_radius=0.1, stroke_width=3, stroke_color=WHITE, stroke_opacity=1,
                                     buff=0.2).set_z_index(25)
 
-        eqr = Tex(r'${\rm sinc}$ range: $[-20, 20]$', r'$\varphi_X$ range: $[-20/(2n+1), 20/(2n+1)]$', font_size=35)
+        eqr = Tex(r'${\rm sinc}$ range: $[-20, 20]$', r'$\varphi_X$ range: $[-20/(n+1/2), 20/(n+1/2)]$', font_size=35)
         eqr[1].next_to(eqr[0], DOWN, buff=0.1).align_to(eqr[0], LEFT)
-        eqr.move_to(ax.coords_to_point(10, 0)).align_to(ax, DOWN)
+        eqr.move_to(ax.coords_to_point(11, 0)).align_to(ax, DOWN)
 
         self.add(ax, graph, labels[0], line1, box1, eqr)
 
@@ -1191,7 +1193,7 @@ class AltInt(SceneOpacity):
     opacity = 0.7
 
     def construct(self):
-        eq1 = MathTex(r'\mathbb P\left(X_n=\frac1{2n+1}\right)=\mathbb P\left(X_n=\frac1{2n+1}\right)=\frac12').set_z_index(10)
+        eq1 = MathTex(r'\mathbb P\left(X_n=\frac1{2n+1}\right)=\mathbb P\left(X_n=\frac{-1}{2n+1}\right)=\frac12').set_z_index(10)
         eq2 = MathTex(r'\varphi_{X_n}(u){{=}}\cos (u/(2n+1))').set_z_index(10).next_to(eq1, DOWN)
         eq3 = MathTex(r'\varphi_{X_0+S_n}(u){{=}}{\rm sinc}(u)\cos(u/3)\cdots\cos(u/(2n+1))').set_z_index(10).next_to(eq1, DOWN)
         eq4 = MathTex(r'\int_{-\infty}^\infty\varphi_{X_0+S_n}(u)\,du {{=}} \pi\mathbb P(\lvert S_n\rvert < 1)'
@@ -1610,6 +1612,244 @@ class EVInt(SceneOpacity):
                   run_time=1.5)
         self.wait(0.5)
 
+
+class Question2025(SceneOpacity):
+    opacity = 0.7
+
+    def construct(self):
+        eq1 = MathTex(r'{{\int_0^1 f(x)g(x)^ndx}}=1,\ n=0,1,\ldots,2025').set_z_index(1)
+        eq2 = MathTex(r'{{\int_0^1 f(x)g(x)^ndx}}\begin{cases}=1,& n=0,1,\ldots,2025, \\ < 1, &n > 2025\end{cases').set_z_index(1)
+        eq1.next_to(eq2[0], ORIGIN, submobject_to_align=eq1[0])
+
+        box = self.box(eq1, eq2)
+
+        self.add(box, eq1[0])
+        self.wait(0.2)
+        self.play(FadeIn(eq1[1][:2]), run_time=0.5)
+        self.wait(0.2)
+        self.play(FadeIn(eq1[1][2:]), run_time=1)
+        self.wait(0.2)
+        self.play(LaggedStart(ReplacementTransform(eq1[1][:] + eq1[0], eq2[1][1:18] + eq2[0]),
+                  FadeIn(eq2[1][0], eq2[1][18]), lag_ratio=0.5),
+                  run_time=1.8)
+        self.wait(0.2)
+        self.play(FadeIn(eq2[1][19:]), run_time=1)
+        self.wait(0.5)
+
+
+class CharacteristicInt(SceneOpacity):
+    opacity = 0.7
+
+    def construct(self):
+        eq1 = MathTex(r'\varphi_X(u){{=}}\mathbb E\left[e^{iuX}\right]').set_z_index(1)
+        eq2 = MathTex(r'\int_0^1\varphi_X(2\pi u)\,du{{=}}\int_0^1\mathbb E\left[e^{2\pi iuX}\right]du'
+                      r'{{=}}\mathbb E\left[\int_0^1e^{2\pi iuX}du\right]').set_z_index(1)
+        eq2[3:5].next_to(eq2[1], ORIGIN, submobject_to_align=eq2[3], coor_mask=RIGHT)
+        eq2.next_to(eq1, DOWN)#.align_to(eq1, LEFT)
+        eq2_2 = eq2.copy().align_to(eq1, UP)
+        eq3 = MathTex(r'\int_0^1e^{2\pi iuX}du{{=}}\begin{cases}0, &{\rm if\ }X\not=0,\\ 1,&{\rm if\ }X=0\end{cases}').set_z_index(1)
+        eq3.next_to(eq2_2, DOWN).align_to(eq2, LEFT)
+        eq4 = MathTex(r'{{=}}I(X=0)').set_z_index(1)
+        eq4.next_to(eq2_2[1], ORIGIN, submobject_to_align=eq4[0])
+        eq4[1].move_to(eq2_2[4][2:-1], coor_mask=RIGHT)
+        eq5 = MathTex(r'\int_0^1\varphi_X(2\pi u)\,du{{=}}\mathbb P(X=0)').set_z_index(1)
+        eq5.next_to(eq2_2[1], ORIGIN, submobject_to_align=eq5[0]).move_to(ORIGIN, coor_mask=RIGHT)
+
+        box = self.box(eq1, eq2, eq3)
+
+        self.add(box, eq1)
+        self.wait(0.2)
+        self.play(FadeIn(eq2[0]), run_time=1)
+        self.wait(0.2)
+        self.play(FadeIn(eq2[1:3]), run_time=1)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq2[2][:3] + eq2[2][3:5] + eq2[2][-2:] + eq2[2][5:-3],
+                                       eq2[4][2:5] + eq2[4][:2] + eq2[4][-3:-1] + eq2[4][5:-3]),
+                  abra.fade_replace(eq2[2][-3], eq2[4][-1]),
+                  run_time=1.5)
+        self.wait(0.2)
+        eq2[2:4].set_opacity(0)
+        self.play(eq2.animate.move_to(eq2_2), FadeIn(eq3[:2], eq3[2][:9]), FadeOut(eq1), run_time=1.5)
+        self.wait(0.2)
+        self.play(FadeIn(eq3[2][9:]), run_time=1)
+        self.wait(0.2)
+        self.play(FadeIn(eq4[1]), FadeOut(eq2[4][2:-1]), run_time=1.5)
+        self.wait(0.2)
+        self.play(LaggedStart(FadeOut(eq4[1][0], eq2[4][1], eq2[4][-1], eq3),
+                  AnimationGroup(ReplacementTransform(eq4[1][1:] + eq2[:2], eq5[2][1:] + eq5[:2]),
+                  abra.fade_replace(eq2[4][0], eq5[2][0])), lag_ratio=0.5),
+                  run_time=2)
+
+        self.wait(0.5)
+
+
+class RandomIntXY(SceneOpacity):
+    opacity = 0.7
+
+    def construct(self):
+        eq1 = MathTex(r'\mathbb P(X=-2025)=\mathbb P(X=-2024)=\cdots=\mathbb P(X=2025){{=}}\frac1{5051}').set_z_index(1)
+        eq1.move_to(ORIGIN)
+        eq2 = MathTex(r'\mathbb P(Y_n=1)=\mathbb P(Y_n=-1){{=}}\frac12').set_z_index(1)
+        eq2.next_to(eq1[0], DOWN).move_to(ORIGIN, coor_mask=RIGHT)
+
+        eq3 = MathTex(r'\varphi_X(x){{=}}\frac{\sin(5051x/2)}{\sin(x/2)}').set_z_index(1)
+        eq3.align_to(eq1, UP)
+        eq4 = MathTex(r'\varphi_{Y_k}(x){{=}}\cos(x)').set_z_index(1)
+        eq4.next_to(eq2[1], ORIGIN, submobject_to_align=eq4[1], coor_mask=UP).align_to(eq3, LEFT)
+
+        eq5 = MathTex(r'S_n{{=}}Y_1+Y_2+\cdots+Y_n').set_z_index(1)
+        eq5.next_to(eq4, DOWN).align_to(eq4, LEFT)
+        eq6 = MathTex(r'\varphi_{X+S_n}(x){{=}}\varphi_X(x)\varphi_{Y_k}(x)^n').set_z_index(1)
+        eq6.next_to(eq5, DOWN).align_to(eq5, LEFT)
+
+        eq7 = MathTex(r'f(x){{=}}5051\varphi_X(2\pi x){{=}}\frac{\sin(5051\pi x)}{\sin(\pi x)}').set_z_index(1)
+        eq7.align_to(eq1, UP).align_to(eq6, LEFT).shift(LEFT)
+        eq8 = MathTex(r'g(x){{=}}\varphi_{Y_k}(2\pi x){{=}}\cos(2\pi x)').set_z_index(1)
+        eq8.next_to(eq7, DOWN).align_to(eq7, LEFT)
+
+        eq9 = MathTex(r'\int_0^1\varphi_X(2\pi x)\varphi_{Y_k}(2\pi x)^ndx{{=}}\mathbb P(X+S_n=0)'
+                      r'{{=}}\frac{\mathbb P(\lvert S_n\rvert\le 2025)}{5051}').set_z_index(1)
+        eq9[3:5].next_to(eq9[1], ORIGIN, submobject_to_align=eq9[3], coor_mask=RIGHT)
+        eq9.next_to(eq8, DOWN).align_to(eq8, LEFT)
+
+        eq10 = MathTex(r'\int_0^1 5051\varphi_X(2\pi x)\varphi_{Y_k}(2\pi x)^ndx{{=}}\mathbb P(\lvert S_n\rvert\le 2025)').set_z_index(1)
+        eq10.next_to(eq9[1], ORIGIN, submobject_to_align=eq10[1])
+
+        eq11 = MathTex(r'\int_0^1f(x)g(x)^ndx{{=}}\mathbb P(\lvert S_n\rvert\le 2025)').set_z_index(1)
+        eq11.next_to(eq10[1], ORIGIN, submobject_to_align=eq11[1], coor_mask=UP)
+        eq11_1 = eq11[0][3:7].copy().move_to(eq10[0][3:14], coor_mask=RIGHT)
+        eq11_2 = eq11[0][7:12].copy().move_to(eq10[0][14:23], coor_mask=RIGHT)
+
+        box1 = self.box(eq1, eq2)
+        box2 = self.box(eq2, eq3, eq4, eq5, eq6, eq7, eq8)
+        box3 = self.box(eq7, eq8, eq9)
+        box4 = self.box(eq7, eq8, eq9, eq10, eq11)
+        box5 = self.box(eq11)
+
+        self.add(box1, eq1[0])
+        self.wait(0.2)
+        self.play(FadeIn(eq1[1:]), run_time=1)
+        self.wait(0.2)
+        self.play(FadeIn(eq2), run_time=1)
+        self.wait(0.2)
+        self.play(LaggedStart(AnimationGroup(FadeOut(eq1), FadeIn(eq3)),
+                  ReplacementTransform(box1, box2), lag_ratio=0.5), run_time=1.5)
+        self.wait(0.2)
+        self.play(FadeOut(eq2), FadeIn(eq4), run_time=1.5)
+        self.wait(0.2)
+        self.play(FadeIn(eq5), run_time=1)
+        self.wait(0.2)
+        self.play(FadeIn(eq6[0]), run_time=1)
+        self.wait(0.2)
+        self.play(FadeIn(eq6[1:]), run_time=1)
+        self.wait(0.2)
+        self.play(FadeOut(eq3, eq4, eq5), FadeIn(eq7[:3], eq8[:3]), run_time=1.5)
+        self.wait(0.2)
+        self.play(FadeIn(eq7[3:], eq8[3:]), run_time=1)
+        self.wait(0.2)
+        self.play(LaggedStart(AnimationGroup(ReplacementTransform(eq6[2][:3] + eq6[2][3:9] + eq6[2][9:12],
+                                       eq9[0][3:6] + eq9[0][8:14] + eq9[0][16:19]),
+                  FadeOut(eq6[:2])),
+                  FadeIn(eq9[0][:3], eq9[0][-2:], eq9[0][6:8], eq9[0][14:16]),
+                              lag_ratio=0.5), run_time=2)
+        self.wait(0.2)
+        self.play(LaggedStart(ReplacementTransform(box2, box3), FadeIn(eq9[1:3]), lag_ratio=0.5), run_time=1.5)
+        self.wait(0.2)
+        self.play(LaggedStart(AnimationGroup(ReplacementTransform(eq9[2][:2] + eq9[2][4:6] + eq9[2][8],
+                                       eq9[4][:2] + eq9[4][3:5] + eq9[4][11]),
+                  FadeOut(eq9[2][2:4], eq9[2][6:8])),
+                  FadeIn(eq9[4][2], eq9[4][5:11], eq9[4][12]), lag_ratio=0.5),
+                  run_time=2)
+        self.wait(0.2)
+        self.play(FadeIn(eq9[4][13:]), run_time=1)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq9[0][:3] + eq9[4][-4:] + eq9[0][3:] + eq9[1] + eq9[4][:12],
+                                       eq10[0][:3] + eq10[0][3:7] + eq10[0][7:] + eq10[1] + eq10[2][:]),
+                  ReplacementTransform(box3, box4),
+                  FadeOut(eq9[4][12]),
+                  run_time=2)
+        self.wait(0.2)
+        self.play(FadeOut(eq10[0][3:23]), FadeIn(eq11_1, eq11_2), run_time=1.5)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq10[0][:3] + eq11_1 + eq11_2 + eq10[0][23:] + eq10[1:],
+                                       eq11[0][:3] + eq11[0][3:7] + eq11[0][7:12] + eq11[0][12:] + eq11[1:]),
+                  run_time=2)
+        self.wait(0.2)
+        self.play(LaggedStart(FadeOut(eq7, eq8), ReplacementTransform(box4, box5), lag_ratio=0.5), run_time=1.5)
+
+        self.wait(0.5)
+
+
+class WalkSn(Scene):
+    def construct(self):
+        xrange = 2030
+        yrange = xrange
+        xmax = 2125
+        ax = Axes(x_range=[0, xrange+150, 2025], y_range=[-2400, 2400, 2025], x_length=config.frame_x_radius * 1.6,
+                  y_length=config.frame_y_radius * 1.3,
+                  axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': True, 'tick_size': 0.05,
+                               "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               },
+                  x_axis_config={'include_ticks': True}).set_z_index(20).shift(UP * 0.8)
+
+        pa = ax.coords_to_point(0, 2025)
+        pb = ax.coords_to_point(0, -2025)
+        p0 = ax.coords_to_point(0, 0)
+        w = ax.coords_to_point(2125, 0) - p0
+        dx = 1000.0/((ax.coords_to_point(1000, 0) - p0)[0])
+        line1=Line(pa, pa+w, stroke_width=4, color=RED).set_z_index(15)
+        line2=Line(pb, pb+w, stroke_width=4, color=RED).set_z_index(15)
+        eq1 = MathTex(r'2025', font_size=40).next_to(pa, LEFT, buff=0.2).set_z_index(10)
+        eq2 = MathTex(r'-2025', font_size=40).next_to(pb, LEFT, buff=0.2).set_z_index(10)
+        eq0 = MathTex(r'2025', font_size=40).next_to(ax.coords_to_point(2025, 0), DOWN, buff=0.2).set_z_index(10)
+
+        np.random.seed(1)
+        XVals = [x * 1.0 for x in range(0, xmax + 1)]
+        YVals = [0.0] * (xmax + 1)
+        for i in range(1, 500):
+            YVals[i] = YVals[i-1] + np.random.choice((-1, 1, 1))
+        for i in range(500, 900):
+            YVals[i] = YVals[i-1] + np.random.choice((-1, -1, 1))
+        for i in range(900, 1000):
+            YVals[i] = YVals[i-1] + np.random.choice((-1, 1))
+        for i in range(1000, 1600):
+            YVals[i] = YVals[i-1] + np.random.choice((-1, 1, 1))
+        for i in range(1600, xmax+1):
+            YVals[i] = YVals[i-1] + np.random.choice((1, 1, -1, 1))
+
+        interp = scipy.interpolate.interp1d(np.array(XVals), np.array(YVals))
+
+        def f(x):
+            return interp(x) + 0
+
+        path = ax.plot(f, (0, 2125, 2), color=BLUE, stroke_width=5)
+
+        self.add(ax, eq1, eq2, line1, line2, eq0)
+        self.wait(0.5)
+
+        gp = VGroup(MathTex(r'S_n', color=BLUE).set_z_index(30).next_to(p0, RIGHT),
+                    VGroup(), VGroup(), MathTex(r'S^{\rm max}', color=GREY).set_z_index(25).next_to(p0, RIGHT).set_opacity(0),
+                    MathTex(r'S^{\rm min}', color=GREY).set_z_index(25).next_to(p0, RIGHT).set_opacity(0))
+
+        def updatefunc(obj):
+            end = path.get_end()
+            obj[0].next_to(end, RIGHT)
+            x = (end - p0)[0] * dx
+            up = ax.coords_to_point(x, x)
+            dn = ax.coords_to_point(x, -x)
+            obj[1] = Line(p0, up, color=GREY, stroke_width=4).set_z_index(10)
+            obj[2] = Line(p0, dn, color=GREY, stroke_width=4).set_z_index(10)
+            obj[3].next_to(up, RIGHT).set_opacity(min(x/200, 1))
+            obj[4].next_to(dn, RIGHT).set_opacity(min(x/200, 1))
+
+        self.play(FadeIn(gp), run_time=1)
+        gp.add_updater(updatefunc)
+        self.add(gp)
+        self.play(Create(path, rate_func=linear), run_time=15)
+        self.wait(0.5)
+
+
 def calc_prob(n=1., m=2):
     s = 0.0
     k = 1
@@ -1626,13 +1866,11 @@ def calc_prob(n=1., m=2):
     print(p)
 
 
-def GEL():
-    print(len(num))
 
 
 class Sinc(Scene):
     def __init__(self, *args, **kwargs):
-        config.background_color = WHITE
+        config.background_color = BLACK
         Scene.__init__(self, *args, *kwargs)
 
     def construct(self):
@@ -1648,8 +1886,8 @@ class Sinc(Scene):
             return f
 
         xrange = math.pi*3
-        ax = Axes(x_range=[-xrange, xrange * 1.05], y_range=[-0.25, 1.05], z_index=2, x_length=ylen * 1.1, y_length=ylen,
-                  axis_config={'color': BLACK, 'stroke_width': 5, 'include_ticks': False, 'tick_size': 0.05,
+        ax = Axes(x_range=[-xrange, xrange * 1.05], y_range=[-0.25, 1.05], z_index=2, x_length=xlen, y_length=ylen,
+                  axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False, 'tick_size': 0.05,
                                "tip_width": 0.3 * DEFAULT_ARROW_TIP_LENGTH,
                                "tip_height": 0.4 * DEFAULT_ARROW_TIP_LENGTH,
                                },
@@ -1657,17 +1895,118 @@ class Sinc(Scene):
         ax.to_edge(DOWN, buff=0.05)
 
 
-        f = get_sinc(0)
-        graph = ax.plot(f, (-xrange, xrange, 0.05), color=BLUE_E, stroke_width=4).set_z_index(3)
+        f = get_sinc(6)
+        graph = ax.plot(f, (-xrange, xrange, 0.05), color=BLUE, stroke_width=4).set_z_index(3)
         graphu = ax.plot(lambda x: max(f(x), 0.), (-xrange, xrange, 0.05), color=BLUE, stroke_width=4).set_z_index(3)
         graphl = ax.plot(lambda x: min(f(x), 0.), (-xrange, xrange, 0.05), color=BLUE, stroke_width=4).set_z_index(3)
-        areau = ax.get_area(graphu, color=BLUE_D, x_range=(-xrange, xrange), opacity=0.5)
-        areal = ax.get_area(graphl, color=RED, x_range=(-xrange, xrange), opacity=0.6)
-        self.add(VGroup(ax, graph, areau, areal).rotate(90*DEGREES).move_to(ORIGIN).to_edge(RIGHT, buff=0.4))
+        areau = ax.get_area(graphu, color=ManimColor(BLUE.to_rgb()*0.3), x_range=(-xrange, xrange), opacity=1)
+        areal = ax.get_area(graphl, color=ManimColor(RED.to_rgb()*0.3), x_range=(-xrange, xrange), opacity=1)
 
+#        self.add(VGroup(ax, graph, areau, areal).rotate(90*DEGREES).move_to(ORIGIN).to_edge(RIGHT, buff=0.4))
+        self.add(VGroup(ax, graph, areau, areal))
+
+class IntThumb(Scene):
+    def construct(self):
+        eq = MathTex(r'\int\limits_{-\infty}^\infty\frac{\sin(x)}{x}\frac{\sin(x/3)}{x/3}\frac{\sin(x/5)}{x/5}\frac{\sin(x/7)}{x/7}'
+                     r'\frac{\sin(x/9)}{x/9}\frac{\sin(x/11)}{x/11}\frac{\sin(x/13)}{x/13}\frac{\sin(x/15)}{x/15}dx', font_size=40, stroke_width=1.5)
+
+        self.add(eq)
+
+
+class ProcessThumb(ProcessBW):
+    def construct(self):
+        self.animprocess(yrange=None, n0=3, n1=17, do_extreme=True, iredlines=0, fast=True, thumb=True, yscale=1.428)
+
+class PiThumb(Scene):
+    def construct(self):
+        eq = MathTex(r'\pi', stroke_width=2, font_size=200)
+        self.add(eq)
+
+
+class Intro_Short(Scene):  # manim -p -r1080,1920 --fps 30 borwein.py Intro_Short
+    nTerms = 8
+
+    def __init__(self, *args, **kwargs):
+        config.frame_y_radius = config.frame_x_radius * 1.77777777
+        Scene.__init__(self, *args, *kwargs)
+
+    def construct(self):
+        print(config.frame_x_radius)
+        print(config.frame_y_radius)
+
+        bistr = [r'{{{{ \frac{{\sin\frac{{x}}{{ {0} }} }}{{x/{0}}} }}}}'.format(i) for i in range(3, 17, 2)]
+        bistr = [r'{{\int\limits_{-\infty}^\infty\frac{\sin x}{x} }}'] + bistr + [r'dx{{=}}\pi']
+
+        xlen = config.frame_x_radius * 1.8
+        ylen = config.frame_y_radius * 1
+
+        def get_sinc(n):
+            def f(x):
+                res = 1.0
+                for i in range(1, 2*n+3, 2):
+                    res *= math.sin(x/i)*i/x
+                return res
+            return f
+
+        xrange = 10.0
+        ax = Axes(x_range=[-xrange, xrange * 1.05], y_range=[-0.5, 1.1], z_index=2, x_length=xlen, y_length=ylen,
+                  axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False, 'tick_size': 0.05,
+                               "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               },
+                  x_axis_config={'include_ticks': False}).move_to(ORIGIN).set_z_index(2)
+
+        eq_width = config.frame_x_radius * 2 * 0.9
+        eq0 = VGroup()
+        for i in range(self.nTerms):
+            eq1 = MathTex(''.join(bistr[:i+1] + bistr[-1:]), font_size=80).to_edge(UP, buff=2.7)
+            scale = min(eq1.width, eq_width, (eq1.width + eq_width) * 0.5 - eq_width * 0.2)/eq1.width
+            eq1.scale(scale)
+            f = get_sinc(i)
+            graph = ax.plot(f, (-xrange, xrange, 0.05), color=BLUE, stroke_width=4).set_z_index(3)
+            graphu = ax.plot(lambda x: max(f(x), 0.), (-xrange, xrange, 0.05), color=BLUE, stroke_width=4).set_z_index(3)
+            graphl = ax.plot(lambda x: min(f(x), 0.), (-xrange, xrange, 0.05), color=BLUE, stroke_width=4).set_z_index(3)
+            areau = ax.get_area(graphu, color=BLUE, x_range=(-xrange, xrange))
+            areal = ax.get_area(graphl, color=RED, x_range=(-xrange, xrange))
+            if i == 0:
+                eq2 = MathTex(r'{\rm sinc}(x)=\frac{\sin x}{x}', font_size=80)[0]
+                eq2.next_to(eq1[0][-2], ORIGIN, submobject_to_align=eq2[-2])
+                eq2.move_to(ORIGIN, coor_mask=RIGHT)
+                eq3 = eq2.copy().scale(1.6).move_to(ORIGIN)
+                self.add(eq3)
+                self.wait(0.5)
+                self.play(LaggedStart(AnimationGroup(ReplacementTransform(eq3, eq2), FadeIn(ax)),
+                                      Create(graph, rate_func=linear), lag_ratio=0.5), run_time=2)
+
+                self.play(ReplacementTransform(eq2[-6:], eq1[0][-6:]),
+                          FadeOut(eq2[:-6]),
+                          FadeIn(eq1[0][:-6], eq1[-3:]),
+                          FadeIn(areau, areal), run_time=2)
+                self.wait(0.5)
+            else:
+                anims1 = [ReplacementTransform(eq0[:i] + eq0[-3:-1], eq1[:i] + eq1[-3:-1]),
+                          FadeIn(eq1[i]), FadeOut(eq0[-1], rate_func=rate_functions.rush_from)]
+                anims2 = [ReplacementTransform(graph0, graph),
+                          ReplacementTransform(areau0, areau),
+                          ReplacementTransform(areal0, areal)]
+                if i == 1:
+                    self.play(*anims1, run_time=1)
+                    self.play(*anims2, run_time=1)
+                else:
+                    self.play(*anims1, *anims2, run_time=1)
+                if i < 7:
+                    self.play(FadeIn(eq1[-1]), run_time=0.5)
+                    self.wait(1)
+            eq0 = eq1
+            graph0 = graph
+            areau0 = areau
+            areal0 = areal
+
+        eq4 = MathTex(r'0.999999999985\ldots\pi', font_size=80).next_to(eq0, DOWN).to_edge(RIGHT, buff=0.8)
+        self.play(FadeIn(eq4), run_time=0.5)
+        self.wait(0.5)
 
 
 if __name__ == "__main__":
-    GEL()
-#    with tempconfig({"quality": "low_quality", "preview": True}):
-#        Intro().render()
+    with tempconfig({"quality": "low_quality", "preview": True}):
+        WalkSn().render()
