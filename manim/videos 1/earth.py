@@ -721,6 +721,7 @@ class MeasureDistance(Measure):
 
         self.wait(0.5)
 
+
 class RadiusNumbers1(Scene):
     def construct(self):
         eq2 = MathTex(r'R_E{{{{=}}}} {}\,{{\rm km}}'.format(radiusE_str))
