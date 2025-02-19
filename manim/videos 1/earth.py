@@ -19,7 +19,7 @@ distance_str = r'77.64'
 height_str = r'316'
 radius_str1 = r'9\,538'
 radius_str2 = r'8\,184'
-radius_str3 = r'6\,801'
+radius_str3 = r'6\,793'
 radiusE_str = r'6\,371'
 me_str = r'2'
 adjust1_str = r'1.165'
@@ -39,7 +39,7 @@ Tdot = 0.0065 K/m
 '''
 
 ref_str = '.00027'
-density_str = '1.275'
+density_str = '1.177'
 atm_str = r'101'
 tdot_str = '0.0065'
 t_str = '300'
@@ -772,23 +772,23 @@ class IndexCalc(RefractionCalc):
                       r'\,000} - \frac{' + tdot_str + r'}{' + t_str + r'}\right)').to_edge(DR)
         eq8.next_to(eq4[1], ORIGIN, submobject_to_align=eq8[1]).to_edge(RIGHT, buff=0.1)
 
-        eq9 = MathTex(r'a{{=}}2.486\times10^{-8}')
+        eq9 = MathTex(r'a{{=}}2.502\times10^{-8}')
         eq9.next_to(eq4[1], ORIGIN, submobject_to_align=eq9[1]).to_edge(RIGHT, buff=0.1)
         eq9.next_to(eq8[2][7:], ORIGIN, submobject_to_align=eq9[2], coor_mask=RIGHT)
 
-        eq10 = MathTex(r'R^\prime a{{=}}2.486\times10^{-8}R^\prime')
+        eq10 = MathTex(r'R^\prime a{{=}}2.502\times10^{-8}R^\prime')
         eq10.next_to(eq9[1], ORIGIN, submobject_to_align=eq10[1])
 
-        eq11 = MathTex(r'R^\prime a{{=}}2.486\times10^{-8}\cdot ' + radius_str2 + r'\,000')
+        eq11 = MathTex(r'R^\prime a{{=}}2.502\times10^{-8}\cdot ' + radius_str2 + r'\,000')
         eq11.next_to(eq4[1], ORIGIN, submobject_to_align=eq11[1]).to_edge(RIGHT, buff=0.1)
 
-        eq12 = MathTex(r'R^\prime a{{=}}0.203') # 0.203427
+        eq12 = MathTex(r'R^\prime a{{=}}0.205') # 0.203427
         eq12.next_to(eq4[1], ORIGIN, submobject_to_align=eq12[1]).to_edge(RIGHT, buff=0.6)
 
-        eq13 = MathTex(r'R{{=}}\frac{R^\prime}{1.203}\,\rm km')
+        eq13 = MathTex(r'R{{=}}\frac{R^\prime}{1.205}\,\rm km')
         eq13.next_to(eq4[1], ORIGIN, submobject_to_align=eq13[1]).to_edge(RIGHT, buff=0.2)
 
-        eq14 = MathTex(r'R{{=}}\frac{' + radius_str2 + r'}{1.203}')
+        eq14 = MathTex(r'R{{=}}\frac{' + radius_str2 + r'}{1.205}')
         eq14.next_to(eq4[1], ORIGIN, submobject_to_align=eq14[1]).to_edge(RIGHT, buff=0.2)
         eq14.align_to(eq13[2][:-2], RIGHT)
 
@@ -945,6 +945,7 @@ class AtmosCond(Measure):
         self.wait(wt)
         self.play(FadeIn(eq_R1), run_time=rt)
         self.wait(0.5)
+
 
 class RadiusCalc3(Scene):
     def construct(self):
