@@ -48,8 +48,7 @@ t_str = '300'
 class RadiusCalc(Scene):
     still = False
 
-
-    def get_earth(self, center, radius):
+    def get_earth_raw(self):
         earth_0 = ImageMobject(r"images/earth_bg.png", z_index=2)
         pa = earth_0.pixel_array.copy()
         m, n, _ = pa.shape
@@ -57,20 +56,23 @@ class RadiusCalc(Scene):
             for j in range(n):
                 for k in range(3):
                     pa[i, j, k] = int(pa[i, j, k] * 0.6)
-        earth = ImageMobject(pa, z_index=2)
+        return ImageMobject(pa, z_index=2)
+
+    def get_earth(self, center, radius, theta_is=None):
+        earth = self.get_earth_raw()
         mountain = ImageMobject(r"images/mountain11.png", z_index=1)
         wojak = ImageMobject(r'../abracadabra/wojak.png', z_index=15)
         earth.move_to(center).rotate(-30*DEGREES).scale(0.891).shift(RIGHT*0.1315 + DOWN*0.02)
-
-        theta_is = 35.8*DEGREES
+        if theta_is is None:
+            theta_is = 35.8*DEGREES
         p_is = center + (UP * math.cos(theta_is) + RIGHT * math.sin(theta_is)) * radius
-        mountain.scale(0.17).next_to(p_is, UP, buff=0).rotate(-theta_is, about_point=p_is).shift((center-p_is) * 0.02)
+        mountain.scale(0.17).next_to(p_is, UP, buff=0).rotate(-theta_is, about_point=p_is).shift((center-p_is) * 0.02 * config.frame_y_radius * 1.5 / radius)
         wojak.scale(0.2).next_to(center + UP * radius, LEFT, buff=0.2)
 
         return earth, mountain, wojak
 
     def get_trig(self, radius, theta2=33*DEGREES):
-        cdot = Dot(radius=0.2, color=RED).to_edge(DOWN, buff=0.3).shift(LEFT * 1.5).set_z_index(10)
+        cdot = Dot(radius=0.2, color=RED).to_edge(DOWN, buff=0.3).shift(LEFT * 1.5).set_z_index(40)
         center = cdot.get_center()
         surf = Arc(radius=radius, arc_center=center, start_angle=184*DEGREES, angle=-188*DEGREES, color=BLUE, stroke_width=5).set_z_index(10)
         p0 = center + UP * radius
@@ -98,8 +100,6 @@ class RadiusCalc(Scene):
         radius = config.frame_y_radius * 1.5
         cdot, surf, line, rightangle, eq = self.get_trig(radius)
         earth, mountain, wojak = self.get_earth(cdot.get_center(), radius)
-
-        return
 
         gp = Group(VGroup(cdot, surf, line, rightangle, eq),
                    earth, mountain, wojak)
@@ -374,6 +374,30 @@ class RadiusCalc2(RadiusCalc):
 
 
 class Refraction(RadiusCalc):
+    r_scale = 1.7  # 2.0426872
+
+    def atmosphere(self, center, radius):
+        w1 = 0.35
+        col1 = BLUE_D
+        col2 = ManimColor(col1.to_rgb() * 0.8)
+        col3 = ManimColor(col1.to_rgb() * 0.6)
+        col4 = ManimColor(col1.to_rgb() * 0.4)
+        col5 = ManimColor(col1.to_rgb() * 0.2)
+        a0 = Arc(radius=radius - w1 / 2, arc_center=center, start_angle=184 * DEGREES, angle=-200 * DEGREES, color=col1,
+                 stroke_width=w1 * 100).set_z_index(0.9)
+        a1 = Arc(radius=radius + w1 / 2, arc_center=center, start_angle=184 * DEGREES, angle=-200 * DEGREES, color=col1,
+                 stroke_width=w1 * 100).set_z_index(0.9)
+        a2 = Arc(radius=radius + w1 * 3 / 2, arc_center=center, start_angle=184 * DEGREES, angle=-200 * DEGREES, color=col2,
+                 stroke_width=w1 * 100).set_z_index(0.8)
+        a3 = Arc(radius=radius + w1 * 5 / 2, arc_center=center, start_angle=184 * DEGREES, angle=-200 * DEGREES, color=col3,
+                 stroke_width=w1 * 100).set_z_index(0.7)
+        a4 = Arc(radius=radius + w1 * 7 / 2, arc_center=center, start_angle=184 * DEGREES, angle=-200 * DEGREES, color=col4,
+                 stroke_width=w1 * 100).set_z_index(0.6)
+        a5 = Arc(radius=radius + w1 * 9 / 2, arc_center=center, start_angle=184 * DEGREES, angle=-200 * DEGREES, color=col5,
+                 stroke_width=w1 * 100).set_z_index(0.5)
+        return VGroup(a0, a1, a2, a3, a4, a5)
+
+
     def construct(self):
         radius = config.frame_y_radius * 1.5
         cdot, surf, line, rightangle, eq = self.get_trig(radius)
@@ -400,25 +424,10 @@ class Refraction(RadiusCalc):
                  eq[2:], eq_R1, eq_d1, eq_d2, eq_h1, eq_h2)
 
         self.wait(0.5)
-        col1 = BLUE_D
-        col2 = ManimColor(col1.to_rgb() * 0.8)
-        col3 = ManimColor(col1.to_rgb() * 0.6)
-        col4 = ManimColor(col1.to_rgb() * 0.4)
-        col5 = ManimColor(col1.to_rgb() * 0.2)
-        w1 = 0.35
-        a1 = Arc(radius=radius+w1/2, arc_center=center, start_angle=184*DEGREES, angle=-200*DEGREES, color=col1,
-                 stroke_width=w1 * 100).set_z_index(0.9)
-        a2 = Arc(radius=radius+w1*3/2, arc_center=center, start_angle=184*DEGREES, angle=-200*DEGREES, color=col2,
-                 stroke_width=w1 * 100).set_z_index(0.8)
-        a3 = Arc(radius=radius+w1*5/2, arc_center=center, start_angle=184*DEGREES, angle=-200*DEGREES, color=col3,
-                 stroke_width=w1 * 100).set_z_index(0.7)
-        a4 = Arc(radius=radius+w1*7/2, arc_center=center, start_angle=184*DEGREES, angle=-200*DEGREES, color=col4,
-                 stroke_width=w1 * 100).set_z_index(0.6)
-        a5 = Arc(radius=radius+w1*9/2, arc_center=center, start_angle=184*DEGREES, angle=-200*DEGREES, color=col5,
-                 stroke_width=w1 * 100).set_z_index(0.5)
-        self.play(FadeIn(a1), run_time=2)
+        atmosphere = self.atmosphere(center, radius)
+        self.play(FadeIn(atmosphere[:2]), run_time=2)
         self.wait(0.5)
-        self.play(LaggedStart(FadeIn(a2), FadeIn(a3), FadeIn(a4), FadeIn(a5), lag_ratio=0.2), run_time=2)
+        self.play(LaggedStart(*[FadeIn(_) for _ in atmosphere[2:]], lag_ratio=0.2), run_time=2)
 
         self.wait(0.2)
         theta = 10 * DEGREES
@@ -443,26 +452,42 @@ class Refraction(RadiusCalc):
 
             return f
 
+        def get_f(theta_0, radius2):
+            def f(theta):
+                thetap = (theta - theta_0) * radius / radius2
+                rad = radius2 * ( 1 / math.cos(thetap) - 1) + radius
+                return center + (RIGHT * math.sin(theta) + UP * math.cos(theta)) * rad
+
+            return f
+
+
+        scale_val = ValueTracker(1.0)
         theta_val = ValueTracker(0.0)
         lines = VGroup(line[0], eq[2], rightangle, rangle)
+        lines[1].set_opacity(0)
         lines_1 = lines.copy()
         lines.set_opacity(0)
         line[0].set_opacity(0.3)
 
         def g():
-            theta_0 = theta_val.get_value()
-            f = curve_func(theta_0)
+            scale = scale_val.get_value()
+            radius2 = radius * scale
+            theta_0 = scale * math.acos(1 / (1 + (1 / math.cos(theta1) - 1) / scale)) - theta1
+            f = get_f(theta_0, radius2)
             curved = ParametricFunction(f, (theta_l, theta_r), dt=0.01, stroke_width=5, stroke_color=WHITE)\
                 .set_z_index(40)
 
-            return VGroup(curved, lines_1.copy().rotate(-theta_0, about_point=center))
+            lines2 = lines_1.copy().rotate(-theta_0, about_point=center)
+
+            return VGroup(curved, lines2, eq[2].copy().set_opacity(1).move_to(lines2[1]))
 
         line1.set_z_index(25).set_opacity(0.5)
         line[1].set_z_index(25).set_opacity(0.5)
         curved = always_redraw(g)
 
         self.add(curved)
-        self.play(theta_val.animate.set_value(8 * DEGREES), run_time=1.5)
+        self.play(theta_val.animate.set_value(8 * DEGREES),
+                  scale_val.animate.set_value(self.r_scale), run_time=1.5)
         self.remove(curved)
         curved = g()
         self.add(curved)
@@ -471,6 +496,348 @@ class Refraction(RadiusCalc):
 #        a2 = Arc(radius=radius + w1, arc_center=center, start_angle=184*DEGREES, angle=-188*DEGREES, color=BLUE, stroke_width=5).set_z_index(10)
 
         self.wait(0.5)
+
+
+class EffectiveRadius(Refraction):
+
+    def construct(self):
+        radius = config.frame_y_radius * 1.5
+        cdot, surf, line, rightangle, eq = self.get_trig(radius)
+        shift = LEFT * 296 /1920 * config.frame_x_radius * 2
+        VGroup(cdot, surf, line, rightangle, eq).shift(shift)
+
+        center = cdot.get_center()
+        _, _, wojak = self.get_earth(center, radius)
+        earth = ImageMobject(r'images/earth_scaled.png', z_index=2).shift(shift)
+
+        theta1 = 18 * DEGREES
+        p1 = center + (UP + LEFT * math.tan(theta1)) * radius
+        wojak.next_to(p1, LEFT, buff=0.33)
+
+        scale = self.r_scale
+
+        '''
+        x = R' (1/cos(theta') - 1)
+        theta' = (theta-theta0)/scale
+        R' = R scale
+        
+        have x(-theta1) = R (1/cos(theta1)-1)
+        
+        hence 1/cos(theta1) - 1 = scale (1/cos(theta') - 1)
+        theta0 = scale cosinv(1 / (1 + (1/cos(theta1)-1)/scale)) - theta1
+        '''
+
+        theta_0 = scale * math.acos(1/(1 + (1/math.cos(theta1) - 1) / scale)) - theta1
+
+        print('theta0 =', theta_0 / DEGREES)
+
+        theta_r = 33*DEGREES
+
+        shift = DOWN * (scale - 1) * radius
+        radius2 = radius * scale
+        center2 = center + shift
+        theta1_2 = (theta1 + theta_0) * radius / radius2
+
+        h1_2 = radius2 * ( 1/ math.cos(theta1_2) - 1)
+        h1 = radius * (1/math.cos(theta1) - 1)
+        print(h1, h1_2)
+        h2 = radius * (1/math.cos(theta_r) - 1)
+
+
+#        _, _, _, rightangle2, eq2 = self.get_trig(radius2*1.002)
+#        VGroup(rightangle2, eq2).shift(shift)
+        theta_is = 35.8 * DEGREES
+
+        def get_g(theta_0, center2, radius2):
+            """
+            gets light path with effective radius
+            """
+            def g(theta):
+                thetap = (theta - theta_0) * radius2 / radius / scale
+                rad = radius * scale * ( 1 / math.cos(thetap) - 1 ) + radius2
+                return center2 + (RIGHT * math.sin(theta) + UP * math.cos(theta)) * rad
+            return g
+
+        def get_h(theta_l, center2, radius2):
+            def h(theta):
+                thetap = (theta - theta_l) * radius2 / radius - theta1
+                rad = radius * (1/math.cos(thetap) - 1) + radius2
+                return center2 + (RIGHT * math.sin(theta) + UP * math.cos(theta)) * rad
+            return h
+
+        mountain = ImageMobject(r"images/mountain11.png", z_index=1).scale(0.17)
+        t_val = ValueTracker(0.0)
+
+        def get_obj():
+            t = t_val.get_value()
+            scale2 = 1 + (scale-1)*t
+            center_t = center2 * t + center * (1-t)
+            radius2 = radius * scale2
+            theta_0p = theta_0 * (1-t)
+
+            theta1_2 = (theta1 + theta_0) /scale2 - theta_0p
+            earth2 = earth.copy().shift(shift * t).scale(scale2, about_point=center_t)
+            theta_is3 = (theta_is - theta_0) / scale2 + theta_0p
+            theta_is4 = (theta_is - theta_0) / scale
+            p_is = center_t + (UP * math.cos(theta_is3) + RIGHT * math.sin(theta_is3)) * radius * scale2
+            mountain2 = mountain.copy().next_to(p_is, UP, buff=0).rotate(-theta_is3, about_point=p_is).shift(
+                (center_t - p_is) * 0.02 * config.frame_y_radius * 1.5 / radius / scale2)
+
+            theta_r2 = (theta_r - theta_0) / scale2 + theta_0p
+            g = get_g(theta_0p, center_t, radius2)
+            curved = ParametricFunction(g, (-theta1_2, theta_r2), dt=0.01, stroke_width=5, stroke_color=WHITE) \
+                .set_z_index(40)
+
+            h = get_h(-theta1_2, center_t, radius2)
+            curved2 = ParametricFunction(h, (-theta1_2, theta_r2), dt=0.01, stroke_width=5, stroke_color=WHITE,
+                                         stroke_opacity=0.5).set_z_index(40)
+
+            surf = Arc(radius=radius2 * ( 1 + 0.002 * t), arc_center=center_t * 1.0, start_angle=184 * DEGREES, angle=-188 * DEGREES, color=BLUE,
+                       stroke_width=5).set_z_index(10)
+
+            get_obj.t_prev = t
+
+            atmos2 = self.atmosphere(center_t, radius2)
+            cdot2 = cdot.copy().shift(shift * t)
+
+            p1_2 = g(-theta1_2)
+            wojak2 = wojak.copy().next_to(p1_2, LEFT, buff=0.33)
+
+            q1 = center_t + (UP * math.cos(theta1_2) + LEFT * math.sin(theta1_2)) * radius2
+            q2 = center_t + (UP * math.cos(theta_r2) + RIGHT * math.sin(theta_r2)) * radius2
+            q3 = center_t + (UP * math.cos(theta_r2) + RIGHT * math.sin(theta_r2)) * (radius2 + h2)
+            p3 = center + UP * radius
+            p4 = center + (UP + RIGHT * math.tan(theta_is)) * radius
+            p5 = center + (UP + LEFT * math.tan(theta1)) * radius
+            p6 = center_t + (UP + RIGHT * math.tan(theta_r2)) * radius2
+
+            line1 = Line(center_t, q1, stroke_color=LIGHT_BROWN, stroke_width=5).set_z_index(20)
+            line2 = Line(q1, p1_2, stroke_color=WHITE, stroke_width=5).set_z_index(20)
+            line3 = Line(center_t, q2, stroke_color=LIGHT_BROWN, stroke_width=5).set_z_index(20)
+            line4 = Line(q2, q3, stroke_color=WHITE, stroke_width=5).set_z_index(20)
+            line5 = Line(center_t, p3, stroke_color=LIGHT_BROWN, stroke_width=5).set_z_index(20)
+            line6 = Line(p3, p4, stroke_width=5).set_z_index(20)
+            line7 = Line(p3, p5, stroke_width=5).set_z_index(20)
+            line8 = Line(p3, p1_2, stroke_width=5)
+            line9 = Line(p3, p6, stroke_width=5)
+            line10 = line5.copy().set_opacity(0.3).set_z_index(19)
+
+            rangle1 = RightAngle(line5, line6, length=0.5, stroke_color=WHITE, stroke_width=5,
+                                    quadrant=(-1, 1)).set_z_index(20)
+            rangle2 = RightAngle(line5, line7, length=0.5, stroke_color=WHITE, stroke_width=5,
+                                    quadrant=(-1, 1)).set_z_index(20)
+
+            eq2_1 = eq[2].copy()
+
+            VGroup(line5, rangle1, rangle2, eq2_1).rotate(-theta_0p, about_point=center_t)
+
+            eq2 = MathTex(r'R^\prime')[0].set_z_index(40)
+            eq2.next_to(eq2_1 ,ORIGIN, submobject_to_align=eq2[0]).shift(LEFT*0.1*t)
+            eq2[1].set_opacity(t)
+
+            pos = center_t + RIGHT * math.sin(theta_r2) * (radius2 - radius/2)\
+                  - center - RIGHT * math.sin(theta_r) * radius/2
+            eq3 = eq2.copy()
+            eq3.next_to(eq[3], ORIGIN, submobject_to_align=eq3[0]).shift(pos * RIGHT)
+
+
+            pos = center_t + (LEFT * math.sin(theta1_2) + UP * math.cos(theta1_2)) * (radius2 - radius/2)\
+                + LEFT * 0.3
+            eq4 = eq2.copy()
+            eq4.next_to(pos, ORIGIN, submobject_to_align=eq4[0]).shift(LEFT*0.1*t)
+
+            eq5 = MathTex(r'h_1', stroke_width=1.5)[0].set_z_index(30).move_to(line2).shift(LEFT * 0.2)
+            eq6 = MathTex(r'h_2', stroke_width=1.5)[0].set_z_index(30).move_to(line4).shift(DR * 0.25)
+
+            eq7 = MathTex(r'd_1')[0].set_z_index(30).next_to(line8, UP, buff=0.2)
+            eq8 = MathTex(r'd_2')[0].set_z_index(30).next_to(line9, UP, buff=0.2)
+
+            res = earth2.add(mountain2, wojak2, curved, atmos2, surf, cdot2, line1, line2, line3,
+                             line4, line5, eq2, eq3, eq4, eq5, eq6, eq7, eq8, rangle1, rangle2,
+                             line10, curved2)
+            res.shift(p1 - p1_2)
+
+            return res
+
+
+        get_obj.t_prev = 0.0
+
+        obj = always_redraw(get_obj)
+        self.add(obj)
+
+        self.wait(0.5)
+
+        self.play(t_val.animate.set_value(1.0),
+                  run_time=2)
+
+        self.wait(0.5)
+
+
+class RefractionThumb(Refraction):
+    def construct(self):
+        radius = config.frame_y_radius * 1.5
+        cdot, surf, line, rightangle, eq = self.get_trig(radius)
+        shift = cdot.get_center() * LEFT + DOWN * 0.3
+        VGroup(cdot, surf, line, rightangle, eq).shift(shift)
+
+        center = cdot.get_center()
+        earth, _, wojak = self.get_earth(center, radius)
+#        earth = ImageMobject(r'images/earth_scaled.png', z_index=2).shift(shift)
+#        earth.rotate(10*DEGREES, about_point=center)
+
+        theta1 = 18 * DEGREES
+        p1 = center + (UP + LEFT * math.tan(theta1)) * radius
+        wojak.next_to(p1, LEFT, buff=0.33)
+
+        scale = self.r_scale
+
+        '''
+        x = R' (1/cos(theta') - 1)
+        theta' = (theta-theta0)/scale
+        R' = R scale
+
+        have x(-theta1) = R (1/cos(theta1)-1)
+
+        hence 1/cos(theta1) - 1 = scale (1/cos(theta') - 1)
+        theta0 = scale cosinv(1 / (1 + (1/cos(theta1)-1)/scale)) - theta1
+        '''
+
+        theta_0 = scale * math.acos(1 / (1 + (1 / math.cos(theta1) - 1) / scale)) - theta1
+
+        print('theta0 =', theta_0 / DEGREES)
+
+        theta_r = 33 * DEGREES
+
+        shift = DOWN * (scale - 1) * radius
+        radius2 = radius * scale
+        center2 = center + shift
+        theta1_2 = (theta1 + theta_0) * radius / radius2
+
+        h1_2 = radius2 * (1 / math.cos(theta1_2) - 1)
+        h1 = radius * (1 / math.cos(theta1) - 1)
+        print(h1, h1_2)
+        h2 = radius * (1 / math.cos(theta_r) - 1)
+
+        #        _, _, _, rightangle2, eq2 = self.get_trig(radius2*1.002)
+        #        VGroup(rightangle2, eq2).shift(shift)
+        theta_is = 35.8 * DEGREES
+
+        def get_g(theta_0, center2, radius2):
+            """
+            gets light path with effective radius
+            """
+
+            def g(theta):
+                thetap = (theta - theta_0) * radius2 / radius / scale
+                rad = radius * scale * (1 / math.cos(thetap) - 1) + radius2
+                return center2 + (RIGHT * math.sin(theta) + UP * math.cos(theta)) * rad
+
+            return g
+
+        def get_h(theta_l, center2, radius2):
+            def h(theta):
+                thetap = (theta - theta_l) * radius2 / radius - theta1
+                rad = radius * (1 / math.cos(thetap) - 1) + radius2
+                return center2 + (RIGHT * math.sin(theta) + UP * math.cos(theta)) * rad
+
+            return h
+
+        mountain = ImageMobject(r"images/mountain11.png", z_index=1).scale(0.17)
+        t_val = ValueTracker(0.0)
+
+        def get_obj():
+            t = t_val.get_value()
+            scale2 = 1 + (scale - 1) * t
+            center_t = center2 * t + center * (1 - t)
+            radius2 = radius * scale2
+            theta_0p = theta_0 * (1 - t)
+
+            theta1_2 = (theta1 + theta_0) / scale2 - theta_0p
+            earth2 = earth.copy().shift(shift * t).scale(scale2, about_point=center_t)
+            theta_is3 = (theta_is - theta_0) / scale2 + theta_0p
+            p_is = center_t + (UP * math.cos(theta_is3) + RIGHT * math.sin(theta_is3)) * radius * scale2
+            mountain2 = mountain.copy().next_to(p_is, UP, buff=0).rotate(-theta_is3, about_point=p_is).shift(
+                (center_t - p_is) * 0.02 * config.frame_y_radius * 1.5 / radius / scale2)
+
+            theta_r2 = (theta_r - theta_0) / scale2 + theta_0p
+            g = get_g(theta_0p, center_t, radius2)
+            curved = ParametricFunction(g, (-theta1_2, theta_r2), dt=0.01, stroke_width=5, stroke_color=WHITE) \
+                .set_z_index(40)
+
+            h = get_h(-theta1_2, center_t, radius2)
+            curved2 = ParametricFunction(h, (-theta1_2, theta_r2), dt=0.01, stroke_width=5, stroke_color=WHITE,
+                                         stroke_opacity=0.5).set_z_index(40)
+
+            surf = Arc(radius=radius2 * (1 + 0.002 * t), arc_center=center_t * 1.0, start_angle=184 * DEGREES,
+                       angle=-188 * DEGREES, color=BLUE,
+                       stroke_width=5).set_z_index(10)
+
+            get_obj.t_prev = t
+
+            atmos2 = self.atmosphere(center_t, radius2)
+            cdot2 = cdot.copy().shift(shift * t)
+
+            p1_2 = g(-theta1_2)
+            wojak2 = wojak.copy().next_to(p1_2, LEFT, buff=0.33)
+
+            q1 = center_t + (UP * math.cos(theta1_2) + LEFT * math.sin(theta1_2)) * radius2
+            q2 = center_t + (UP * math.cos(theta_r2) + RIGHT * math.sin(theta_r2)) * radius2
+            q3 = center_t + (UP * math.cos(theta_r2) + RIGHT * math.sin(theta_r2)) * (radius2 + h2)
+            p3 = center + UP * radius
+            p4 = center + (UP + RIGHT * math.tan(theta_is)) * radius
+            p5 = center + (UP + LEFT * math.tan(theta1)) * radius
+            p6 = center_t + (UP + RIGHT * math.tan(theta_r2)) * radius2
+
+            line1 = Line(center_t, q1, stroke_color=LIGHT_BROWN, stroke_width=5).set_z_index(20)
+            line2 = Line(q1, p1_2, stroke_color=WHITE, stroke_width=5).set_z_index(20)
+            line3 = Line(center_t, q2, stroke_color=LIGHT_BROWN, stroke_width=5).set_z_index(20)
+            line4 = Line(q2, q3, stroke_color=WHITE, stroke_width=5).set_z_index(20)
+            line5 = Line(center_t, p3, stroke_color=LIGHT_BROWN, stroke_width=5).set_z_index(20)
+            line6 = Line(p3, p4, stroke_width=5).set_z_index(20)
+            line7 = Line(p3, p5, stroke_width=5).set_z_index(20)
+            line8 = Line(p3, p1_2, stroke_width=5)
+            line9 = Line(p3, p6, stroke_width=5)
+            line10 = line5.copy().set_opacity(0.3).set_z_index(19)
+
+            rangle1 = RightAngle(line5, line6, length=0.5, stroke_color=WHITE, stroke_width=5,
+                                 quadrant=(-1, 1)).set_z_index(20)
+            rangle2 = RightAngle(line5, line7, length=0.5, stroke_color=WHITE, stroke_width=5,
+                                 quadrant=(-1, 1)).set_z_index(20)
+
+            eq2_1 = eq[2].copy()
+
+            VGroup(line5, rangle1, rangle2, eq2_1).rotate(-theta_0p, about_point=center_t)
+
+            eq2 = MathTex(r'R^\prime')[0].set_z_index(40).set_opacity(0)
+            eq2.next_to(eq2_1, ORIGIN, submobject_to_align=eq2[0]).shift(LEFT * 0.1 * t)
+            eq2[1].set_opacity(t)
+
+            pos = center_t + RIGHT * math.sin(theta_r2) * (radius2 - radius / 2) \
+                  - center - RIGHT * math.sin(theta_r) * radius / 2
+            eq3 = eq2.copy()
+            eq3.next_to(eq[3], ORIGIN, submobject_to_align=eq3[0]).shift(pos * RIGHT)
+
+            pos = center_t + (LEFT * math.sin(theta1_2) + UP * math.cos(theta1_2)) * (radius2 - radius / 2) \
+                  + LEFT * 0.3
+            eq4 = eq2.copy()
+            eq4.next_to(pos, ORIGIN, submobject_to_align=eq4[0]).shift(LEFT * 0.1 * t)
+
+            eq5 = MathTex(r'h_1', stroke_width=1.5)[0].set_z_index(30).move_to(line2).shift(LEFT * 0.2)
+            eq6 = MathTex(r'h_2', stroke_width=1.5)[0].set_z_index(30).move_to(line4).shift(DR * 0.25)
+
+            eq7 = MathTex(r'd_1')[0].set_z_index(30).next_to(line8, UP, buff=0.2)
+            eq8 = MathTex(r'd_2')[0].set_z_index(30).next_to(line9, UP, buff=0.2)
+
+            res = earth2.add(mountain2, wojak2, curved, atmos2, surf, cdot2, line1, line2, line3,
+                             line4, curved2)
+            res.shift(p1 - p1_2)
+
+            return res
+
+        get_obj.t_prev = 0.0
+
+        obj = always_redraw(get_obj)
+        self.add(obj)
 
 
 class RefractionCalc(Scene):
@@ -979,25 +1346,27 @@ class Theta(Scene):
 
 
 class Bounce(Scene):
-    dot_opacity = 0
+    dot_opacity = 1
     def construct(self):
         pts = [
             (-0.9, 1.7, 0., 0.),
-            (-1.5, 1.05, 0.2, 90 * DEGREES),
-            (-2.6, 0.4, 0.4, -200 * DEGREES),
-            (-3.7, -0.1, 0.4, 90 * DEGREES),
-            (-5, -1.3, 0.4, 180 * DEGREES),
+            [-1.5, 1.05, 0.5, 90 * DEGREES],
+            (-2.6, 0.4, 1, -200 * DEGREES),
+            (-3.7, -0.1, 1, 90 * DEGREES),
+            (-5, -1.3, 1, 180 * DEGREES),
         ]
         obstacle = VMobject()
         man = ImageMobject(r'images/boy.png', z_index=2).scale(0.15)
 #        obstacle = ImageMobject(r"images/island_outline.png", z_index=1)
 
-
         pt = pts[0]
         v1 = 0.0
         v2 = 0.0
-        g = 50.0
+        g = 10.0
         theta1 = 0.0
+
+#        pts[1][2] = math.sqrt(2 * (pts[0][1] - pts[1][1])/g)
+        print(pts[1][2])
 
         t = ValueTracker(0.0)
 
@@ -1027,7 +1396,8 @@ class Bounce(Scene):
             theta1 = (pts[i][3] - pt[3]) / dt
             v1 = (pts[i][0] - pt[0]) / dt
             v2 = (pts[i][1] - pt[1]) / dt + 0.5 * g * dt
-            self.play(t.animate(rate_func=linear).set_value(dt))
+            print(v2)
+            self.play(t.animate(rate_func=linear).set_value(dt), run_time=dt)
 
 
         self.wait(0.5)
