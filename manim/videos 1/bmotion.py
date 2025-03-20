@@ -137,5 +137,57 @@ class BMZoom(Scene):
         self.wait(0.5)
 
 
+class Weierstrass(Scene):
+    def __init__(self, *args, **kwargs):
+#        config.background_color = GREY
+        Scene.__init__(self, *args, **kwargs)
+
+    def construct(self):
+        xlen = config.frame_x_radius
+        ylen = config.frame_y_radius
+        a = 0.5
+        b = 4
+        xrange = 2.0
+        ymax = 1/(1-a)
+        ymin = -ymax * 1.15
+        xvals = np.linspace(-xrange, xrange, 1000)
+        y = np.zeros(len(xvals))
+        fill_color = ManimColor([0.3657/2, 0.7526/2, 0.877/2])
+
+        ax = Axes(x_range=[-xrange, xrange], y_range=[ymin, ymax], z_index=2, x_length=xlen, y_length=ylen)
+        box = SurroundingRectangle(ax, fill_color=BLACK, fill_opacity=0.6, stroke_opacity=0, corner_radius=0.2)
+        VGroup(ax, box).to_edge(DOWN, buff=0.05)
+
+        eq = MathTex(r'f(x)=\sum_{n=0}^\infty 2^{-n}\cos(4^n\pi x)', font_size=32, stroke_width=0.8)[0]\
+            .set_z_index(3).next_to(ax.get_bottom(), UP, buff=0.05)
+
+        line = ax.plot_line_graph(xvals, y, line_color=WHITE, add_vertex_dots=False, stroke_width=1).set_z_index(2)
+        pts = ax.coords_to_point(list(zip(xvals, y)) + [(xrange, ymin), (-xrange, ymin)])
+        poly = Polygon(*pts, stroke_opacity=0, fill_opacity=1, fill_color=fill_color).set_z_index(1)
+        graph = VGroup(line, poly)
+        self.add(box, graph, eq)
+        self.wait(1)
+        x = xvals * PI
+        c = 1.
+        for i in range(15):
+            y += np.cos(x) * c
+            line = ax.plot_line_graph(xvals, y, line_color=WHITE, add_vertex_dots=False, stroke_width=1).set_z_index(2)
+            pts = ax.coords_to_point(list(zip(xvals, y)) + [(xrange, ymin), (-xrange, ymin)])
+            poly = Polygon(*pts, stroke_opacity=0, fill_opacity=1, fill_color=fill_color).set_z_index(1)
+            graph1 = VGroup(line, poly)
+            self.play(ReplacementTransform(graph, graph1), run_time=7/(i+14), rate_func=linear)
+            x *= b
+            c *= a
+            graph = graph1
+
+        self.wait(0.5)
+
+
+if __name__ == "__main__":
+    with tempconfig({"quality": "low_quality", "preview": True}):
+        Weierstrass().render()
+
+
+
 class BMZoomRects(BMZoom):
     bmDraw = BMDrawRects
