@@ -48,9 +48,7 @@ class BMDraw:
             yvals0[i] = yvals[i] = (yvals[i - 1] + yvals[i + 1]) * 0.5
             yvals[i] += random.normalvariate(0, b)
 
-    def __call__(self):
-        scale = self.scale.get_value() - self.prev_scale
-        xs = math.exp(scale)
+    def get_obj(self, scale):
         yvals = self.yvals
         yvals0 = self.yvals0
         xvals = self.xvals
@@ -58,15 +56,7 @@ class BMDraw:
         dx = self.dx
         dy = self.dy
 
-        if xs > 2:
-            self.rescale()
-            self.prev_scale += math.log(2)
-            scale -= math.log(2)
-            #                for rect in rects:
-            #                    rect[0] *= 2
-            #                    rect[1] *= math.sqrt(2)
-            xs = math.exp(scale)
-
+        xs = math.exp(scale)
         ys = math.exp(scale / 2)
 
         xvals1 = xvals * xs
@@ -81,19 +71,55 @@ class BMDraw:
         right = RIGHT * config.frame_x_radius * 1.02
         pts = pts + [right + bottom, -right + bottom]
 
-        path = Polygon(*pts, stroke_width=2, fill_opacity=1, fill_color=self.fill_color, stroke_color=WHITE)
-
-        #            if xs * rects[-1][0] > 2 * config.frame_x_radius and ys * rects[-1][1] > 2 * config.frame_y_radius:
-        #                rects.pop()
-
-        #            if rects[0][0] * xs > dx[0] * 0.5:
-        #                rects.insert(0, [rect0[0]/xs, rect0[1]/ys])
-
-        #            rects_plot = [Rectangle(width=xs * rect[0], height=ys * rect[1], stroke_color=RED, stroke_width=4,
-        #                              stroke_opacity=min(0.7, (rect[0] * xs/rect0[0] - 1) * 2)).set_z_index(1) for rect in rects]
+        path = Polygon(*pts, stroke_width=1, fill_opacity=1, fill_color=self.fill_color, stroke_color=WHITE)
 
         return path
-    #            return VGroup(path, *rects_plot)
+
+    def __call__(self):
+        scale = self.scale.get_value() - self.prev_scale
+        xs = math.exp(scale)
+
+        if xs > 2:
+            self.rescale()
+            self.prev_scale += math.log(2)
+            scale -= math.log(2)
+            xs = math.exp(scale)
+
+        return self.get_obj(scale)
+
+
+class BMDrawRects(BMDraw):
+    def __init__(self, *args, **kwargs):
+        BMDraw.__init__(self, *args, **kwargs)
+        dx = self.dx
+        dy = self.dy
+        w = 0.01
+        self.rect0 = rect0 = [w * dx[0], math.sqrt(w/2) * 4 * dy[1]]
+        xs = 1.5
+        self.rects = [[rect0[0] * xs, rect0[1] * math.sqrt(xs)]]
+
+    def get_obj(self, scale):
+        xs = math.exp(scale)
+        ys = math.exp(scale/2)
+        rects = self.rects
+        dx = self.dx
+        if xs * rects[-1][0] > 2 * config.frame_x_radius and ys * rects[-1][1] > 2 * config.frame_y_radius:
+            rects.pop()
+
+        rect0 = self.rect0
+        if rects[0][0] * xs > dx[0] * 0.5:
+            rects.insert(0, [rect0[0]/xs, rect0[1]/ys])
+
+        rects_plot = [Rectangle(width=xs * rect[0], height=ys * rect[1], stroke_color=RED, stroke_width=4,
+                                stroke_opacity=min(0.7, (rect[0] * xs/rect0[0] - 1) * 2)).set_z_index(1)
+                      for rect in rects]
+
+        return VGroup(*rects_plot)
+
+    def rescale(self):
+        for rect in self.rects:
+            rect[0] *= 2
+            rect[1] *= math.sqrt(2)
 
 
 class BMZoom(Scene):
@@ -103,12 +129,6 @@ class BMZoom(Scene):
     def construct(self):
         random.seed(3)
 
-
-#        w = 0.01
-#        rect0 = [w * dx[0], math.sqrt(w/2) * 4 * dy[1]]
-#        xs = 1.5
-#        rects = [[rect0[0] * xs, rect0[1] * math.sqrt(xs)]]
-
         f = self.bmDraw()
         path = always_redraw(f)
         self.add(path)
@@ -117,3 +137,5 @@ class BMZoom(Scene):
         self.wait(0.5)
 
 
+class BMZoomRects(BMZoom):
+    bmDraw = BMDrawRects
