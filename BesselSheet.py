@@ -10,7 +10,6 @@ from matplotlib import cm
 import math
 import pylab
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-
 seed = 4
 seed = 5
 #seed = 6
@@ -69,7 +68,7 @@ for j in range(1, ypts):
 
 
 fig = plt.figure()
-ax = plt.axes(projection='3d', frame_on='True')
+ax = plt.axes(projection='3d')#, frame_on='True')
 surf = ax.plot_surface(X3, Y3, Z3, cmap=cm.coolwarm, edgecolor='black', linewidth=0.5) # coolwarm, Reds, summer
 #ax.plot_wireframe(X3, Y3, Z3, cmap='cividis', edgecolor='blue')
 ax.set_xlim(0.0, plotmax)
@@ -79,7 +78,8 @@ plt.subplots_adjust(left=0.01, right=0.99, bottom=0.05, top=0.99, hspace=0, wspa
 ax.view_init(20, 134)
 
 fig2 = plt.figure()
-ax2 = plt.axes(projection='3d', frame_on='False')
+ax2 = plt.axes(projection='3d')
+#ax2.set_frame_on()
 ax2.set_xticks([])
 ax2.set_yticks([])
 ax2.set_zticks([])
