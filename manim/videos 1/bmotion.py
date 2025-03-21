@@ -150,7 +150,7 @@ class Weierstrass(Scene):
         xrange = 2.0
         ymax = 1/(1-a)
         ymin = -ymax * 1.15
-        xvals = np.linspace(-xrange, xrange, 1000)
+        xvals = np.linspace(-xrange, xrange, 2000)
         y = np.zeros(len(xvals))
         fill_color = ManimColor([0.3657/2, 0.7526/2, 0.877/2])
 
@@ -158,7 +158,7 @@ class Weierstrass(Scene):
         box = SurroundingRectangle(ax, fill_color=BLACK, fill_opacity=0.6, stroke_opacity=0, corner_radius=0.2)
         VGroup(ax, box).to_edge(DOWN, buff=0.05)
 
-        eq = MathTex(r'f(x)=\sum_{n=0}^\infty 2^{-n}\cos(4^n\pi x)', font_size=32, stroke_width=0.8)[0]\
+        eq = MathTex(r'f(x)=\sum_{n=0}^\infty 2^{-n}\cos(4^n\pi x)', font_size=32*2, stroke_width=0.8)[0]\
             .set_z_index(3).next_to(ax.get_bottom(), UP, buff=0.05)
 
         line = ax.plot_line_graph(xvals, y, line_color=WHITE, add_vertex_dots=False, stroke_width=1).set_z_index(2)
@@ -175,17 +175,129 @@ class Weierstrass(Scene):
             pts = ax.coords_to_point(list(zip(xvals, y)) + [(xrange, ymin), (-xrange, ymin)])
             poly = Polygon(*pts, stroke_opacity=0, fill_opacity=1, fill_color=fill_color).set_z_index(1)
             graph1 = VGroup(line, poly)
-            self.play(ReplacementTransform(graph, graph1), run_time=7/(i+14), rate_func=linear)
+            self.play(ReplacementTransform(graph, graph1), run_time=7/(i+14) * 4, rate_func=linear)
             x *= b
             c *= a
             graph = graph1
 
         self.wait(0.5)
 
+def bmcovs(times, H):
+    n = len(times)
+    cov = np.ndarray(shape=(n, n))
+    for i in range(0, n):
+        t = times[i]
+        cov[i, i] = math.pow(t, H * 2)
+        for j in range(0, i):
+            dt = abs(t - times[j])
+            cov[i, j] = cov[j, i] = (cov[i, i] + cov[j, j] - math.pow(dt, H * 2))/2
+    return cov
+
+def bmpath(times, H, seed):
+    np.random.seed(seed)
+    npts = len(times)
+    mean = np.zeros(shape=(npts,))
+    cov = bmcovs(times, H)
+    return np.random.multivariate_normal(mean, cov)
+
+
+def bmpath2(times, H, rands):
+    if H >= 0.99999:
+        return times * rands[0]
+    cov = bmcovs(times, H)
+    U = gs(cov)
+    return np.matmul(U, rands)
+
+
+
+def gs(M):
+    """
+    return U with M = U U^T
+    """
+    n = len(M)
+    U = M.copy()
+    for i in range(n):
+        s = U[i, i]
+#        U[i+1:] -= np.matmul(U[i], np.transpose(U[i+1:, i]))/s
+        for j in range(i + 1, n):
+            U[j] -= U[i] * (U[j, i]/s)
+        U[i] /= math.sqrt(s)
+
+    return np.transpose(U)
+
+
+class FractionalBM(Scene):
+    def construct(self):
+        xlen = config.frame_x_radius * 1.8
+        ylen = config.frame_y_radius * 1.8
+        xmax = 1.0
+        ymax = 2
+        ymin = -1.3
+        m = 10
+        n = 2**m + 1
+        xvals = np.linspace(0, xmax, n)
+
+        ax = Axes(x_range=[0, 1], y_range=[ymin, ymax], z_index=2, x_length=xlen, y_length=ylen)
+        box = SurroundingRectangle(ax, fill_color=BLACK, fill_opacity=0.6, stroke_opacity=0, corner_radius=0.2)
+        diag = ax.coords_to_point(xmax, ymax) - ax.coords_to_point(0, ymin)
+        edge = Rectangle(width=diag[0], height=diag[1], fill_opacity=0, stroke_opacity=1, stroke_width=2, stroke_color=YELLOW).set_z_index(10)
+
+        eq = MathTex(r'H = 0.51').next_to(ax.get_bottom(), UP, buff=0.1)
+        pt = eq[0][0].get_center()
+#        VGroup(ax, box).to_edge(DOWN, buff=0.05)
+
+        xvals2 = np.zeros(n-1)
+        indices = [0] * (n-1)
+
+        j = 0
+        for r in range(m+1):
+            step = 2**(m-r)
+            for i in range(step, n, step * 2):
+                xvals2[j] = xvals[i]
+                indices[j] = i
+                j += 1
+
+        np.random.seed(1)
+        rands = np.random.normal(size=n-1)
+
+        self.add(box, edge)
+
+        h_value = ValueTracker(0.002)
+
+        def f():
+            h = h_value.get_value()
+            yvals2 = bmpath2(xvals2, h, rands)
+            yvals = np.zeros(n)
+            for i in range(n-1):
+                yvals[indices[i]] = yvals2[i]
+            plot = ax.plot_line_graph(xvals, yvals, add_vertex_dots=False, stroke_width=2, line_color=BLUE).set_z_index(1)
+            eq = MathTex(r'H={:.2f}'.format(h))[0].set_z_index(15)
+            eq.next_to(pt, ORIGIN, submobject_to_align=eq[0])
+            return VGroup(plot, eq)
+
+        path = always_redraw(f)
+
+        self.add(path)
+        self.play(h_value.animate.set_value(0.5), run_time=4)
+        self.play(h_value.animate.set_value(1), run_time=4)
+
+        self.wait(0.5)
+
+
+
+
 
 if __name__ == "__main__":
-    with tempconfig({"quality": "low_quality", "preview": True}):
-        Weierstrass().render()
+    times = np.array([1.0, 0.5, 0.25, 0.75, 0.125, 0.375, 0.625, 0.875])
+    path = bmpath2(times, 0.4, 3)
+    print(path)
+#    C = bmcovs(times, 0.4)
+#    print(C)
+#    M = gs(C)
+#    print(M)
+#    print(np.matmul(M, np.transpose(M)))
+#    with tempconfig({"quality": "low_quality", "preview": True}):
+#        FractionalBM().render()
 
 
 
