@@ -137,6 +137,87 @@ class BMZoom(Scene):
         self.wait(0.5)
 
 
+class Circle1(Scene):
+    fill_color=GREY
+    def __init__(self, *args, **kwargs):
+        Scene.__init__(self, *args, **kwargs)
+        config.background_color=self.fill_color
+
+    def construct(self):
+        circ1 = Circle(radius=1, stroke_width=6, stroke_color=BLUE, fill_opacity=0, fill_color=self.fill_color).set_z_index(1).rotate(90*DEGREES)
+        circ2 = circ1.copy().set_stroke(opacity=0).set_fill(opacity=0.6).set_z_index(0)
+        self.wait(0.5)
+        self.play(Create(circ1), rate_func=linear, run_time=0.6)
+        self.play(FadeIn(circ2), run_time=0.5, rate_func=linear)
+        self.wait(0.5)
+
+class Ellipse1(Circle1):
+    fill_color = ORANGE
+
+    def construct(self):
+        circ1 = Ellipse(width=2.4, height=1.6, stroke_color=YELLOW, stroke_width=6, fill_opacity=0, fill_color=self.fill_color).set_z_index(1).rotate(30*DEGREES)
+        circ2 = circ1.copy().set_stroke(opacity=0).set_fill(opacity=0.6).set_z_index(0)
+        self.wait(0.5)
+        self.play(Create(circ1), rate_func=linear, run_time=0.6)
+        self.play(FadeIn(circ2), run_time=0.5, rate_func=linear)
+        self.wait(0.5)
+
+class Conic(ThreeDScene):
+    def construct(self):
+        cone_height = 3
+        cone_slope = 0.7
+        plane_offset = 0.5
+        plane_slope = 0.2
+        res = 10
+
+        base_radius = cone_slope * cone_height
+        kwargs = {'base_radius': base_radius, 'height': cone_height, 'show_base': True, 'fill_color': BLUE}
+        surf_op = 0.9
+        cone_op=0.9
+        cone1 = Surface(lambda u, v: OUT * u + (RIGHT * math.cos(v) + UP * math.sin(v)) * cone_slope * u,
+                        u_range=[-cone_height, cone_height], v_range=[0, TAU], resolution=[10*res, 10*res], fill_color=BLUE,
+                        fill_opacity=cone_op, stroke_opacity=0, checkerboard_colors=False)
+        plane = Surface(lambda u, v: OUT * u + RIGHT * (plane_offset + plane_slope * u) + UP * v,
+                        u_range=[-cone_height, cone_height], v_range=[-cone_height, cone_height],
+                        resolution = [10*res, 10*res], fill_color=GREY, fill_opacity=surf_op, stroke_opacity=0,
+                        stroke_color=GREY, stroke_width=1,
+                        checkerboard_colors=False)
+        dot = Dot3D(color=RED, radius=0.3)
+
+        dir = 1
+
+        def pf(t):
+            """
+            v = t
+            cs^2 * u^2 = (po + ps*u)^2 + v^2
+            (cs^2 - ps^2)*u^2 - 2*po*ps*u - po^2 - v^2 = 0
+            au^2 - 2bu - c=0
+            u = (b +- sqrt(b^2 + ac))/a
+
+            bound: u = ch
+            """
+            a = cone_slope**2 - plane_slope**2
+            b = plane_slope * plane_offset
+            c = plane_offset**2 + t**2
+            u = (b + dir * math.sqrt(b**2 + a*c))/a
+            return UP * t + OUT * u + RIGHT * (plane_offset + plane_slope * u)
+
+        t0 = math.sqrt(base_radius**2 - (plane_offset + plane_slope*cone_height)**2)
+        t1 = math.sqrt(base_radius**2 - (plane_offset - plane_slope*cone_height)**2)
+        t0vec = np.linspace(-t0, t0, 100)
+        t1vec = np.linspace(-t1, t1, 100)
+        curve1 = VGroup(*[Line3D(pf(t0vec[i-1]), pf(t0vec[i]), color=RED, thickness=0.02, fill_opacity=1, resolution=10) for i in range(1, 100)])
+#        curve1 = ParametricFunction(pf, t_range=(-t0, t0), stroke_color=RED, stroke_width=4, stroke_opacity=0.8)
+        dir=-1
+        curve2 = VGroup(*[Line3D(pf(t1vec[i-1]), pf(t1vec[i]), color=RED, thickness=0.02) for i in range(1, 100)])
+#        curve2 = ParametricFunction(pf, t_range=(-t1, t1), stroke_color=RED, stroke_width=4)
+
+
+
+        self.set_camera_orientation(phi=90*DEGREES, theta=45*DEGREES)
+        self.add(cone1, plane, curve1, curve2)
+        self.wait()
+
 class Weierstrass(Scene):
     def __init__(self, *args, **kwargs):
 #        config.background_color = GREY
