@@ -252,18 +252,37 @@ class Conic(ThreeDScene):
         tval.set_value(-t1)
         self.play(tval.animate.set_value(t1), run_time=t1*0.7, rate_func=linear)
         move[-1].set_opacity(0)
+        dir=0
         self.wait(0.3)
         self.begin_ambient_camera_rotation(rate=PI*1.2)
 
         self.wait(4)
 
-class Triangle1(Scene):
+class Triangle1(Circle1):
+    fill_color = BLUE
     def construct(self):
         p0 = ORIGIN
-        p1 = p0 + RIGHT + UP * 0.8
-        p2 = p0 + RIGHT * 1.7 + DOWN * 0.2
-        tr = Polygon([p0, p1, p2])
-        self.add(tr)
+        p1 = p0 + RIGHT * 2 + UP * 1.9
+        p2 = p0 + RIGHT * 3 + DOWN * 0.6
+        circ1 = Polygon(p0, p1, p2, stroke_color=GREEN, stroke_width=6, fill_color=self.fill_color, fill_opacity=0).set_z_index(1)
+        circ2 = circ1.copy().set_stroke(opacity=0).set_fill(opacity=0.6).set_z_index(0)
+        self.wait(0.5)
+        self.play(Create(circ1), rate_func=linear, run_time=0.6)
+        self.play(FadeIn(circ2), run_time=0.5, rate_func=linear)
+        self.wait(0.5)
+        dots = [Dot(p, radius=0.1, color=RED).set_z_index(2) for p in [p0, p1, p2]]
+        self.play(FadeIn(*dots), run_time=1)
+        self.wait()
+
+class Polygon1(Circle1):
+    fill_color = ORANGE
+    def construct(self):
+        circ1 = RegularPolygon(5, radius=1.4, stroke_color=YELLOW, stroke_width=6, fill_color=self.fill_color, fill_opacity=0).set_z_index(1)
+        circ2 = circ1.copy().set_stroke(opacity=0).set_fill(opacity=0.6).set_z_index(0)
+        self.wait(0.5)
+        self.play(Create(circ1), rate_func=linear, run_time=0.6)
+        self.play(FadeIn(circ2), run_time=0.5, rate_func=linear)
+        self.wait(0.5)
 
 class Weierstrass(Scene):
     def __init__(self, *args, **kwargs):
