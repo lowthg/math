@@ -163,17 +163,21 @@ class Ellipse1(Circle1):
         self.wait(0.5)
 
 class Conic(ThreeDScene):
+    def __init__(self, *args, **kwargs):
+        config.background_color=GREY
+        ThreeDScene.__init__(self, *args, **kwargs)
+
     def construct(self):
-        cone_height = 3
+        cone_height = 1.5
         cone_slope = 0.7
-        plane_offset = 0.5
+        plane_offset = 0.3
         plane_slope = 0.2
         res = 10
 
         base_radius = cone_slope * cone_height
-        kwargs = {'base_radius': base_radius, 'height': cone_height, 'show_base': True, 'fill_color': BLUE}
-        surf_op = 0.9
-        cone_op=0.9
+        surf_op = 0.6
+        cone_op=0.5
+        line_op=0.5
         cone1 = Surface(lambda u, v: OUT * u + (RIGHT * math.cos(v) + UP * math.sin(v)) * cone_slope * u,
                         u_range=[-cone_height, cone_height], v_range=[0, TAU], resolution=[10*res, 10*res], fill_color=BLUE,
                         fill_opacity=cone_op, stroke_opacity=0, checkerboard_colors=False)
@@ -200,23 +204,66 @@ class Conic(ThreeDScene):
             b = plane_slope * plane_offset
             c = plane_offset**2 + t**2
             u = (b + dir * math.sqrt(b**2 + a*c))/a
-            return UP * t + OUT * u + RIGHT * (plane_offset + plane_slope * u)
+            return UP * t * dir + OUT * u + RIGHT * (plane_offset + plane_slope * u)
 
         t0 = math.sqrt(base_radius**2 - (plane_offset + plane_slope*cone_height)**2)
         t1 = math.sqrt(base_radius**2 - (plane_offset - plane_slope*cone_height)**2)
         t0vec = np.linspace(-t0, t0, 100)
         t1vec = np.linspace(-t1, t1, 100)
-        curve1 = VGroup(*[Line3D(pf(t0vec[i-1]), pf(t0vec[i]), color=RED, thickness=0.02, fill_opacity=1, resolution=10) for i in range(1, 100)])
-#        curve1 = ParametricFunction(pf, t_range=(-t0, t0), stroke_color=RED, stroke_width=4, stroke_opacity=0.8)
+        kwargs = {'color': GREY, 'thickness': 0.02, 'fill_opacity': line_op, 'stroke_opacity': line_op, 'stroke_color': GREY, 'resolution': 10}
+        curve1 = VGroup(*[Line3D(pf(t0vec[i-1]), pf(t0vec[i]), **kwargs) for i in range(1, 100)])
         dir=-1
-        curve2 = VGroup(*[Line3D(pf(t1vec[i-1]), pf(t1vec[i]), color=RED, thickness=0.02) for i in range(1, 100)])
-#        curve2 = ParametricFunction(pf, t_range=(-t1, t1), stroke_color=RED, stroke_width=4)
+        curve2 = VGroup(*[Line3D(pf(t1vec[i-1]), pf(t1vec[i]), **kwargs) for i in range(1, 100)])
 
+        self.set_camera_orientation(phi=90*DEGREES, theta=35*DEGREES)
+        self.add(cone1)
+        self.add(plane)
 
+        dot = Dot3D(radius=0.08, color=RED, stroke_opacity=1, fill_opacity=1, fill_color=RED, stroke_color=RED)
 
-        self.set_camera_orientation(phi=90*DEGREES, theta=45*DEGREES)
-        self.add(cone1, plane, curve1, curve2)
-        self.wait()
+        tval = ValueTracker(-t0)
+        dir = 0
+
+        def g():
+            t = tval.get_value()
+            if dir == 1:
+                curve = curve1
+                tvec = t0vec
+            elif dir == -1:
+                curve = curve2
+                tvec = t1vec
+            else:
+                return VGroup(curve1.copy(), curve2.copy())
+
+            for i in range(1, len(tvec)):
+                if tvec[i] + tvec[i-1] < t * 2:
+                    curve[i-1].set_stroke(color=RED).set_fill(color=RED).set_opacity(1)
+
+            return VGroup(curve1.copy(), curve2.copy(), dot.copy().move_to(pf(t)))
+
+        move = always_redraw(g)
+        self.add(move)
+        self.wait(0.5)
+        dir = 1
+        self.play(tval.animate.set_value(t0), run_time=t0*0.7, rate_func=linear)
+        move[-1].set_opacity(0)
+        self.wait(0.3)
+        dir = -1
+        tval.set_value(-t1)
+        self.play(tval.animate.set_value(t1), run_time=t1*0.7, rate_func=linear)
+        move[-1].set_opacity(0)
+        self.wait(0.3)
+        self.begin_ambient_camera_rotation(rate=PI*1.2)
+
+        self.wait(4)
+
+class Triangle1(Scene):
+    def construct(self):
+        p0 = ORIGIN
+        p1 = p0 + RIGHT + UP * 0.8
+        p2 = p0 + RIGHT * 1.7 + DOWN * 0.2
+        tr = Polygon([p0, p1, p2])
+        self.add(tr)
 
 class Weierstrass(Scene):
     def __init__(self, *args, **kwargs):
