@@ -140,8 +140,9 @@ class BMZoom(Scene):
 class Circle1(Scene):
     fill_color=GREY
     def __init__(self, *args, **kwargs):
+        if config.transparent:
+            config.background_color=self.fill_color
         Scene.__init__(self, *args, **kwargs)
-        config.background_color=self.fill_color
 
     def construct(self):
         circ1 = Circle(radius=1, stroke_width=6, stroke_color=BLUE, fill_opacity=0, fill_color=self.fill_color).set_z_index(1).rotate(90*DEGREES)
@@ -283,6 +284,31 @@ class Polygon1(Circle1):
         self.play(Create(circ1), rate_func=linear, run_time=0.6)
         self.play(FadeIn(circ2), run_time=0.5, rate_func=linear)
         self.wait(0.5)
+
+class Poly1(Circle1):
+    fill_color=ORANGE
+    def construct(self):
+        x_range = [0, 2.3]
+        def f(x):
+            return x**3 - 3*x**2 + 2*x + 1
+#            return x*(x-1)*(x-2) + 1/2
+        ax = Axes(x_range=[0, x_range[1]*1.1], y_range=[0, f(x_range[1])*1.1], x_length=5, y_length=3,
+                  axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False,
+                               "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               },
+                  ).set_z_index(2)
+
+        eq = MathTex('y=x^3-3x^2+2x+1', font_size=40, stroke_width=1.5)[0].next_to(ax.get_bottom(), UP, buff=0.35).set_z_index(2)
+        self.add(ax, eq)
+        self.wait(0.5)
+
+        crv = ax.plot(f, x_range=x_range, color=BLUE, stroke_width=6).set_z_index(1)
+        area = ax.get_area(crv, x_range=x_range, color=self.fill_color, opacity=0.4)
+
+        self.play(Create(crv), run_time=1, rate_func=linear)
+        self.play(FadeIn(area), run_time=1)
+        self.wait()
 
 class Weierstrass(Scene):
     def __init__(self, *args, **kwargs):
