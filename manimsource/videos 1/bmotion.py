@@ -9,6 +9,7 @@ import datetime
 import sys
 import scipy.interpolate
 
+
 sys.path.append('../abracadabra/')
 # noinspection PyUnresolvedReferences
 import abracadabra as abra
@@ -89,6 +90,7 @@ class BMDraw:
 
 
 class BMDrawRects(BMDraw):
+    multi=False
     def __init__(self, *args, **kwargs):
         BMDraw.__init__(self, *args, **kwargs)
         dx = self.dx
@@ -103,14 +105,14 @@ class BMDrawRects(BMDraw):
         ys = math.exp(scale/2)
         rects = self.rects
         dx = self.dx
-        if xs * rects[-1][0] > 2 * config.frame_x_radius and ys * rects[-1][1] > 2 * config.frame_y_radius:
+        if self.multi and xs * rects[-1][0] > 2 * config.frame_x_radius and ys * rects[-1][1] > 2 * config.frame_y_radius:
             rects.pop()
 
         rect0 = self.rect0
-        if rects[0][0] * xs > dx[0] * 0.5:
+        if self.multi and rects[0][0] * xs > dx[0] * 0.5:
             rects.insert(0, [rect0[0]/xs, rect0[1]/ys])
 
-        rects_plot = [Rectangle(width=xs * rect[0], height=ys * rect[1], stroke_color=RED, stroke_width=4,
+        rects_plot = [Rectangle(width=xs * rect[0], height=ys * rect[1], stroke_color=RED_B, stroke_width=4,
                                 stroke_opacity=min(0.7, (rect[0] * xs/rect0[0] - 1) * 2)).set_z_index(1)
                       for rect in rects]
 
@@ -136,6 +138,8 @@ class BMZoom(Scene):
 
         self.wait(0.5)
 
+class BMZoomRects(BMZoom):
+    bmDraw = BMDrawRects
 
 class Circle1(Scene):
     fill_color=GREY
@@ -310,6 +314,319 @@ class Poly1(Circle1):
         self.play(FadeIn(area), run_time=1)
         self.wait()
 
+class SmoothZoom(Scene):
+    def construct(self):
+        x_range = [-1., 1.]
+        y_range=[-1,1]
+        def f(x):
+            return x * 0.4 - 0.3 * (np.cos((x+0.1)*5)-np.cos(0.5))
+
+        ax = Axes(x_range=x_range, y_range=y_range, x_length=config.frame_x_radius, y_length=config.frame_y_radius)
+        dl = ax.coords_to_point(x_range[0], y_range[0])
+        ur = ax.coords_to_point(x_range[1], y_range[1])
+        diag = ur - dl
+        edge = Rectangle(width=diag[0], height=diag[1], stroke_width=4, stroke_color=WHITE, fill_color=BLACK, fill_opacity=0).set_z_index(10)
+        box = edge.copy().set_stroke(opacity=0).set_fill(opacity=0.6).set_z_index(0)
+
+        xvals = np.linspace(*x_range, 101)
+        yvals = f(xvals)
+
+        gp = VGroup(edge, box)
+        shift = -gp.get_center()
+        gp.to_edge(DOWN, buff=0.05)
+        shift += gp.get_center()
+        ax.shift(shift)
+        crv = ax.plot_line_graph(xvals, yvals, stroke_width=4, line_color=BLUE,
+                                 add_vertex_dots=False).set_z_index(5)
+
+        self.add(edge, box)
+        self.wait(0.5)
+        self.play(Create(crv), run_time=1, rate_func=linear)
+        self.wait(0.2)
+        a0 = 0.3
+        a = a0
+#        x = np.linspace(-a, a, 50)
+#        y = f(x)
+        s_val = ValueTracker(1.0)
+
+        dot = Dot(radius=0.1, color=RED).move_to(shift).set_z_index(7)
+
+        def f():
+            s = s_val.get_value()
+            crv = ax.plot_line_graph(xvals * s, yvals * s, stroke_width=4, line_color=GREY,
+                                     add_vertex_dots=False).set_z_index(4)
+            op = min((a*s - 0.3) * 5, 1.) if a < 0.2 else 1
+            rect = Rectangle(width=a*s*diag[0], height = a*s*diag[1], stroke_width=4, stroke_color=RED,
+                             stroke_opacity=op).set_z_index(7).move_to(shift)
+            return VGroup(crv, rect)
+
+        curveZoom = always_redraw(f)
+        self.play(FadeIn(curveZoom, dot), run_time=0.5)
+        self.wait(0.5)
+        self.play(s_val.animate.set_value(1/a), run_time=1.5, rate_func=rate_functions.ease_in_cubic)
+        self.wait(0.2)
+        a *= a0
+        self.play(s_val.animate.set_value(1/a), run_time=1.5, rate_func=linear)
+        self.wait(0.2)
+        a *= a0
+        self.play(s_val.animate.set_value(1/a), run_time=1.5, rate_func=linear)
+        self.wait()
+
+class SmoothStock1(Scene):
+    def __init__(self, *args, **kwargs):
+        config.background_color=GREY
+        Scene.__init__(self, *args, **kwargs)
+
+    def construct(self):
+        tmax = 10
+        ymax = 10
+        ax = Axes(x_range=[0, tmax*1.1], y_range=[0, ymax], x_length=5, y_length=3,
+                  axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False,
+                               "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               },
+                  ).set_z_index(200)
+        box = SurroundingRectangle(ax, corner_radius=0.2, fill_color=BLACK, fill_opacity=0.7, stroke_opacity=0,
+                                   buff=0.15)
+        eq1 = MathTex('t')[0].next_to(ax.x_axis.get_right(), UL).set_z_index(2)
+        eq2 = MathTex('S_t')[0].next_to(ax.y_axis.get_top(), DR, buff=0.2).set_z_index(2)
+
+        self.add(box, ax, eq1, eq2)
+        n = 100
+        x = np.linspace(0, tmax, n)
+        xarr = [0, 1, 3, 5, 7.5, 10]
+        sprice = scipy.interpolate.CubicHermiteSpline(
+            xarr,
+            [y-0.5 for y in [4, 3, 7, 4, 9, 5]],
+            [-1, 0, 0, 0, 0, -2]
+        )
+        y = sprice(x)
+        pts = ax.coords_to_point([(t, sprice(t)) for t in xarr])
+        plot = ax.plot_line_graph(x, y, stroke_width=5, line_color=WHITE, add_vertex_dots=False).set_z_index(1)
+
+        i0 = j0 = i1 = j1 = 0
+        for i in range(len(x)):
+            if i0 == 0 and x[i] > 1:
+                i0 = i
+            if j0 == 0 and x[i] > 3:
+                j0 = i
+            if i1 == 0 and x[i] > 5:
+                i1 = i
+            if j1 == 0 and x[i] > 7.5:
+                j1 = i
+
+
+        self.wait(0.5)
+        self.play(Create(plot), rate_func=linear, run_time=1.5)
+        self.wait(0.5)
+
+        tval = ValueTracker(0.0)
+        show0 = show1 = show2 = show3 = show4 = False
+        green = GREEN_E
+        red = RED
+
+        def f():
+            t = tval.get_value()
+            st = sprice(t)
+            dot = Dot(ax.coords_to_point(t, st), radius=0.1).set_z_index(50)
+            res = []
+            color = red
+
+            if show0:
+                k = 0
+                for i in range(0, i0 + 1):
+                    k = i
+                    if x[i] >= t:
+                        break
+                plot0 = ax.plot_line_graph(x[0:k + 1], y[0:k + 1], stroke_width=6, line_color=RED_E,
+                                           add_vertex_dots=False).set_z_index(2)
+                res.append(*plot0)
+
+            if show1:
+                k = i0
+                for i in range(i0, j0 + 1):
+                    k = i
+                    if x[i] >= t:
+                        break
+                plot1 = ax.plot_line_graph(x[i0:k+1], y[i0:k+1], stroke_width=6, line_color=green, add_vertex_dots=False).set_z_index(2)
+                res.append(*plot1)
+                color = green
+
+            if show2:
+                k = j0
+                for i in range(j0, i1 + 1):
+                    k = i
+                    if x[i] >= t:
+                        break
+                plot2 = ax.plot_line_graph(x[j0:k+1], y[j0:k+1], stroke_width=6, line_color=red, add_vertex_dots=False).set_z_index(2)
+                res.append(*plot2)
+                color = red
+
+            if show3:
+                k = i1
+                for i in range(i1, j1 + 1):
+                    k = i
+                    if x[i] >= t:
+                        break
+                plot3 = ax.plot_line_graph(x[i1:k+1], y[i1:k+1], stroke_width=6, line_color=green, add_vertex_dots=False).set_z_index(2)
+                res.append(*plot3)
+                color = green
+
+            if show4:
+                k = j1
+                for i in range(j1, n):
+                    k = i
+                    if x[i] >= t:
+                        break
+                dot.set_opacity(math.pow(min((x[-1] - t)*2, 1), 0.3))
+                plot4 = ax.plot_line_graph(x[j1:k+1], y[j1:k+1], stroke_width=6, line_color=red, add_vertex_dots=False).set_z_index(2)
+                res.append(*plot4)
+                color = red
+
+
+            return VGroup(*res, dot.set_color(color))
+
+        buy = Tex(r'\bf buy', color=green, font_size=35)[0]
+        sell = Tex(r'\bf sell', color=red, font_size=35)[0]
+        profit = Tex(r'\bf profit!', font_size=30, color=WHITE)[0].set_z_index(200)
+        move = always_redraw(f)
+        self.add(move)
+
+        show0 = True
+        self.play(tval.animate.set_value(x[i0]), run_time=0.5, rate_func=linear)
+        dot1 = move[-1].copy().set_color(green).move_to(pts[1]).set_z_index(60)
+        self.play(FadeIn(dot1, buy.copy().next_to(pts[1], DOWN, buff=0.1)), run_time=0.2)
+
+        show1 = True
+        self.play(tval.animate.set_value(x[j0]), run_time=0.8, rate_func=linear)
+        pt = pts[1] * UP + pts[2] * RIGHT
+        line1 = DashedLine(pts[1], pt + RIGHT*0.1, stroke_width=2)
+        arr1 = Arrow(pt, pts[2], color=ManimColor(WHITE.to_rgb()*0.7), buff=0, stroke_width=4).set_z_index(100)
+        dot2 = move[-1].copy().set_color(red).move_to(pts[2]).set_z_index(60)
+        profit1 = profit.copy().move_to(pt * 0.6 + pts[2] * 0.4)
+        self.play(FadeIn(dot2, sell.copy().next_to(pts[2], UP, buff=0.2)), run_time=0.2)
+
+        show2 = True
+        self.play(tval.animate.set_value(x[i1]), run_time=0.8, rate_func=linear)
+        dot3 = move[-1].copy().set_color(green).move_to(pts[3]).set_z_index(60)
+        self.play(FadeIn(dot3, buy.copy().next_to(pts[3], DOWN, buff=0.1)), run_time=0.2)
+
+        show3 = True
+        self.play(tval.animate.set_value(x[j1]), run_time=0.8, rate_func=linear)
+        pt = pts[3] * UP + pts[4] * RIGHT
+        line2 = DashedLine(pts[3], pt + RIGHT*0.1, stroke_width=2)
+        arr2 = Arrow(pt, pts[4], color=ManimColor(WHITE.to_rgb()*0.7), buff=0, stroke_width=4).set_z_index(100)
+        dot4 = move[-1].copy().set_color(red).move_to(pts[4]).set_z_index(60)
+        profit2 = profit.copy().move_to(pt * 0.6 + pts[4] * 0.4)
+        self.play(FadeIn(dot4, sell.copy().next_to(pts[4], UP, buff=0.2)), run_time=0.2)
+
+        show4 = True
+        self.play(tval.animate.set_value(x[-1]), run_time=0.5, rate_func=linear)
+        self.play(FadeIn(line1, arr1, profit1, line2, arr2, profit2), run_time=29.5/30)
+        self.wait(1.5/30)
+
+class BMDefs(Scene):
+    def construct(self):
+        xlen = config.frame_x_radius * 1.05
+        ylen = config.frame_y_radius
+        ax = Axes(x_range=[0, 1.05], y_range=[-1, 1], x_length=xlen, y_length=ylen,
+                  axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False,
+                               "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               },
+                  ).set_z_index(2)
+#        self.add(ax)
+        eq1 = MathTex(r't')[0].next_to(ax.x_axis.get_right(), UL, buff=0.2)
+        eq2 = MathTex(r'B_t')[0].next_to(ax.y_axis.get_top(), DR, buff=0.2)
+        tarr = np.linspace(0.1, 0.95, 4)
+        self.add(eq1, eq2)
+
+        marks = [ax.x_axis.get_tick(t) for t in tarr]
+        eq_marks = [MathTex(r't_{}'.format(i), font_size=40).next_to(marks[i], DOWN, buff=0.05) for i in range(4)]
+        eq_dB = []
+        self.wait(0.5)
+        for i in range(len(tarr)):
+            tmp = []
+            if i > 0:
+                pos = (marks[i-1].get_bottom() + marks[i].get_bottom()) * 0.5
+                tmp.append(MathTex(r'B_{{t_{} }} - B_{{ t_{} }}'.format(i, i-1), font_size=38)
+                           .next_to(pos, DOWN, buff=0.85))
+                eq_dB += tmp
+            self.play(FadeIn(marks[i], eq_marks[i], *tmp), run_time=1)
+
+        self.wait()
+        t0 = 0.6
+        mark = ax.x_axis.get_tick(t0)
+        eq_mark = MathTex(r't', font_size=40).next_to(mark, DOWN, buff=0.05)
+        eq3 = MathTex(r'B_t\sim N(0, t)')[0].next_to(ax.get_bottom(), UP)
+        self.play(FadeOut(*marks, *eq_marks, *eq_dB),
+                  FadeIn(eq3[:3], mark, eq_mark),
+                  run_time=1.5)
+        self.wait(0.2)
+        self.play(FadeIn(eq3[3:5], eq3[6], eq3[8]), run_time=1)
+        self.wait(0.2)
+        self.play(FadeIn(eq3[5]), run_time=0.5)
+        self.wait(0.2)
+        self.play(FadeIn(eq3[7]), run_time=0.5)
+        self.wait(0.2)
+        self.play(FadeOut(eq3, mark, eq_mark), run_time=0.5)
+        self.wait()
+        eq4 = MathTex(r'{\rm Var}(B_t){{=}}t').next_to(ax.get_bottom(), UP).shift(LEFT*1.2)
+        eq5 = MathTex(r'{\rm Var}(B_{Nt}){{=}}Nt')
+        eq6 = MathTex(r'{\rm Var}(B_{Nt}){{=}}N{\rm Var}(B_t)')
+        eq7 = MathTex(r'{\rm std\,dev}(B_{Nt}){{=}}\sqrt{N}\,{\rm std\,dev}(B_t)')
+        eq5.next_to(eq4[1], ORIGIN, submobject_to_align=eq5[1])
+        eq6.next_to(eq4[1], ORIGIN, submobject_to_align=eq6[1])
+        eq7.next_to(eq4[1], ORIGIN, submobject_to_align=eq7[1])
+        self.play(FadeIn(eq4), run_time=0.6)
+        self.wait(0.1)
+        self.play(LaggedStart(ReplacementTransform(eq4[0][:5] + eq4[0][5] + eq4[0][6] + eq4[1] + eq4[2][0],
+                                                   eq5[0][:5] + eq5[0][6] + eq5[0][7] + eq5[1] + eq5[2][1]),
+                              FadeIn(eq5[0][5], eq5[2][0]), lag_ratio=0.3),
+                  run_time=1)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq5[2][0], eq6[2][0]),
+                  FadeOut(eq5[2][1]),
+                  FadeIn(eq6[2][1:]),
+                  run_time=1)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq5[0][-5:] + eq5[1] + eq6[2][0],
+                                       eq7[0][-5:] + eq7[1] + eq7[2][2]),
+                  FadeOut(eq5[0][:-5] + eq6[2][1:]),
+                  FadeIn(eq7[0][:-5] + eq7[2][3:] + eq7[2][:2]),
+                  run_time=1.5)
+        self.wait(0.5)
+        self.play(FadeOut(eq7), run_time=0.5)
+
+        self.wait()
+
+class BMMorePaths(Scene):
+    def construct(self):
+        xlen = config.frame_x_radius * 1.05
+        ylen = config.frame_y_radius
+        random.seed(0)
+        ax = Axes(x_range=[0, 1.05], y_range=[-1.5, 1.5], x_length=xlen, y_length=ylen,
+                  axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False,
+                               "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               },
+                  )
+        self.add(ax)
+        n = 1025
+        tvals = np.linspace(0, 1, n)
+        a = math.sqrt(tvals[1] - tvals[0])
+        plots = []
+        colors = [GREY, BLUE_A, GREEN_A, ORANGE, RED_A]
+        for i in range(5):
+            y = np.zeros(n)
+            for j in range(1, n):
+                y[j] = y[j-1] + random.normalvariate(0, a)
+            plots.append(ax.plot_line_graph(tvals, y, line_color=colors[i], stroke_width=2, add_vertex_dots=False))
+
+        self.wait()
+        self.play(*[Create(p) for p in plots], run_time=4, rate_func=linear)
+        self.wait()
+
 class Weierstrass(Scene):
     def __init__(self, *args, **kwargs):
 #        config.background_color = GREY
@@ -461,18 +778,5 @@ class FractionalBM(Scene):
 
 
 if __name__ == "__main__":
-    times = np.array([1.0, 0.5, 0.25, 0.75, 0.125, 0.375, 0.625, 0.875])
-    path = bmpath2(times, 0.4, 3)
-    print(path)
-#    C = bmcovs(times, 0.4)
-#    print(C)
-#    M = gs(C)
-#    print(M)
-#    print(np.matmul(M, np.transpose(M)))
-#    with tempconfig({"quality": "low_quality", "preview": True}):
-#        FractionalBM().render()
-
-
-
-class BMZoomRects(BMZoom):
-    bmDraw = BMDrawRects
+    with tempconfig({"quality": "low_quality", "preview": True}):
+        SmoothStock1().render()
