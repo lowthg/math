@@ -1111,8 +1111,178 @@ class SmoothvsBM(Scene):
 
 class Dimension(Scene):
     def construct(self):
-        eq = MathTex(r'{\rm dimension} = \frac12', stroke_width=1, font_size=40)[0]
+        eq = MathTex(r'{\rm dimension} = 2', stroke_width=1, font_size=40)[0]
         self.add(eq)
+
+class BM2D(Scene):
+    def construct(self):
+        ax = Axes(x_range=[0, 1], y_range=[0, 1], x_length=config.frame_x_radius, y_length=config.frame_y_radius)
+        ax.shift(-ax.coords_to_point(0.5, 0.5))
+        corners = ax.coords_to_point([(0,0), (1,1)])
+        diag = corners[1] - corners[0]
+        box = Rectangle(width=diag[0], height=diag[1], fill_color=BLACK, fill_opacity=0.7, stroke_opacity=0)
+        edge = Rectangle(width=diag[0], height=diag[1], fill_opacity=0, stroke_opacity=1, stroke_color=WHITE, stroke_width=6).set_z_index(100)
+
+        edge.to_edge(DOWN, buff=0.05)
+        shift = edge.get_center()
+        box.shift(shift)
+        ax.shift(shift)
+        self.add(box, edge)
+
+        x = y = 0.5
+
+        xvals = [x]
+        yvals = [y]
+        a = 0.004
+
+        i = 0
+
+        random.seed(3)
+
+
+        while True:
+            x += random.normalvariate(0, a)
+            y += random.normalvariate(0, a)
+            xvals.append(x)
+            yvals.append(y)
+
+            i += 1
+
+            if x > 1 or x < 0 or y > 1 or y < 0:
+                break
+
+        print('steps: ', i)
+        plot = ax.plot_line_graph(xvals, yvals, line_color=BLUE, add_vertex_dots=False, stroke_width=0.3).set_z_index(5)
+        dot = Dot(radius=0.06, color=WHITE, fill_opacity=1).move_to(ax.coords_to_point(0.5, 0.5))
+        dot2 = Dot(radius=0.06, color=YELLOW, fill_opacity=1).move_to(ax.coords_to_point(0.5, 0.5))
+        def f(obj):
+            obj.move_to(plot['line_graph'].get_end())
+
+        dot2.add_updater(f)
+        self.add(dot, dot2)
+        self.wait(0.5)
+#        self.add(update)
+
+        self.play(Create(plot), run_time=22, rate_func=linear)
+        self.remove(dot2)
+        self.wait()
+
+
+class SmoothTrading(Scene):
+    do_all=True
+
+    def __init__(self, *args, **kwargs):
+        config.background_color=GREY
+        Scene.__init__(self, *args, **kwargs)
+
+    def construct(self):
+        ax = Axes(x_range=[0, 1], y_range=[0, 1], x_length=config.frame_x_radius,
+                  y_length=config.frame_y_radius,
+                  axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False,
+                               "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               },
+                  ).set_z_index(5)
+        box = SurroundingRectangle(ax, fill_color=BLACK, fill_opacity=0.7, stroke_opacity=0, corner_radius=0.15)
+        VGroup(ax, box).to_edge(DOWN, buff=0.1)
+        eq_sax = MathTex(r'S', font_size=40).next_to(ax.x_axis.get_right(), UL, buff=0.2).set_z_index(10)
+        eq_fax = MathTex(r'f(S)', font_size=40).next_to(ax.y_axis.get_top(), DR, buff=0.2).set_z_index(10)
+
+        def f(x):
+            return (x-0.5)**2 * 3 + 0.15
+
+        fplot = ax.plot(f, [0, 1], stroke_color=BLUE, stroke_width=4).set_z_index(4)
+        self.add(box)
+
+        x0 = 0.7
+        y0 = f(x0)
+        p0 = ax.coords_to_point(x0, y0)
+        g = 2 * (x0 - 0.5) * 3
+
+        dot1 = Dot(color=RED, radius=0.1).move_to(p0).set_z_index(5)
+        # y0 + (x-x0) * g
+        line1 = Line(*ax.coords_to_point([(x0-y0/g, 0), (1, y0 + (1 -x0)*g)]), stroke_color=YELLOW, stroke_width=4).set_z_index(3)
+        eq2 = MathTex(r'{\rm slope} = f^\prime', font_size=40).move_to(ax.coords_to_point(0.6, 0.7))
+        pt = eq2.get_corner(DR)
+        pt2 = ax.coords_to_point(0.9, y0 + (0.9-x0))
+        arr1 = Arrow(pt, pt2 + UP * 0.1, color=YELLOW, buff=0, stroke_width=4).set_z_index(100)
+
+        if self.do_all:
+            self.add(ax, eq_sax, eq_fax, fplot)
+            self.wait(0.5)
+            self.play(FadeIn(dot1, line1, eq2, arr1), run_time=1)
+            self.wait(0.5)
+            self.play(FadeOut(ax, eq_sax, eq_fax, fplot, dot1, line1, eq2, arr1), run_time=0.5)
+
+        eq3 = MathTex(r'\frac{d}{dt}f(S_t) {{=}} f^\prime(S_t)\frac{dS_t}{dt}').set_z_index(5)
+        eq3.move_to(box)
+        eq3_1 = eq3[0].copy().move_to(box, coor_mask=RIGHT)
+        self.play(FadeIn(eq3_1[4:]), run_time=1)
+        self.wait(0.2)
+        self.play(FadeIn(eq3_1[:4]), run_time=0.5)
+        self.wait(0.2)
+        self.play(LaggedStart(ReplacementTransform(eq3_1, eq3[0]), FadeIn(eq3[1:]), lag_ratio=0.2), run_time=1)
+        self.wait(0.2)
+
+#        eq3.generate_target().next_to(box.get_top(), DOWN, buff=0.1)
+        eq4 = MathTex(r'V_t {{=}} {\rm portfolio\ profit\ at\ }t').set_z_index(5).move_to(box)
+        self.play(LaggedStart(eq3.animate.next_to(eq4, UP), FadeIn(eq4), lag_ratio=0.2), run_time=1)
+        g1 = VGroup(eq3, eq4)
+        g1.generate_target().next_to(box.get_top(), DOWN, buff=0.1)
+        eq5 = MathTex(r'\frac{dV_t}{dt} {{=}} f^\prime(S_t)\frac{dS_t}{dt}').set_z_index(5).next_to(g1.target, DOWN)
+        eq5.align_to(eq3, LEFT)
+        self.wait(0.2)
+        self.play(MoveToTarget(g1), FadeIn(eq5), run_time=1)
+        eq5_1 = g1[0][0].copy()
+        eq5_1.generate_target().next_to(eq5[1], ORIGIN, submobject_to_align=g1[0][1]).align_to(eq5[2], LEFT)
+        self.wait(0.2)
+        self.play(MoveToTarget(eq5_1), FadeOut(eq5[2]), run_time=1.5)
+
+        eq6 = MathTex(r'V_t {{=}} f(S_t) - f(S_0)').set_z_index(5).next_to(eq5, DOWN)
+        eq6.align_to(eq3, LEFT)
+        self.wait(0.2)
+        self.play(FadeIn(eq6), run_time=1)
+
+        ax2 = Axes(x_range=[0, 1], y_range=[0, 0.87], x_length=config.frame_x_radius,
+                  y_length=config.frame_y_radius * 0.87,
+                  axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False,
+                               "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               },
+                  ).set_z_index(5).align_to(ax, UP)
+
+        f0 = f(0.5)
+        def f2(x):
+            return f(x) - f0
+
+        fplot2 = ax2.plot(f2, [0, 1], stroke_color=BLUE, stroke_width=4).set_z_index(4)
+
+        self.play(FadeOut(g1, eq5[:2], eq5_1, eq6), run_time=0.8)
+        self.wait(0.2)
+        self.play(FadeIn(ax2, fplot2), run_time=0.8)
+
+        sval = ValueTracker(0.5)
+        dot1 = Dot(color=RED, radius=0.1).set_z_index(11)
+        dot2 = Dot(color=YELLOW, radius=0.1).set_z_index(10)
+        eqS = MathTex(r'S_t').set_z_index(10)
+        eqV = MathTex(r'V_t').set_z_index(10)
+
+        def redraw():
+            s = sval.get_value()
+            p0 = ax2.coords_to_point(s, f2(s))
+            p1 = ax2.coords_to_point(s, 0)
+
+            return VGroup(dot1.move_to(p0), dot2.move_to(p1), eqS.next_to(p1, DOWN, buff=0.2),
+                          eqV.next_to(p0, UP, buff=0.2)).copy()
+
+        move = always_redraw(redraw)
+        self.play(FadeIn(move), run_time=0.5)
+        self.play(sval.animate.set_value(0.9), run_time=4)
+        self.play(sval.animate.set_value(0.1), run_time=4)
+        self.play(sval.animate.set_value(0.7), run_time=4)
+
+        self.wait()
+
 
 def bmcovs(times, H):
     n = len(times)
@@ -1221,4 +1391,4 @@ class FractionalBM(Scene):
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "preview": True}):
-        SmoothStock1().render()
+        BM2D().render()
