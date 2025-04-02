@@ -1170,12 +1170,13 @@ class BM2D(Scene):
 
 class SmoothTrading(Scene):
     do_all=True
+    opacity=0.7
 
     def __init__(self, *args, **kwargs):
         config.background_color=GREY
         Scene.__init__(self, *args, **kwargs)
 
-    def construct(self):
+    def get_ax(self):
         ax = Axes(x_range=[0, 1], y_range=[0, 1], x_length=config.frame_x_radius,
                   y_length=config.frame_y_radius,
                   axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False,
@@ -1183,8 +1184,12 @@ class SmoothTrading(Scene):
                                "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
                                },
                   ).set_z_index(5)
-        box = SurroundingRectangle(ax, fill_color=BLACK, fill_opacity=0.7, stroke_opacity=0, corner_radius=0.15)
+        box = SurroundingRectangle(ax, fill_color=BLACK, fill_opacity=self.opacity, stroke_opacity=0, corner_radius=0.15)
         VGroup(ax, box).to_edge(DOWN, buff=0.1)
+        return box, ax
+
+    def construct(self):
+        box, ax = self.get_ax()
         eq_sax = MathTex(r'S', font_size=40).next_to(ax.x_axis.get_right(), UL, buff=0.2).set_z_index(10)
         eq_fax = MathTex(r'f(S)', font_size=40).next_to(ax.y_axis.get_top(), DR, buff=0.2).set_z_index(10)
 
@@ -1280,6 +1285,214 @@ class SmoothTrading(Scene):
         self.play(sval.animate.set_value(0.9), run_time=4)
         self.play(sval.animate.set_value(0.1), run_time=4)
         self.play(sval.animate.set_value(0.7), run_time=4)
+
+        self.wait()
+
+class SmoothTrading2(SmoothTrading):
+    def construct(self):
+        box, ax = self.get_ax()
+        self.add(box)
+        self.wait(0.5)
+        eq1 = MathTex(r'f(S) {{=}} (S-S_0)^2').set_z_index(5)
+        eq2 = MathTex(r'f^\prime(S) {{=}} 2(S-S_0)').set_z_index(5).next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq3 = MathTex(r'V_t {{=}} (S_t-S_0)^2\ge0').set_z_index(5).next_to(eq2, DOWN).align_to(eq2, LEFT)
+        VGroup(eq1, eq2, eq3).move_to(box)
+
+        self.play(FadeIn(eq1), run_time=1)
+        self.wait(0.2)
+        self.play(FadeIn(eq2), run_time=1)
+        self.wait(0.2)
+        self.play(FadeIn(eq3), run_time=1)
+
+        self.wait()
+
+
+class SmoothTrading3(SmoothTrading):
+    opacity = 1
+    do_all = True
+
+    def construct(self):
+        box, ax = self.get_ax()
+        self.add(box)
+        corners = ax.coords_to_point([(0, 0), (1, 1)])
+        diag = corners[1] - corners[0]
+        edge = Rectangle(width=diag[0], height=diag[1], fill_opacity=0, stroke_opacity=1, stroke_width=4,
+                         stroke_color=WHITE).set_z_index(10).move_to((corners[0] + corners[1])/2)
+        box2 = Rectangle(width=config.frame_x_radius*2, height=config.frame_y_radius*2, fill_opacity=1, color=BLACK, stroke_opacity=0).set_z_index(0)
+        ax2 = Axes(x_range=[0, 1], y_range=[-1, 1], x_length=config.frame_x_radius*1.85,
+                  y_length=config.frame_y_radius*1.9,
+                  axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False, 'include_tip': False},
+                  ).set_z_index(5)
+        ax2.to_edge(LEFT, buff=0.2)
+        corners = ax2.coords_to_point([(0, -1), (1, 1)])
+        diag = corners[1] - corners[0]
+        edge2 = Rectangle(width=diag[0], height=diag[1], fill_opacity=0, stroke_opacity=1, stroke_width=4,
+                         stroke_color=WHITE).set_z_index(10).move_to((corners[0] + corners[1])/2)
+
+
+        line0 = DashedLine(*ax.coords_to_point([(0, 0.5), (1, 0.5)]), color=WHITE, stroke_width=3, stroke_opacity=0).set_z_index(2)
+        line1 = DashedLine(*ax2.coords_to_point([(0, 0), (1, 0)]), color=WHITE, stroke_width=3).set_z_index(2)
+
+
+        if self.do_all:
+            self.add(box, edge)
+            self.wait(0.2)
+            self.play(ReplacementTransform(box, box2),
+                      ReplacementTransform(edge, edge2),
+                      ReplacementTransform(line0, line1), run_time=1)
+        else:
+            self.add(box2, edge2, line1)
+
+        n = 1001
+        xvals = np.linspace(0, 1, n)
+        yvals = np.zeros(n)
+        vvals = np.zeros(n)
+        v2vals = np.zeros(n)
+        v3vals = np.zeros(n)
+        dt = xvals[1]
+        a = math.sqrt(dt)
+        random.seed(2)
+        for i in range(1, n):
+            dS = -random.normalvariate(0, a)
+            yvals[i] = yvals[i-1] + dS
+            vvals[i] = vvals[i-1] + yvals[i-1] * 2 * dS
+            v2vals[i] = v2vals[i - 1] + yvals[i] * 2 * dS
+            v3vals[i] = v3vals[i - 1] + (yvals[i-1] + yvals[i]) * dS
+        y2vals = yvals * yvals
+        plot1 = ax2.plot_line_graph(xvals, yvals, add_vertex_dots=False, line_color=BLUE, stroke_width=4.5).set_z_index(5)
+        plot2 = ax2.plot_line_graph(xvals, y2vals, add_vertex_dots=False, line_color=GREY, stroke_width=4).set_z_index(5)
+        plot3 = ax2.plot_line_graph(xvals, vvals, add_vertex_dots=False, line_color=YELLOW, stroke_width=4).set_z_index(6)
+        plot4 = ax2.plot_line_graph(xvals, v2vals, add_vertex_dots=False, line_color=ORANGE, stroke_width=4).set_z_index(7)
+        plot5 = ax2.plot_line_graph(xvals, v3vals, add_vertex_dots=False, line_color=GREEN, stroke_width=4).set_z_index(7)
+        plt1 = plot1['line_graph']
+        plt2 = plot2['line_graph']
+        plt3 = plot3['line_graph']
+        pts = [ax2.coords_to_point(0, 0)] * 3
+
+        def update(obj):
+            pts2 = [plt1.get_end(), plt2.get_end(), plt3.get_end()]
+            for i in range(3):
+                pts2[i] -= (pts2[i] - pts[i]) * 0.5 * UP
+
+            obj[0].next_to(pts2[0], RIGHT, buff=0.1)
+            obj[1].next_to(pts2[1], RIGHT, buff=0.1)
+            obj[2].next_to(pts2[2], RIGHT, buff=0.1)
+            pts[:] = pts2[:]
+
+        eqs = VGroup(MathTex(r'S_t', font_size=50, color=BLUE),
+                     MathTex(r'S_t^2', font_size=50, color=GREY),
+                     MathTex(r'V_t', font_size=50, color=YELLOW))
+
+        eqs.add_updater(update)
+        self.add(eqs)
+
+        self.play(Create(plot1), Create(plot2), Create(plot3), rate_func=linear, run_time=10)
+        eqs.clear_updaters()
+
+
+        eq2 = MathTex(r'V_{t+dt} {{=}} V_t + 2S_t\, dS_t').to_edge(DOWN, buff=0.6).shift(LEFT).set_z_index(10)
+        eq1 = MathTex(r'V_{t+dt} {{=}} V_t + {\rm quantity}\, dS_t').set_z_index(10)
+        eq1.next_to(eq2[1], ORIGIN, submobject_to_align=eq1[1])
+        eq3 = MathTex(r'V_{t+dt} {{=}} V_t + 2S_{t+dt}\, dS_t').to_edge(DOWN, buff=0.6).set_z_index(10)
+        eq3.next_to(eq2[1], ORIGIN, submobject_to_align=eq3[1])
+        eq4 = MathTex(r'V_{t+dt} {{=}} V_t + (S_t+S_{t+dt})\, dS_t').to_edge(DOWN, buff=0.6).set_z_index(10)
+        eq4.next_to(eq2[1], ORIGIN, submobject_to_align=eq4[1])
+
+        self.play(FadeIn(eq1), run_time=1)
+        self.wait(0.2)
+        self.play(FadeOut(eq1[2][3:-3]), FadeIn(eq2[2][3:-3]),
+                  ReplacementTransform(eq1[:2] + eq1[2][:3] + eq1[2][-3:],
+                                       eq2[:2] + eq2[2][:3] + eq2[2][-3:]),
+                  run_time=1)
+        self.wait(0.2)
+        self.play(FadeIn(eq3[2][6:9]),
+                  ReplacementTransform(eq2[:2] + eq2[2][:6] + eq2[2][-3:],
+                                       eq3[:2] + eq3[2][:6] + eq3[2][-3:]),
+                  run_time=1)
+        self.wait(0.2)
+        plt4 = plot4['line_graph']
+        pts = [ax2.coords_to_point(0, 0)]
+        def update(obj):
+            pts2 = [plt4.get_end()]
+            pts2[0] -= (pts2[0] - pts[0]) * 0.5 * UP
+            obj.next_to(pts2[0], RIGHT, buff=0.1)
+            pts[0] = pts2[0]
+
+        eqV2 = MathTex(r'V_t', color=ORANGE).set_z_index(8)
+        eqV2.add_updater(update)
+        self.add(eqV2)
+
+        self.play(Create(plot4), run_time=4, rate_func=linear)
+        eqV2.clear_updaters()
+        self.remove(eqV2)
+
+        self.wait(0.2)
+        self.play(
+                  ReplacementTransform(eq3[:2] + eq3[2][:3] + eq3[2][-3:] + eq3[2][4:9],
+                                       eq4[:2] + eq4[2][:3] + eq4[2][-3:] + eq4[2][7:12]),
+            ReplacementTransform(eq3[2][4:6].copy(), eq4[2][4:6]),
+            FadeIn(eq4[2][3], eq4[2][6], eq4[2][12]),
+            FadeOut(eq3[2][3]),
+                  run_time=1)
+
+
+        self.wait(0.2)
+        eqV3 = MathTex(r'V_t', color=GREEN).set_z_index(9)
+        plt4 = plot5['line_graph']
+        pts[0] = ax2.coords_to_point(0, 0)
+        eqV3.add_updater(update)
+        self.add(eqV3)
+        self.play(Create(plot5), run_time=4, rate_func=linear)
+        eqV3.clear_updaters()
+        self.play(FadeOut(eqV3), run_time=0.5)
+
+#        eq4 = MathTex(r'V_{t+dt} {{=}} V_t + (S_t+S_{t+dt})\, dS_t').to_edge(DOWN, buff=0.6)
+        eq5 = MathTex(r'V_{t+dt} - V_t {{=}} (S_t+S_{t+dt})\, dS_t').set_z_index(10)
+        eq5.next_to(eq4[1], ORIGIN, submobject_to_align=eq5[1]).align_to(eq4, LEFT)
+        eq6 = MathTex(r'V_{t+dt} - V_t {{=}} (S_t+S_{t+dt})(S_{t+dt}-S_t)').set_z_index(10)
+        eq6.next_to(eq4[1], ORIGIN, submobject_to_align=eq6[1]).move_to(eq4, coor_mask=RIGHT)
+        eq7 = MathTex(r'V_{t+dt} - V_t {{=}} (S_{t+dt}+S_t)(S_{t+dt}-S_t)').set_z_index(10)
+        eq7.next_to(eq6[1], ORIGIN, submobject_to_align=eq7[1])
+        eq8 = MathTex(r'V_{t+dt} - V_t {{=}} S_{t+dt}^2-S_t^2').set_z_index(10)
+        eq8.next_to(eq6[1], ORIGIN, submobject_to_align=eq8[1])
+        eq9 = MathTex(r'V_t {{=}} S_t^2').set_z_index(10)
+        eq9.next_to(eq8[1], ORIGIN, submobject_to_align=eq9[1])
+
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq4[0][:5] + eq4[1] + eq4[2][:2] + eq4[2][3:],
+                                       eq5[0][:5] + eq5[1] + eq5[0][-2:] + eq5[2][:]),
+                  FadeIn(eq5[0][-3]),
+                  FadeOut(eq4[2][2]),
+                  run_time=1.5)
+        self.wait(0.5)
+        self.play(ReplacementTransform(eq5[:2] + eq5[2][:10],
+                                       eq6[:2] + eq6[2][:10]),
+                  abra.fade_replace(eq5[2][10:], eq6[2][10:]),
+                  run_time=1.5)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq6[:2] + eq6[2][9:] + eq6[2][0] + eq6[2][1:3] + eq6[2][4:9] + eq6[2][3],
+                                       eq7[:2] + eq7[2][9:] + eq7[2][0] + eq7[2][7:9] + eq7[2][1:6] + eq7[2][6]),
+                  run_time=1)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq7[:2] + eq7[2][1] + eq7[2][2:6] + eq7[2][7] + eq7[2][8],
+                                       eq8[:2] + eq8[2][0] + eq8[2][2:6] + eq8[2][7] + eq8[2][9]),
+                  ReplacementTransform(eq7[2][12:16] + eq7[2][11] + eq7[2][17] + eq7[2][18],
+                                       eq8[2][2:6] + eq8[2][0] + eq8[2][7] + eq8[2][9]),
+                  ReplacementTransform(eq7[2][16], eq8[2][6]),
+                  FadeIn(eq8[2][1], eq8[2][8]),
+                  FadeOut(eq7[2][0], eq7[2][9:11]),
+                  FadeOut(eq7[2][-1], target_position=eq7[2][11]),
+                  abra.fade_replace(eq7[2][6], eq8[2][6]),
+                  run_time=2)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq8[0][-2:] + eq8[1] + eq8[2][-3:],
+                                       eq9[0][-2:] + eq9[1] + eq9[2][:]),
+                  ReplacementTransform(eq8[0][:2], eq9[0][-2:]),
+                  ReplacementTransform(eq8[2][:3], eq9[2][:]),
+                  FadeOut(eq8[0][2:6], target_position=eq9[1], coor_mask=RIGHT),
+                  FadeOut(eq8[2][3:6]),
+                  FadeOut(eq8[2][6], target_position=eq9[2][0]),
+                  run_time=1.5)
 
         self.wait()
 
@@ -1391,4 +1604,4 @@ class FractionalBM(Scene):
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "preview": True}):
-        BM2D().render()
+        SmoothTrading3().render()
