@@ -1371,8 +1371,10 @@ class SmoothTrading3(SmoothTrading):
 
         def update(obj):
             pts2 = [plt1.get_end(), plt2.get_end(), plt3.get_end()]
+            t = (corners[1] - pts2[0])[0] / (corners[1] - corners[0])[0]
+            t = min(10*t, 0.9)
             for i in range(3):
-                pts2[i] -= (pts2[i] - pts[i]) * 0.5 * UP
+                pts2[i] -= (pts2[i] - pts[i]) * t * UP
 
             obj[0].next_to(pts2[0], RIGHT, buff=0.1)
             obj[1].next_to(pts2[1], RIGHT, buff=0.1)
@@ -1390,7 +1392,8 @@ class SmoothTrading3(SmoothTrading):
         eqs.clear_updaters()
 
 
-        eq2 = MathTex(r'V_{t+dt} {{=}} V_t + 2S_t\, dS_t').to_edge(DOWN, buff=0.6).shift(LEFT).set_z_index(10)
+        eq2 = MathTex(r'V_{t+dt} {{=}} V_t + 2S_t\, dS_t').to_edge(DOWN, buff=1).shift(LEFT*2.1).set_z_index(10)
+        eq10 = eq2.copy()
         eq1 = MathTex(r'V_{t+dt} {{=}} V_t + {\rm quantity}\, dS_t').set_z_index(10)
         eq1.next_to(eq2[1], ORIGIN, submobject_to_align=eq1[1])
         eq3 = MathTex(r'V_{t+dt} {{=}} V_t + 2S_{t+dt}\, dS_t').to_edge(DOWN, buff=0.6).set_z_index(10)
@@ -1414,7 +1417,9 @@ class SmoothTrading3(SmoothTrading):
         pts = [ax2.coords_to_point(0, 0)]
         def update(obj):
             pts2 = [plt4.get_end()]
-            pts2[0] -= (pts2[0] - pts[0]) * 0.5 * UP
+            t = (corners[1] - pts2[0])[0] / (corners[1] - corners[0])[0]
+            t = min(10*t, 0.9)
+            pts2[0] -= (pts2[0] - pts[0]) * t * UP
             obj.next_to(pts2[0], RIGHT, buff=0.1)
             pts[0] = pts2[0]
 
@@ -1422,7 +1427,7 @@ class SmoothTrading3(SmoothTrading):
         eqV2.add_updater(update)
         self.add(eqV2)
 
-        self.play(Create(plot4), run_time=4, rate_func=linear)
+        self.play(Create(plot4), run_time=5, rate_func=linear)
         eqV2.clear_updaters()
         self.remove(eqV2)
 
@@ -1442,7 +1447,7 @@ class SmoothTrading3(SmoothTrading):
         pts[0] = ax2.coords_to_point(0, 0)
         eqV3.add_updater(update)
         self.add(eqV3)
-        self.play(Create(plot5), run_time=4, rate_func=linear)
+        self.play(Create(plot5), run_time=5, rate_func=linear)
         eqV3.clear_updaters()
         self.play(FadeOut(eqV3), run_time=0.5)
 
@@ -1493,6 +1498,123 @@ class SmoothTrading3(SmoothTrading):
                   FadeOut(eq8[2][3:6]),
                   FadeOut(eq8[2][6], target_position=eq9[2][0]),
                   run_time=1.5)
+        self.wait(0.2)
+        self.play(FadeOut(eq9))
+        self.wait(0.2)
+
+        self.play(FadeIn(eq10.shift(DOWN*0.25)), run_time=1)
+        self.wait(0.2)
+        eq11 = MathTex(r'V_{t+dt} {{=}} V_t + (S_t+S_{t+dt})\,dS_t - (S_{t+dt}-S_t)dS_t').set_z_index(10)
+        eq11.next_to(eq10[1], ORIGIN, submobject_to_align=eq11[1])
+        eq12 = MathTex(r'V_{t+dt} {{=}} V_t + (S_t+S_{t+dt})\,dS_t - (dS_t)dS_t').set_z_index(10)
+        self.play(ReplacementTransform(eq10[:2] + eq10[2][:3] + eq10[2][4:6] + eq10[2][6:9],
+                                       eq11[:2] + eq11[2][:3] + eq11[2][4:6] + eq11[2][13:16]),
+                  ReplacementTransform(eq10[2][4:6].copy(), eq11[2][7:9]),
+                  FadeIn(eq11[2][6]),
+                  FadeIn(eq11[2][9:12], target_position=eq10[2][5]),
+                  FadeOut(eq10[2][3]),
+                  FadeIn(eq11[2][3]),
+                  FadeIn(eq11[2][12], target_position=eq10[2][4]),
+                  run_time=1.5)
+        self.wait(0.2)
+
+        eq11.generate_target().shift(LEFT * 1.5)
+        eq11[2][16:].set_opacity(0)
+        self.play(MoveToTarget(eq11), run_time=1.5)
+
+        eq12.next_to(eq11[1], ORIGIN, submobject_to_align=eq12[1])
+        eq13 = MathTex(r'V_{t+dt} {{=}} V_t + (S_t+S_{t+dt})\,dS_t - (dS_t)^2').set_z_index(10)
+        eq13.next_to(eq11[1], ORIGIN, submobject_to_align=eq13[1])
+        eq14 = MathTex(r'V_t {{=}} S_t^2 - \sum (dS_t)^2')
+        eq14.next_to(eq11[1], ORIGIN, submobject_to_align=eq14[1]).shift(RIGHT * 1.5)
+        eq15 = MathTex(r'V_t {{=}} S_t^2 - t')
+        eq15.next_to(eq14[1], ORIGIN, submobject_to_align=eq15[1])
+
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq11[:2] + eq11[2][:18] + eq11[2][26:],
+                                      eq12[:2] + eq12[2][:18] + eq12[2][21:]),
+                  FadeOut(eq11[2][23:26], target_position=eq11[2][23:26]),
+                  FadeOut(eq11[2][18:23]),
+                  FadeIn(eq12[2][18:21]),
+                  run_time=1)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq12[:2] + eq12[2][:-3],
+                                       eq13[:2] + eq13[2][:-1]),
+                  ReplacementTransform(eq12[2][-3:], eq13[2][-5:-2]),
+                  FadeIn(eq13[2][-1]),
+                  run_time=0.7)
+        self.wait(0.2)
+        self.play(FadeOut(eq13), FadeIn(eq14), run_time=1.5)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq14[:2] + eq14[2][:4],
+                                       eq15[:2] + eq15[2][:4]),
+                  FadeOut(eq14[2][4:]),
+                  FadeIn(eq15[2][4:]),
+                  run_time=1.5)
+
+        self.wait(0.2)
+        self.play(FadeOut(plot1, plot4, plot5, eqs[0], eqV2, eqV3), run_time=1)
+        self.wait(0.2)
+
+        xvals_poly = np.append(xvals, xvals[::-1])
+        yvals_poly = np.append(y2vals, vvals[::-1])
+        pts_poly = ax2.coords_to_point(list(zip(xvals_poly, yvals_poly)))
+        poly1 = Polygon(*pts_poly, stroke_opacity=0, fill_opacity=0.8, fill_color=BLUE).set_z_index(4)
+        plot6 = plot2.copy().set_stroke(color=WHITE).set_z_index(8)
+        plot7 = ax2.plot_line_graph(xvals, y2vals - vvals, add_vertex_dots=False, line_color=WHITE, stroke_width=4).set_z_index(8)
+        self.play(FadeIn(poly1, plot6), run_time=2)
+
+        yvals_poly2 = np.append(y2vals - vvals, np.zeros(n))
+        pts_poly2 = ax2.coords_to_point(list(zip(xvals_poly, yvals_poly2)))
+        poly2 = Polygon(*pts_poly2, stroke_opacity=0, fill_opacity=0.8, fill_color=BLUE).set_z_index(4)
+        eqQV = MathTex(r'S_t^2 - V_t {{\approx}}t').set_z_index(10).move_to(ax2.coords_to_point(0.42, 0.55))
+        self.wait(0.2)
+        self.play(ReplacementTransform(poly1, poly2),
+                  ReplacementTransform(plot6, plot7),
+                  FadeIn(eqQV[0]),
+                  run_time=2)
+        self.play(FadeIn(eqQV[1:]), run_time=1)
+
+        self.wait(0.2)
+        self.play(FadeOut(poly2), FadeIn(plot1, plot4, plot5, eqs[0], eqV2, eqV3), run_time=1.5)
+
+        eq16 = MathTex(r'\mathbb E\left[V_t\right] {{=}} \mathbb E\left[S_t^2 - t\right]').set_z_index(10)
+        eq16.next_to(eq15[1], ORIGIN, submobject_to_align=eq16[1])
+        eq17 = MathTex(r'\mathbb E\left[V_t\right] {{=}} \mathbb E\left[S_t^2\right]-t').set_z_index(10)
+        eq17.next_to(eq15[1], ORIGIN, submobject_to_align=eq17[1])
+        eq18 = MathTex(r'\mathbb E\left[V_t\right] {{=}} t - t').set_z_index(10)
+        eq18.next_to(eq15[1], ORIGIN, submobject_to_align=eq18[1])
+        eq18[2][-2:].move_to(eq17[2][-2:], coor_mask=RIGHT)
+        eq18[2][0].move_to(eq17[2][:-2], coor_mask=RIGHT)
+        eq19 = MathTex(r'\mathbb E\left[V_t\right] {{=}} 0').set_z_index(10)
+        eq19.next_to(eq15[1], ORIGIN, submobject_to_align=eq19[1])
+
+        self.wait(0.2)
+        self.play(LaggedStart(ReplacementTransform(eq15[0][:] + eq15[1] + eq15[2][:],
+                                       eq16[0][2:4] + eq16[1] + eq16[2][2:-1]),
+                  FadeIn(eq16[0][:2], eq16[0][-1], eq16[2][:2], eq16[2][-1]),
+                              lag_ratio=0.2),
+                  run_time=1.5)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq16[:2] + eq16[2][:5] + eq16[2][5:7] + eq16[2][7],
+                                       eq17[:2] + eq17[2][:5] + eq17[2][6:8] + eq17[2][5]),
+                  run_time=1.5)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq17[:2] + eq17[2][-2:],
+                                       eq18[:2] + eq18[2][-2:]),
+                  FadeOut(eq17[2][:-2]),
+                  FadeIn(eq18[2][:-2]),
+                  run_time=1.5)
+        self.wait(0.2)
+        self.play(ReplacementTransform(eq18[:2],
+                                       eq19[:2]),
+                  FadeOut(eq18[2][0], target_position=eq19[2][0]),
+                  FadeOut(eq18[2][1], target_position=eq19[2][0]),
+                  FadeOut(eq18[2][2], target_position=eq19[2][0]),
+                  FadeIn(eq19[2], target_position=eq18[2][0]),
+                  run_time=1.5
+                  )
+
 
         self.wait()
 
