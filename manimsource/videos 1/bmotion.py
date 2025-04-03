@@ -9,6 +9,7 @@ import datetime
 import sys
 import scipy.interpolate
 
+
 sys.path.append('../abracadabra/')
 # noinspection PyUnresolvedReferences
 import abracadabra as abra
@@ -1385,11 +1386,15 @@ class SmoothTrading3(SmoothTrading):
                      MathTex(r'S_t^2', font_size=50, color=GREY),
                      MathTex(r'V_t', font_size=50, color=YELLOW))
 
+        eqPnL = MathTex(r'V_t = {\rm profit/loss\ at\ }t', color=YELLOW).to_corner(DL, buff=1)
+
+        self.play(FadeIn(eqPnL), run_time=0.6)
         eqs.add_updater(update)
         self.add(eqs)
 
         self.play(Create(plot1), Create(plot2), Create(plot3), rate_func=linear, run_time=10)
         eqs.clear_updaters()
+        self.play(FadeOut(eqPnL), run_time=0.7)
 
 
         eq2 = MathTex(r'V_{t+dt} {{=}} V_t + 2S_t\, dS_t').to_edge(DOWN, buff=1).shift(LEFT*2.1).set_z_index(10)
@@ -1452,32 +1457,33 @@ class SmoothTrading3(SmoothTrading):
         self.play(FadeOut(eqV3), run_time=0.5)
 
 #        eq4 = MathTex(r'V_{t+dt} {{=}} V_t + (S_t+S_{t+dt})\, dS_t').to_edge(DOWN, buff=0.6)
-        eq5 = MathTex(r'V_{t+dt} - V_t {{=}} (S_t+S_{t+dt})\, dS_t').set_z_index(10)
+        eq5 = MathTex(r'V_{t+dt} - V_t {{=}} (S_{t+dt} + S_t)\, dS_t').set_z_index(10)
         eq5.next_to(eq4[1], ORIGIN, submobject_to_align=eq5[1]).align_to(eq4, LEFT)
-        eq6 = MathTex(r'V_{t+dt} - V_t {{=}} (S_t+S_{t+dt})(S_{t+dt}-S_t)').set_z_index(10)
-        eq6.next_to(eq4[1], ORIGIN, submobject_to_align=eq6[1]).move_to(eq4, coor_mask=RIGHT)
-        eq7 = MathTex(r'V_{t+dt} - V_t {{=}} (S_{t+dt}+S_t)(S_{t+dt}-S_t)').set_z_index(10)
-        eq7.next_to(eq6[1], ORIGIN, submobject_to_align=eq7[1])
+        eq7 = MathTex(r'V_{t+dt} - V_t {{=}} (S_{t+dt} + S_t)(S_{t+dt}-S_t)').set_z_index(10)
+        eq7.next_to(eq4[1], ORIGIN, submobject_to_align=eq7[1]).move_to(eq4, coor_mask=RIGHT)
+#        eq7 = MathTex(r'V_{t+dt} - V_t {{=}} (S_{t+dt}+S_t)(S_{t+dt}-S_t)').set_z_index(10)
+#        eq7.next_to(eq6[1], ORIGIN, submobject_to_align=eq7[1])
         eq8 = MathTex(r'V_{t+dt} - V_t {{=}} S_{t+dt}^2-S_t^2').set_z_index(10)
-        eq8.next_to(eq6[1], ORIGIN, submobject_to_align=eq8[1])
+        eq8.next_to(eq7[1], ORIGIN, submobject_to_align=eq8[1])
         eq9 = MathTex(r'V_t {{=}} S_t^2').set_z_index(10)
         eq9.next_to(eq8[1], ORIGIN, submobject_to_align=eq9[1])
 
         self.wait(0.2)
-        self.play(ReplacementTransform(eq4[0][:5] + eq4[1] + eq4[2][:2] + eq4[2][3:],
-                                       eq5[0][:5] + eq5[1] + eq5[0][-2:] + eq5[2][:]),
+        self.play(ReplacementTransform(eq4[0][:5] + eq4[1] + eq4[2][:2] + eq4[2][3:] + eq4[2][3] + eq4[2][4:6] + eq4[2][6] + eq4[2][7:12] + eq4[2][12:],
+                                       eq5[0][:5] + eq5[1] + eq5[0][-2:] + eq5[2][:] + eq5[2][0] + eq5[2][7:9] + eq5[2][6] + eq5[2][1:6] + eq5[2][9:]),
                   FadeIn(eq5[0][-3]),
                   FadeOut(eq4[2][2]),
                   run_time=1.5)
         self.wait(0.5)
         self.play(ReplacementTransform(eq5[:2] + eq5[2][:10],
-                                       eq6[:2] + eq6[2][:10]),
-                  abra.fade_replace(eq5[2][10:], eq6[2][10:]),
+                                       eq7[:2] + eq7[2][:10]),
+                  abra.fade_replace(eq5[2][10:], eq7[2][10:]),
                   run_time=1.5)
         self.wait(0.2)
-        self.play(ReplacementTransform(eq6[:2] + eq6[2][9:] + eq6[2][0] + eq6[2][1:3] + eq6[2][4:9] + eq6[2][3],
-                                       eq7[:2] + eq7[2][9:] + eq7[2][0] + eq7[2][7:9] + eq7[2][1:6] + eq7[2][6]),
-                  run_time=1)
+#        self.play(ReplacementTransform(eq6[:2] + eq6[2][9:] + eq6[2][0] + eq6[2][1:3] + eq6[2][4:9] + eq6[2][3],
+#                                       eq7[:2] + eq7[2][9:] + eq7[2][0] + eq7[2][7:9] + eq7[2][1:6] + eq7[2][6]),
+#                  run_time=1)
+        self.wait(1)
         self.wait(0.2)
         self.play(ReplacementTransform(eq7[:2] + eq7[2][1] + eq7[2][2:6] + eq7[2][7] + eq7[2][8],
                                        eq8[:2] + eq8[2][0] + eq8[2][2:6] + eq8[2][7] + eq8[2][9]),
@@ -1553,7 +1559,7 @@ class SmoothTrading3(SmoothTrading):
                   run_time=1.5)
 
         self.wait(0.2)
-        self.play(FadeOut(plot1, plot4, plot5, eqs[0], eqV2, eqV3), run_time=1)
+        self.play(FadeOut(plot1, plot4, plot5, eqs[0], eqV2), run_time=1)
         self.wait(0.2)
 
         xvals_poly = np.append(xvals, xvals[::-1])
@@ -1617,6 +1623,196 @@ class SmoothTrading3(SmoothTrading):
 
 
         self.wait()
+
+
+class OptionSmooth(Scene):
+        def __init__(self, *args, **kwargs):
+            config.background_color = GREY
+            Scene.__init__(self, *args, **kwargs)
+
+        def construct(self):
+            tmax = 10
+            ymax = 10
+            ax = Axes(x_range=[0, tmax * 1.1], y_range=[0, ymax], x_length=5, y_length=3,
+                      axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False,
+                                   "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                                   "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                                   },
+                      ).set_z_index(200)
+            eq1 = MathTex('t')[0].next_to(ax.x_axis.get_right(), UL).set_z_index(2)
+            eq2 = MathTex('S_t')[0].next_to(ax.y_axis.get_top(), DR, buff=0.2).set_z_index(2)
+
+            n = 100
+            x = np.linspace(0, tmax, n)
+            xarr = [0, 3, 6, 8, 10]
+            yarr = [4, 9, 2, 7, 6]
+
+            sprice = scipy.interpolate.CubicHermiteSpline(
+                xarr, yarr,
+                [1.5, 0, 0, 0, -0.5]
+            )
+
+            kval = yarr[0]
+            eqK = MathTex(r'K', font_size=40).next_to(ax.coords_to_point(0, kval), LEFT, buff=0.1)
+            line1 = DashedLine(*ax.coords_to_point([(0, kval), (tmax*1.08, kval)]), stroke_width=2, stroke_opacity=0.7).set_z_index(2)
+            box = SurroundingRectangle(VGroup(ax, eqK), corner_radius=0.2, fill_color=BLACK, fill_opacity=0.7, stroke_opacity=0,
+                                       buff=0.15)
+
+            self.add(box, ax, eq1, eq2)
+            self.wait(0.5)
+            self.play(FadeIn(eqK, line1), run_time=1)
+
+            y = sprice(x)
+#            pts = ax.coords_to_point([(t, sprice(t)) for t in xarr])
+            plot = ax.plot_line_graph(x, y, stroke_width=5, line_color=WHITE, add_vertex_dots=False).set_z_index(10)
+
+            hold = False
+            trade_i = []
+            for i in range(n):
+                if not hold and y[i] > kval:
+                    trade_i.append(i)
+                    hold = True
+                elif hold and y[i] < kval:
+                    trade_i.append(i)
+                    hold = False
+
+            self.wait(0.5)
+            self.play(Create(plot), rate_func=linear, run_time=1.5)
+            self.wait(0.5)
+
+            tval = ValueTracker(0.0)
+            show0 = show1 = show2 = show3 = show4 = False
+            green = GREEN_E
+            red = RED
+
+            i0 = trade_i[0]
+            j0 = trade_i[1]
+            i1 = trade_i[2]
+            assert len(trade_i) == 3
+            print(trade_i)
+            pts = ax.coords_to_point([(x[i], y[i]) for i in trade_i])
+
+            eqg = MathTex(r'V_t=S_t-K', font_size=32).set_z_index(10)
+            eqr = MathTex(r'V_t=0', font_size=32).set_z_index(10)
+
+            def f():
+                t = tval.get_value()
+                st = sprice(t)
+                dot = Dot(ax.coords_to_point(t, st), radius=0.1).set_z_index(50)
+                res = []
+                color = green
+
+                eqpos = RIGHT
+
+                if show1:
+                    k = i0
+                    for i in range(i0, j0 + 1):
+                        k = i
+                        if x[i] >= t:
+                            break
+                    plot1 = ax.plot_line_graph(x[i0:k + 1], y[i0:k + 1], stroke_width=6, line_color=green,
+                                               add_vertex_dots=False).set_z_index(2)
+                    res.append(*plot1)
+                    color = green
+
+                if show2:
+                    k = j0
+                    for i in range(j0, i1 + 1):
+                        k = i
+                        if x[i] >= t:
+                            break
+                    plot2 = ax.plot_line_graph(x[j0:k + 1], y[j0:k + 1], stroke_width=6, line_color=red,
+                                               add_vertex_dots=False).set_z_index(2)
+                    res.append(*plot2)
+                    color = red
+
+                if show3:
+                    k = i1
+                    for i in range(i1, n):
+                        k = i
+                        if x[i] >= t:
+                            break
+                    plot3 = ax.plot_line_graph(x[i1:k + 1], y[i1:k + 1], stroke_width=6, line_color=green,
+                                               add_vertex_dots=False).set_z_index(2)
+                    res.append(*plot3)
+
+                    dot.set_opacity(min((x[-1] - t) * 2, 1))
+                    color = green
+
+                if color == green:
+                    eq = eqg.copy().next_to(dot, eqpos, buff=0.05)
+                else:
+                    eq = eqr.copy().next_to(dot, eqpos, buff=0.05)
+
+                eq.set_opacity(min(1, t*2, (x[-1] - t) * 2))
+
+                if show3:
+                    eq.set_opacity(0)
+
+                return VGroup(*res, dot.set_color(color))
+
+            buy = Tex(r'\bf buy', color=green, font_size=35)[0]
+            sell = Tex(r'\bf sell', color=red, font_size=35)[0]
+            profit = Tex(r'\bf profit!', font_size=30, color=WHITE)[0].set_z_index(200)
+            move = always_redraw(f)
+            self.add(move)
+
+            show0 = True
+            tval.set_value(x[i0])
+
+            dot1 = move[-1].copy().set_color(green).move_to(pts[0]).set_z_index(60)
+            self.play(FadeIn(dot1, buy.copy().next_to(pts[0], DR, buff=0.1)), run_time=0.2)
+
+            show1 = True
+            i = j0 // 2
+            self.play(tval.animate.set_value(x[i]), run_time=1.3, rate_func=linear)
+            eqg1 = eqg.copy().next_to(move[-1], UR, buff=0.05).shift(LEFT*0.3)
+            self.play(FadeIn(eqg1), run_time=0.5)
+            self.wait(0.2)
+            self.play(#FadeOut(eqg, run_time=0.5),
+                      tval.animate.set_value(x[j0]), run_time=1, rate_func=linear)
+            self.wait(0.2)
+
+#            pt = pts[1] * UP + pts[2] * RIGHT
+#            line1 = DashedLine(pts[1], pt + RIGHT * 0.1, stroke_width=2)
+#            arr1 = Arrow(pt, pts[2], color=ManimColor(WHITE.to_rgb() * 0.7), buff=0, stroke_width=4).set_z_index(
+#                100)
+            dot2 = move[-1].copy().set_color(red).move_to(pts[1]).set_z_index(60)
+            eqr1 = eqr.copy().next_to(move[-1], UR, buff=0.1).shift(LEFT*0.2)
+#            profit1 = profit.copy().move_to(pt * 0.6 + pts[2] * 0.4)
+            self.play(FadeIn(dot2, eqr1, sell.copy().next_to(pts[1], DL, buff=0.1)), run_time=0.2)
+            self.wait(0.2)
+
+            show2 = True
+            i = (j0 + i1)//2
+            self.play(#FadeOut(eqr, run_time=0.5),
+                      tval.animate.set_value(x[i]), run_time=0.8, rate_func=linear)
+            eqr2 = eqr.copy().next_to(move[-1], DOWN, buff=0.1)
+            self.play(FadeIn(eqr2), run_time=0.5)
+            self.wait(0.2)
+            self.play(#FadeOut(eqr, run_time=0.4),
+                      tval.animate.set_value(x[i1]), run_time=0.8, rate_func=linear)
+            self.wait(0.2)
+
+            dot3 = move[-1].copy().set_color(green).move_to(pts[2]).set_z_index(60)
+            self.play(FadeIn(dot3, buy.copy().next_to(pts[2], DR, buff=0.1)), run_time=0.2)
+
+            self.wait(0.2)
+
+            show3 = True
+            self.play(tval.animate.set_value((x[i1]+x[-1])/2), run_time=0.8, rate_func=linear)
+            eqg2 = eqg.next_to(move[-1], UP, buff=0.05)
+            self.play(FadeIn(eqg2), run_time=0.5)
+            self.wait(0.2)
+            self.play(#FadeOut(eqg),
+                      tval.animate.set_value(x[-1]), run_time=0.5, rate_func=linear)
+#            pt = pts[3] * UP + pts[4] * RIGHT
+#            line2 = DashedLine(pts[3], pt + RIGHT * 0.1, stroke_width=2)
+#            arr2 = Arrow(pt, pts[4], color=ManimColor(WHITE.to_rgb() * 0.7), buff=0, stroke_width=4).set_z_index(
+#                100)
+#            self.play(tval.animate.set_value(x[-1]), run_time=0.5, rate_func=linear)
+#            self.play(FadeIn(line1, arr1, profit1, line2, arr2, profit2), run_time=29.5 / 30)
+            self.wait(1.5 / 30)
 
 
 def bmcovs(times, H):
