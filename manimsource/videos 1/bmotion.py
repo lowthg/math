@@ -1656,6 +1656,8 @@ class OptionSmooth(Scene):
             box = SurroundingRectangle(VGroup(ax, eqK), corner_radius=0.2, fill_color=BLACK, fill_opacity=0.7, stroke_opacity=0,
                                        buff=0.15)
 
+            VGroup(ax, eq1, eq2, eqK, line1, box).to_edge(DOWN, buff=0.05)
+
             n = 100
             x = np.linspace(0, tmax, n)
             y = sprice(x)
@@ -1680,7 +1682,6 @@ class OptionSmooth(Scene):
             self.add(box, ax, eq1, eq2)
             self.wait(0.5)
             self.play(FadeIn(eqK, line1), run_time=1)
-
 
             self.wait(0.5)
             self.play(Create(plot), rate_func=linear, run_time=1.5)
@@ -1742,7 +1743,7 @@ class OptionSmooth(Scene):
                                                add_vertex_dots=False).set_z_index(2)
                     res.append(*plot3)
 
-                    dot.set_opacity(min((x[-1] - t) * 2, 1))
+                    dot.set_opacity(min((x[-1] - t) * 8, 1))
                     color = green
 
                 if color == green:
@@ -1775,8 +1776,7 @@ class OptionSmooth(Scene):
             eqg1 = eqg.copy().next_to(move[-1], UR, buff=0.1).shift(LEFT*0.3)
             self.play(FadeIn(eqg1), run_time=0.5)
             self.wait(0.2)
-            self.play(#FadeOut(eqg, run_time=0.5),
-                      tval.animate.set_value(x[j0]), run_time=1, rate_func=linear)
+            self.play(tval.animate.set_value(x[j0]), run_time=1, rate_func=linear)
             self.wait(0.2)
 
             dot2 = move[-1].copy().set_color(red).move_to(pts[1]).set_z_index(60)
@@ -1940,6 +1940,116 @@ class OptionSlippage(OptionSmooth):
         self.play(dx_val.animate.set_value(0.002), run_time=4)
         self.wait()
 
+class OptionLocalTime(OptionSlippage):
+    def construct(self):
+        box, ax, eq1, eq2, eqK, line1, kval, sprice, plot, x, y, trade_i = self.setup()
+        plot.set_stroke(color=BLUE)
+        eqS = MathTex(r'S_t', color=BLUE).move_to(ax.coords_to_point(0.1, 0.77))
+        kval2 = kval * 2 - 1
+
+        corners = ax.coords_to_point([(0, 0), (1, 1)])
+        diag = corners[1] - corners[0]
+        edge = Rectangle(width=diag[0], height=diag[1], fill_opacity=0, stroke_opacity=1, stroke_width=4,
+                         stroke_color=WHITE).set_z_index(10).move_to((corners[0] + corners[1])/2)
+        box2 = Rectangle(width=config.frame_x_radius*2, height=config.frame_y_radius*2, fill_opacity=1, color=BLACK, stroke_opacity=0).set_z_index(0)
+        ax2 = Axes(x_range=[0, 1], y_range=[-1, 1], x_length=config.frame_x_radius*1.9,
+                  y_length=config.frame_y_radius*1.9,
+                  axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False, 'include_tip': False},
+                  ).set_z_index(5)
+        corners = ax2.coords_to_point([(0, -1), (1, 1)])
+        diag = corners[1] - corners[0]
+        edge2 = Rectangle(width=diag[0], height=diag[1], fill_opacity=0, stroke_opacity=1, stroke_width=4,
+                         stroke_color=WHITE).set_z_index(10).move_to((corners[0] + corners[1])/2)
+
+
+#        line0 = DashedLine(*ax.coords_to_point([(0, 0.5), (1, 0.5)]), color=WHITE, stroke_width=3, stroke_opacity=0).set_z_index(2)
+        line2 = DashedLine(*ax2.coords_to_point([(0, kval2), (1, kval2)]), color=WHITE, stroke_width=3).set_z_index(2)
+
+        n = 2001
+        step = 5000
+        n0 = n * step + 1
+        xvals0 = np.linspace(0, 1, n0)
+        yvals0 = np.zeros(n0)
+        random.seed(0)
+        dx = xvals0[1]
+        a = math.sqrt(dx)
+        s = 1
+        for i in range(1, n0):
+#            if i == 600:
+#                s = -1
+            yvals0[i] = yvals0[i-1] + random.normalvariate(0, a) * s
+        k = 30000
+#        yvals0[k:] += (xvals0[k:] - xvals0[k]) * -10
+        yvals0 *= -1.4
+        yvals0 -= xvals0 * 0.3
+        yvals0 *= 1.2
+
+        xvals1 = xvals0[::step]
+        yvals1 = yvals0[::step]
+
+        plotBM1 = ax.plot_line_graph(xvals1, yvals1 * 0.5 + kval, line_color=BLUE, stroke_width=4, add_vertex_dots=False).set_z_index(10)
+        plotBM = ax2.plot_line_graph(xvals1, yvals1 + kval2, line_color=BLUE, stroke_width=4, add_vertex_dots=False).set_z_index(10)
+
+        self.add(box, ax, eq1, eqS, eqK, line1, plot)
+        self.wait(0.2)
+        self.play(ReplacementTransform(plot, plotBM1), FadeOut(ax, eq1, eqK, eqS), FadeIn(edge), run_time=2)
+        self.wait(0.2)
+        self.play(ReplacementTransform(box, box2),
+                  ReplacementTransform(edge, edge2),
+                  ReplacementTransform(line1, line2),
+                  ReplacementTransform(plotBM1, plotBM),
+                  run_time=3)
+        self.wait(0.2)
+
+        def f(x):
+            return np.interp(x, xvals0, yvals0 + kval2)
+
+        dx_val = ValueTracker(math.log(0.02))
+        dxs = []
+        def g():
+            dx1 = math.exp(dx_val.get_value())
+            s = math.ceil(dx1/xvals0[1])
+            dx1 = s * xvals0[1]
+            dxs.append(s)
+            overshoots, xvals1, yvals1 = self.get_overshoots(ax2, f, kval2, dx1, 1., -1., 1.)
+            m = len(xvals1)
+            lines = []
+            x0 = 0.
+            y0 = 0.
+            slippage = kval2
+            op = min(dx1 * 100, 1)
+            for i in range(m):
+                x1, y1 = xvals1[i], yvals1[i]
+                lines.append(Line(*ax2.coords_to_point([(x0, slippage), (x1, slippage)]), stroke_width=5, stroke_color=YELLOW).set_z_index(200))
+                slippage += abs(y1 - kval2)
+                x0, y0 = x1, y1
+            lines.append(Line(*ax2.coords_to_point([(x0, slippage), (1, slippage)]), stroke_width=5, stroke_color=YELLOW))
+            lines = VGroup(lines)
+            vlines = overshoots[0]
+            if op > 0.05:
+                vlines.set_opacity(op)
+            else:
+                vlines = VGroup()
+
+
+            return VGroup(vlines, overshoots[1], lines)
+
+        slippage_graph = always_redraw(g)
+        self.play(FadeIn(slippage_graph[0]), run_time=1)
+        m = len(slippage_graph[1])
+        cpts = [slippage_graph[2][0]]
+        for i in range(m):
+            cpts.append(slippage_graph[1][i])
+            cpts.append(slippage_graph[2][i+1])
+        cpts = VGroup(*cpts)
+        self.play(Create(cpts), run_time=4)
+        self.wait(0.2)
+
+        self.add(slippage_graph)
+        self.play(dx_val.animate.set_value(math.log(xvals1[1] * 0.02)), run_time=4)
+        print(dxs)
+
+        self.wait()
 
 
 def bmcovs(times, H):
