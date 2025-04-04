@@ -1630,40 +1630,35 @@ class OptionSmooth(Scene):
             config.background_color = GREY
             Scene.__init__(self, *args, **kwargs)
 
-        def construct(self):
-            tmax = 10
-            ymax = 10
-            ax = Axes(x_range=[0, tmax * 1.1], y_range=[0, ymax], x_length=5, y_length=3,
+        def setup(self):
+            tmax = 1.
+            ymax = 1.
+            ax = Axes(x_range=[0, 1.1], y_range=[0, ymax], x_length=config.frame_x_radius * 1,
+                      y_length=config.frame_y_radius * 1,
                       axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False,
                                    "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
                                    "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
                                    },
                       ).set_z_index(200)
-            eq1 = MathTex('t')[0].next_to(ax.x_axis.get_right(), UL).set_z_index(2)
-            eq2 = MathTex('S_t')[0].next_to(ax.y_axis.get_top(), DR, buff=0.2).set_z_index(2)
+            eq1 = MathTex('t')[0].next_to(ax.x_axis.get_right(), UL, buff=0.2).set_z_index(2)
+            eq2 = MathTex('S_t')[0].next_to(ax.y_axis.get_top(), DR, buff=0.15).set_z_index(2)
 
-            n = 100
-            x = np.linspace(0, tmax, n)
-            xarr = [0, 3, 6, 8, 10]
-            yarr = [4, 9, 2, 7, 6]
+            xarr = [_/10 for _ in [0, 3, 6, 8, 10]]
+            yarr = [_/10 for _ in [4, 9, 2, 7, 6]]
 
             sprice = scipy.interpolate.CubicHermiteSpline(
                 xarr, yarr,
                 [1.5, 0, 0, 0, -0.5]
             )
-
             kval = yarr[0]
             eqK = MathTex(r'K', font_size=40).next_to(ax.coords_to_point(0, kval), LEFT, buff=0.1)
             line1 = DashedLine(*ax.coords_to_point([(0, kval), (tmax*1.08, kval)]), stroke_width=2, stroke_opacity=0.7).set_z_index(2)
             box = SurroundingRectangle(VGroup(ax, eqK), corner_radius=0.2, fill_color=BLACK, fill_opacity=0.7, stroke_opacity=0,
                                        buff=0.15)
 
-            self.add(box, ax, eq1, eq2)
-            self.wait(0.5)
-            self.play(FadeIn(eqK, line1), run_time=1)
-
+            n = 100
+            x = np.linspace(0, tmax, n)
             y = sprice(x)
-#            pts = ax.coords_to_point([(t, sprice(t)) for t in xarr])
             plot = ax.plot_line_graph(x, y, stroke_width=5, line_color=WHITE, add_vertex_dots=False).set_z_index(10)
 
             hold = False
@@ -1676,12 +1671,23 @@ class OptionSmooth(Scene):
                     trade_i.append(i)
                     hold = False
 
+            return box, ax, eq1, eq2, eqK, line1, kval, sprice, plot, x, y, trade_i
+
+        def construct(self):
+            box, ax, eq1, eq2, eqK, line1, kval, sprice, plot, x, y, trade_i = self.setup()
+            n = len(x)
+
+            self.add(box, ax, eq1, eq2)
+            self.wait(0.5)
+            self.play(FadeIn(eqK, line1), run_time=1)
+
+
             self.wait(0.5)
             self.play(Create(plot), rate_func=linear, run_time=1.5)
             self.wait(0.5)
 
             tval = ValueTracker(0.0)
-            show0 = show1 = show2 = show3 = show4 = False
+            show1 = show2 = show3 = show4 = False
             green = GREEN_E
             red = RED
 
@@ -1692,8 +1698,8 @@ class OptionSmooth(Scene):
             print(trade_i)
             pts = ax.coords_to_point([(x[i], y[i]) for i in trade_i])
 
-            eqg = MathTex(r'V_t=S_t-K', font_size=32).set_z_index(10)
-            eqr = MathTex(r'V_t=0', font_size=32).set_z_index(10)
+            eqg = MathTex(r'V_t=S_t-K', font_size=36).set_z_index(10)
+            eqr = MathTex(r'V_t=0', font_size=36).set_z_index(10)
 
             def f():
                 t = tval.get_value()
@@ -1761,25 +1767,20 @@ class OptionSmooth(Scene):
             tval.set_value(x[i0])
 
             dot1 = move[-1].copy().set_color(green).move_to(pts[0]).set_z_index(60)
-            self.play(FadeIn(dot1, buy.copy().next_to(pts[0], DR, buff=0.1)), run_time=0.2)
+            self.play(FadeIn(dot1, buy.copy().next_to(pts[0], DR, buff=0.15)), run_time=0.2)
 
             show1 = True
             i = j0 // 2
             self.play(tval.animate.set_value(x[i]), run_time=1.3, rate_func=linear)
-            eqg1 = eqg.copy().next_to(move[-1], UR, buff=0.05).shift(LEFT*0.3)
+            eqg1 = eqg.copy().next_to(move[-1], UR, buff=0.1).shift(LEFT*0.3)
             self.play(FadeIn(eqg1), run_time=0.5)
             self.wait(0.2)
             self.play(#FadeOut(eqg, run_time=0.5),
                       tval.animate.set_value(x[j0]), run_time=1, rate_func=linear)
             self.wait(0.2)
 
-#            pt = pts[1] * UP + pts[2] * RIGHT
-#            line1 = DashedLine(pts[1], pt + RIGHT * 0.1, stroke_width=2)
-#            arr1 = Arrow(pt, pts[2], color=ManimColor(WHITE.to_rgb() * 0.7), buff=0, stroke_width=4).set_z_index(
-#                100)
             dot2 = move[-1].copy().set_color(red).move_to(pts[1]).set_z_index(60)
             eqr1 = eqr.copy().next_to(move[-1], UR, buff=0.1).shift(LEFT*0.2)
-#            profit1 = profit.copy().move_to(pt * 0.6 + pts[2] * 0.4)
             self.play(FadeIn(dot2, eqr1, sell.copy().next_to(pts[1], DL, buff=0.1)), run_time=0.2)
             self.wait(0.2)
 
@@ -1787,7 +1788,7 @@ class OptionSmooth(Scene):
             i = (j0 + i1)//2
             self.play(#FadeOut(eqr, run_time=0.5),
                       tval.animate.set_value(x[i]), run_time=0.8, rate_func=linear)
-            eqr2 = eqr.copy().next_to(move[-1], DOWN, buff=0.1)
+            eqr2 = eqr.copy().next_to(move[-1], DOWN, buff=0.)
             self.play(FadeIn(eqr2), run_time=0.5)
             self.wait(0.2)
             self.play(#FadeOut(eqr, run_time=0.4),
@@ -1804,15 +1805,141 @@ class OptionSmooth(Scene):
             eqg2 = eqg.next_to(move[-1], UP, buff=0.05)
             self.play(FadeIn(eqg2), run_time=0.5)
             self.wait(0.2)
-            self.play(#FadeOut(eqg),
-                      tval.animate.set_value(x[-1]), run_time=0.5, rate_func=linear)
-#            pt = pts[3] * UP + pts[4] * RIGHT
-#            line2 = DashedLine(pts[3], pt + RIGHT * 0.1, stroke_width=2)
-#            arr2 = Arrow(pt, pts[4], color=ManimColor(WHITE.to_rgb() * 0.7), buff=0, stroke_width=4).set_z_index(
-#                100)
-#            self.play(tval.animate.set_value(x[-1]), run_time=0.5, rate_func=linear)
-#            self.play(FadeIn(line1, arr1, profit1, line2, arr2, profit2), run_time=29.5 / 30)
-            self.wait(1.5 / 30)
+            self.play(tval.animate.set_value(x[-1]), run_time=0.5, rate_func=linear)
+
+            self.wait()
+
+
+class OptionSlippage(OptionSmooth):
+    def __init__(self, *args, **kwargs):
+        OptionSmooth.__init__(self, *args, **kwargs)
+        self.dot_col = GREY
+        self.dot_x = ValueTracker(0.)
+
+    @staticmethod
+    def get_overshoots(ax, f, kval, dx, x_max, y_min, y_max):
+        m = math.floor(x_max / dx)
+        xvals1 = np.linspace(dx, m * dx, m)
+        lines = [Line(*ax.coords_to_point([(x, y_min), (x, y_max)]), color=WHITE, stroke_width=1, stroke_opacity=0.8,
+                      stroke_color=GREY).set_z_index(1.5) for x in
+                 xvals1]
+        hold = False
+        trade_i = []
+        dots = []
+        yvals1 = f(xvals1)
+        dot = Dot(radius=0.1, color = GREY).set_z_index(220)
+
+        xvals2 = []
+        yvals2 = []
+        for i in range(m):
+            x = xvals1[i]
+            y = yvals1[i]
+            if hold and y < kval:
+                trade_i.append(x)
+                dots.append(dot.copy().move_to(ax.coords_to_point(x, y)).set(color=RED))
+                hold = False
+                xvals2.append(x)
+                yvals2.append(y)
+            elif not hold and y > kval:
+                trade_i.append(x)
+                dots.append(dot.copy().move_to(ax.coords_to_point(x, y)).set(color=GREEN_E))
+                hold = True
+                xvals2.append(x)
+                yvals2.append(y)
+        return VGroup(VGroup(*lines), VGroup(*dots)), xvals2, yvals2
+
+    def construct(self):
+        box, ax, eq1, eq2, eqK, line1, kval, sprice, plot, x, y, trade_i = self.setup()
+        plot.set_stroke(color=BLUE)
+        eqS = MathTex(r'S_t', color=BLUE).move_to(ax.coords_to_point(0.1, 0.77))
+        self.add(box, ax, eq1, eqK, line1, plot, eqS)
+        self.wait(0.2)
+
+
+        x_max = x[-1]
+        ymin = 0.
+        ymax = 1.
+        dot_col = [RED]
+
+        def movedot():
+            x = self.dot_x.get_value()
+            dot = Dot(radius=0.1, color=dot_col[0]).set_z_index(210)
+            return dot.move_to(ax.coords_to_point(x, sprice(x)))
+
+        dx_val = ValueTracker(0.095)
+        def g():
+            dx = dx_val.get_value()
+            overshoots, xvals1, yvals1 = self.get_overshoots(ax, sprice, kval, dx, x_max, ymin, ymax)
+            arrs = []
+            paths = []
+            slippage = 0
+            s = 1
+            x0 = 0.
+            for i in range(len(xvals1)):
+                x1 = x0
+                x0 = xvals1[i]
+                y0 = yvals1[i]
+                arrs.append(Arrow(*ax.coords_to_point([(x0, kval), (x0, y0-0.015*s)]), color=ORANGE, buff=0, stroke_width=5,
+                            max_stroke_width_to_length_ratio=50).set_z_index(40))
+
+                x1 = np.linspace(x1, x0, 50)
+                y1 = np.zeros(50) + kval if s == 1 else sprice(x1)
+                path = ax.plot_line_graph(x1, y1 - slippage, stroke_width=5, line_color=YELLOW, add_vertex_dots=False).set_z_index(2)
+                paths.append(path)
+                slippage += abs(y0 - kval)
+                s = -s
+            x1 = x0
+            x0 = x_max
+            x1 = np.linspace(x1, x0, 50)
+            y1 = np.zeros(50) + kval if s == 1 else sprice(x1)
+            path = ax.plot_line_graph(x1, y1 - slippage, stroke_width=5, line_color=YELLOW,
+                                      add_vertex_dots=False).set_z_index(2)
+            paths.append(path)
+
+            return VGroup(overshoots[0], overshoots[1], VGroup(*arrs), VGroup(*paths))
+
+        overshoot_graph = always_redraw(g)
+        dots = overshoot_graph[1][:]
+        arrs = overshoot_graph[2][:]
+        paths = overshoot_graph[3][:]
+
+        self.play(FadeIn(overshoot_graph[0]), run_time=1)
+        self.wait(0.2)
+        dotm = always_redraw(movedot)
+        self.play(FadeIn(dotm), run_time=0.3)
+        self.wait(1.5/30)
+
+        x0 = 0.
+        cols = [GREEN_E, RED]
+        eqV = MathTex(r'V_t', color=YELLOW).move_to(ax.coords_to_point(0.1, 0.3))
+        origin = ax.coords_to_point(0, 0)
+        graph_dx = ax.coords_to_point(1, 0) - origin
+        for i in range(len(dots)):
+            x1 = x0
+            x0 = (dots[i].get_center() - origin)[0] / graph_dx[0]
+            dt = x0 - x1
+            anims = [self.dot_x.animate.set_value(x0), Create(paths[i])]
+            if i == 0:
+                anims.append(FadeIn(eqV))
+            self.play(*anims, run_time=dt*4, rate_func=linear)
+            anims = [FadeIn(dots[i], arrs[i])]
+            if i == 2:
+                eqslip = Tex(r'slippage', font_size=40, color=ORANGE).set_z_index(10)
+                eqslips = VGroup(eqslip.next_to(arrs[0], RIGHT, buff=0.),
+                                 eqslip.copy().next_to(arrs[1], RIGHT, buff=0.),
+                                 eqslip.copy().next_to(arrs[2], RIGHT, buff=0.))
+                anims.append(FadeIn(eqslips))
+            self.play(*anims, run_time=1)
+            dot_col[0]=cols[i % 2]
+            self.wait(0.2)
+        self.play(self.dot_x.animate.set_value(x_max), Create(paths[-1]), run_time=(x_max - x0)*4, rate_func=linear)
+        self.remove(dotm)
+        self.wait(0.2)
+        self.play(FadeOut(eqslips), run_time=0.5)
+        self.add(overshoot_graph)
+        self.play(dx_val.animate.set_value(0.002), run_time=4)
+        self.wait()
+
 
 
 def bmcovs(times, H):
