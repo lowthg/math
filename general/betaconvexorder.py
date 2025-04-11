@@ -16,8 +16,18 @@ def putPrice(mean, c, x):
     else:
         return x * (1-mean)
 
+
+def var(mean, c, x, dt):
+    dPdt = (putPrice(mean, c, x) - putPrice(mean, c + dt, x)) / dt
+    c1 = c + dt/2
+    a = mean * c1
+    b = c1 - a
+    dens = math.pow(x, a-1) * math.pow(1-x, b-1) / scipy.special.beta(a, b)
+    return 2 * dPdt / dens
+
+
 smax = 6.
-smin = 2
+smin = 1
 ns = 200
 nx = 300
 dx = 1 / (nx+1)
@@ -34,6 +44,7 @@ for i in range(nx):
     for j in range(ns):
         Z3[j, i] = (putPrice(mean, svals[j], xvals[i]) - putPrice(mean, svals[j]+ds, xvals[i]))/ds
 #        Z3[j, i] = (putPrice(mean, svals[j], xvals[i]-dx) + putPrice(mean, svals[j], xvals[i]+dx) - 2*putPrice(mean, svals[j], xvals[i]))/dx/dx
+#        Z3[j, i] = var(mean, svals[j], xvals[i], ds) * math.pow(0.05+svals[j], 1.7)
 
 print(mean)
 fig = plt.figure()
@@ -47,6 +58,6 @@ ax.set_ylabel('s')
 ax.set_xlabel('x')
 
 plt.subplots_adjust(left=0.01, right=0.99, bottom=0.05, top=0.97, hspace=0, wspace=0)
-ax.view_init(15, -150)
+ax.view_init(15, 70)
 
 plt.show()
