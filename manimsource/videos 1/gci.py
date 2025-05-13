@@ -11,6 +11,56 @@ sys.path.append('../abracadabra/')
 # noinspection PyUnresolvedReferences
 import abracadabra as abra
 
+def ConvexPolytope(vectors, g=4., max_radius=4.0, scale=1.0, **kwargs):
+    n = len(vectors)
+    weights = np.ones(n) / n
+    def f(u, v):
+        x = OUT * math.cos(u) + (RIGHT * math.cos(v) + UP * math.sin(v)) * math.sin(u)
+        r = max_radius
+
+        a = 0.
+
+        for i in range(n):
+            a += math.pow(abs(np.inner(x, vectors[i])), g) * weights[i]
+
+        a = math.pow(a, 1/g)
+
+        if r * a > 1:
+            r = 1/a
+#            r = max_radius
+        return x * r * scale
+
+    conv = Surface(f, u_range=[0, PI], v_range=[-PI, PI], checkerboard_colors=False,
+                    **kwargs)
+
+    return conv
+
+
+class Polytope(ThreeDScene):
+    def construct(self):
+        self.set_camera_orientation(phi=55*DEGREES, theta=35*DEGREES)
+
+        vectors = [
+            RIGHT * 0.5 + UP * 0.15,
+            UP * 0.7,
+            OUT * 0.4 + UP * 0.1,
+            (RIGHT + UP) * 0.2,
+        ]
+        vectors2 = [
+            RIGHT * 0.5,
+            UP * 0.3,
+            OUT * 0.5
+        ]
+
+        convA = ConvexPolytope(vectors, scale=0.8, fill_opacity=0.8, stroke_opacity=0, resolution=[50, 50], fill_color=BLUE)
+        convB = ConvexPolytope(vectors2, g=2.0, scale=0.6, fill_opacity=0.8, stroke_opacity=0, resolution=[50, 50], fill_color=RED, max_radius=8)
+
+        self.add(convA, convB)
+        self.wait(0.2)
+        self.begin_ambient_camera_rotation(rate=PI * 0.5)
+
+        self.wait(2)
+
 
 class GCIforms(Scene):
     def construct(self):
