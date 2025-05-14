@@ -11,24 +11,37 @@ sys.path.append('../abracadabra/')
 # noinspection PyUnresolvedReferences
 import abracadabra as abra
 
-def ConvexPolytope(vectors, g=4., max_radius=4.0, scale=1.0, **kwargs):
+
+def unitVec2D(theta):
+    return RIGHT * math.cos(theta) + UP * math.sin(theta)
+
+def convexPolytopePoint(x, vectors, g=4.0, max_radius=4.0):
+    r = max_radius
+    a = 0.
+
+    for v in vectors:
+        a += math.pow(abs(np.inner(x, v)), g)
+
+    a = math.pow(a, 1/g)
+
+    if r * a > 1:
+        r = 1/a
+
+    return r
+
+
+def convexPolytope2D(vectors, g=4., max_radius=10.0, scale=1.0, **kwargs):
+    def f(t):
+        x = unitVec2D(t)
+        return x * min([convexPolytopePoint(x, v, g, max_radius) for v, g in zip(vectors, g)]) * scale
+    return ParametricFunction(f, (0, 2*PI), **kwargs)
+
+def convexPolytope3D(vectors, g=4., max_radius=4.0, scale=1.0, **kwargs):
     n = len(vectors)
     weights = np.ones(n) / n
     def f(u, v):
         x = OUT * math.cos(u) + (RIGHT * math.cos(v) + UP * math.sin(v)) * math.sin(u)
-        r = max_radius
-
-        a = 0.
-
-        for i in range(n):
-            a += math.pow(abs(np.inner(x, vectors[i])), g) * weights[i]
-
-        a = math.pow(a, 1/g)
-
-        if r * a > 1:
-            r = 1/a
-#            r = max_radius
-        return x * r * scale
+        return x * convexPolytopePoint(x, vectors, g, max_radius) * scale
 
     conv = Surface(f, u_range=[0, PI], v_range=[-PI, PI], checkerboard_colors=False,
                     **kwargs)
@@ -36,30 +49,65 @@ def ConvexPolytope(vectors, g=4., max_radius=4.0, scale=1.0, **kwargs):
     return conv
 
 
-class Polytope(ThreeDScene):
+class Intersect2D(Scene):
+    def __init__(self, *args, **kwargs):
+        config.background_color=GREY
+        Scene.__init__(self, *args, **kwargs)
+
     def construct(self):
-        self.set_camera_orientation(phi=55*DEGREES, theta=35*DEGREES)
+        theta = 25*DEGREES
+        scale=1.2
+        vectors = [
+            unitVec2D(theta)/4,
+            unitVec2D(theta+PI/2)
+        ]
+        vectors2 = [
+            unitVec2D(15*DEGREES) / 1.5,
+            unitVec2D(135*DEGREES) / 2.4
+        ]
+        blue = ManimColor((50, 100, 180))
+        red = ManimColor(RED.to_rgb()*0.7)
+        g = [2.5, 3]
+        setA = convexPolytope2D([vectors], g=[g[0]], stroke_opacity=0, fill_color=red, fill_opacity=1, scale=scale).set_z_index(0)
+        setB = convexPolytope2D([vectors2], g=[g[1]], stroke_opacity=0, fill_color=blue, fill_opacity=1, scale=scale).set_z_index(0)
+        setC = convexPolytope2D([vectors, vectors2], g, fill_color=(red+blue)*0.5, fill_opacity=1, stroke_opacity=0, scale=scale).set_z_index(1)
+        eq1 = MathTex(r'C_1', font_size=80).move_to((LEFT*2.4 + DOWN*1.17)*scale).set_z_index(2)
+        eq2 = MathTex(r'C_2', font_size=80).move_to((LEFT*0.1 + UP*2)*scale).set_z_index(2)
+        eq3 = MathTex(r'C_1\cap C_2', font_size=80).set_z_index(2)#.move_to(LEFT*0.1 + UP*2)
+        self.add(setA, setB, setC, eq1, eq2, eq3)
+
+
+class Intersect3D(ThreeDScene):
+    def construct(self):
+        self.set_camera_orientation(phi=60*DEGREES, theta=0*DEGREES)
 
         vectors = [
-            RIGHT * 0.5 + UP * 0.15,
-            UP * 0.7,
-            OUT * 0.4 + UP * 0.1,
-            (RIGHT + UP) * 0.2,
+            (OUT + RIGHT)*0.45,
+            (IN + RIGHT*1.1) * 0.4,
+            UP * 0.5 + OUT * 0.2,
+            #            RIGHT * 0.5 + UP * 0.15,
+#            UP * 0.7,
+#            OUT * 0.4 + UP * 0.1,
+#            (RIGHT + UP) * 0.2,
         ]
         vectors2 = [
             RIGHT * 0.5,
             UP * 0.3,
             OUT * 0.5
         ]
+        res=100
 
-        convA = ConvexPolytope(vectors, scale=0.8, fill_opacity=0.8, stroke_opacity=0, resolution=[50, 50], fill_color=BLUE)
-        convB = ConvexPolytope(vectors2, g=2.0, scale=0.6, fill_opacity=0.8, stroke_opacity=0, resolution=[50, 50], fill_color=RED, max_radius=8)
+        convA = convexPolytope3D(vectors, g=4.0, scale=1.18, fill_opacity=0.8, stroke_opacity=0, resolution=[res, res], fill_color=BLUE)
+        convB = convexPolytope3D(vectors2, g=2.0, scale=0.79, fill_opacity=0.8, stroke_opacity=0, resolution=[res, res], fill_color=RED, max_radius=8)
+
+
 
         self.add(convA, convB)
+        self.add(Arrow3D(ORIGIN, OUT*4, color=WHITE))
         self.wait(0.2)
         self.begin_ambient_camera_rotation(rate=PI * 0.5)
 
-        self.wait(2)
+        self.wait(1)
 
 
 class GCIforms(Scene):
