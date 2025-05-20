@@ -108,13 +108,13 @@ def intersectPolytopes(setA, setB, shift=0.0, **kwargs):
 
 
 class Intersect2D(Scene):
-    show_eqs=False
-
-    def __init__(self, *args, **kwargs):
-        config.background_color=GREY
-        Scene.__init__(self, *args, **kwargs)
+    show_eqs=2
+    show_A = 1
+    show_B = 1
+    show_o = False
 
     def construct(self):
+        MathTex.set_default(font_size=120)
         theta = 25*DEGREES
         scale=1.2
         vectors = [
@@ -129,12 +129,26 @@ class Intersect2D(Scene):
         setA = convexPolytope2D([vectors], g=[g[0]], stroke_opacity=0, fill_color=red, fill_opacity=1, scale=scale).set_z_index(0)
         setB = convexPolytope2D([vectors2], g=[g[1]], stroke_opacity=0, fill_color=blue, fill_opacity=1, scale=scale).set_z_index(0)
         setC = convexPolytope2D([vectors, vectors2], g, fill_color=(red+blue)*0.5, fill_opacity=1, stroke_opacity=0, scale=scale).set_z_index(1)
-        eq1 = MathTex(r'C_1', font_size=80).move_to((LEFT*2.4 + DOWN*1.17)*scale).set_z_index(2)
-        eq2 = MathTex(r'C_2', font_size=80).move_to((LEFT*0.1 + UP*2)*scale).set_z_index(2)
-        eq3 = MathTex(r'C_1\cap C_2', font_size=80).set_z_index(2)#.move_to(LEFT*0.1 + UP*2)
-        self.add(setA, setB, setC)
-        if self.show_eqs:
-            self.add(eq1, eq2, eq3)
+
+        if self.show_eqs == 1:
+            eq1 = MathTex(r'C_1').move_to((LEFT*2.4 + DOWN*1.17)*scale).set_z_index(2)
+            eq2 = MathTex(r'C_2').move_to((LEFT*0.1 + UP*2)*scale).set_z_index(2)
+            eq3 = MathTex(r'C_1\cap C_2').set_z_index(2)#.move_to(LEFT*0.1 + UP*2)
+        elif self.show_eqs == 2:
+            eq1 = MathTex(r'A').move_to((LEFT*2.4 + DOWN*1)*scale).set_z_index(2)
+            eq2 = MathTex(r'B').move_to((LEFT*0.1 + UP*2)*scale).set_z_index(2)
+            eq3 = MathTex(r'A\cap B').set_z_index(2)#.move_to(LEFT*0.1 + UP*2)
+        else:
+            eq1 = eq2 = eq3 = VGroup()
+
+        if self.show_A:
+            self.add(setA, eq1)
+        if self.show_B:
+            self.add(setB, eq2)
+        if self.show_A and self.show_B:
+            self.add(setC, eq3)
+        if self.show_o:
+            self.add(Dot(radius=0.2, color=WHITE, fill_opacity=0.6).set_z_index(5))
 
 
 class Intersect3D(ThreeDScene):
@@ -152,19 +166,33 @@ class Intersect3D(ThreeDScene):
     g = [4.0, 2.0]
     scale=[1.18, 1.09]
     rtime=1
+    showA = True
+    showB = True
+    phi=60*DEGREES
 
     def shapes(self):
         res=[self.res, self.res]
         g = self.g
-        convA = convexPolytope3D(self.vectors1, g=g[0], scale=self.scale[0], fill_opacity=0.7, stroke_opacity=0, resolution=res, fill_color=blue)
-        convB = convexPolytope3D(self.vectors2, g=g[1], scale=self.scale[1], fill_opacity=0.7, stroke_opacity=0, resolution=res, fill_color=red, max_radius=8)
-        intersect = intersectPolytopes(convA, convB, shift = 0.02, thickness=0.02, color=GREY, resolution=8, fill_opacity=0.7, stroke_opacity=0.8)
+        convA = convexPolytope3D(self.vectors1, g=g[0], scale=self.scale[0], fill_opacity=0.7, stroke_opacity=0,
+                                 resolution=res, fill_color=blue)
+        convB = convexPolytope3D(self.vectors2, g=g[1], scale=self.scale[1], fill_opacity=0.7, stroke_opacity=0,
+                                 resolution=res, fill_color=red, max_radius=8)
+        if self.showA and self.showB:
+            intersect = intersectPolytopes(convA, convB, shift = 0.02, thickness=0.02, color=GREY, resolution=8,
+                                           fill_opacity=0.7, stroke_opacity=0.8)
+        else:
+            intersect = VGroup()
         return convA, convB, intersect
 
     def construct(self):
-        self.set_camera_orientation(phi=60*DEGREES, theta=0*DEGREES)
+        self.set_camera_orientation(phi=self.phi, theta=0*DEGREES)
         convA, convB, intersect = self.shapes()
-        self.add(convA, convB, intersect)
+        if self.showA:
+            self.add(convA)
+        if self.showB:
+            self.add(convB)
+        if self.showA and self.showB:
+            self.add(intersect)
 #        self.add(Arrow3D(ORIGIN, OUT*4, color=WHITE))
 #        self.wait(0.2)
         self.begin_ambient_camera_rotation(rate=PI*2/self.rtime)
@@ -205,10 +233,14 @@ class Intersect3DEllipsoids(Intersect3D):
         RIGHT * 0.45,
         UP * 0.8,
     ]
+    showB = False
+    phi=80*DEGREES
     def __init__(self, *args, **kwargs):
         Intersect3D.__init__(self, *args, **kwargs)
         for v in self.vectors1:
             v[:] = rotate_vector(v, 30*DEGREES, RIGHT+UP)
+        for v in self.vectors2:
+            v[:] = rotate_vector(v, -10*DEGREES, RIGHT)
 
     g = [2, 2]
     rtime = 4
@@ -222,6 +254,7 @@ class Intersect3DEllipsoid(Intersect3D):
         (IN * 0.8 + RIGHT * 1.1*1.1) * 0.4,
         UP * 0.5 * 0.8 + OUT * 0.2 * 0.8
     ]
+
 
 class Intersect3DGeneral(Intersect3D):
     rtime = 4
@@ -250,6 +283,38 @@ class Intersect3DGeneral(Intersect3D):
             v[1] *= 1
             v[:] = rotate_vector(v, 50*DEGREES, RIGHT)
 
+
+class GCIStatement(Scene):
+    anim = True # put in animation on formula
+    def construct(self):
+        txt1 = Tex(r'\bf\underline{The Gaussian Correlation Inequality}', color=BLUE)
+        txt2 = Tex(r'For centrally symmetric convex $A,B\subseteq\mathbb R^n$ then,')
+        txt3 = MathTex(r'\mathbb P(A\cap B)\ge\mathbb P(A)\mathbb P(B)')[0]
+        txt4 = Tex(r'under the standard normal distribution on $\mathbb R^n$.')
+
+        txt2.next_to(txt1, DOWN)
+        txt3.next_to(txt2, DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 1.2)
+        txt4.next_to(txt3, DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 1.2)
+        gp = VGroup(txt1, txt2, txt3, txt4)
+        txt2.align_to(gp, LEFT)
+        txt4.align_to(gp, LEFT)
+        gp.move_to(ORIGIN).to_edge(UP)
+        txt3[0][:6].set(stroke_width=2, family=True)
+
+        self.add(txt1, txt2, txt3, txt4)
+        if self.anim:
+            self.wait()
+            txtbig = txt3.copy()
+            for x in txtbig:
+                x.set(stroke_width=2)
+            txtbig[:6].scale(1.2, about_point=txt3[3].get_center())
+            txtbig[6:7].scale(1.2)
+            txtbig[7:].scale(1.2, about_point=txt3[8].get_center())
+#            self.play(txt3[:6].animate.scale(1.2).set(stroke_width=4), rate_func=rate_functions.there_and_back, run_time=2)
+            self.play(Transform(txt3[:6], txtbig[:6]), rate_func=rate_functions.there_and_back, run_time=2)
+            self.play(Transform(txt3[6:7], txtbig[6:7]), rate_func=rate_functions.there_and_back, run_time=2)
+            self.play(Transform(txt3[7:], txtbig[7:]), rate_func=rate_functions.there_and_back, run_time=2)
+            self.wait()
 
 
 class GCIforms(Scene):
@@ -378,5 +443,5 @@ class threed(ThreeDScene):
 
 
 if __name__ == "__main__":
-    with tempconfig({"quality": "low_quality", "preview": True}):
+    with tempconfig({"quality": "low_quality", "preview": False, 'fps': 30}):
         Intersect3D().render()
