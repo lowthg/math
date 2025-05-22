@@ -20,12 +20,16 @@ def unitVec2D(theta):
 def unitvec3D(u, v):
     return OUT * math.cos(u) + (RIGHT * math.cos(v) + UP * math.sin(v)) * math.sin(u)
 
-def convexPolytopePoint(x, vectors, g=4.0, max_radius=4.0):
+def convexPolytopePoint(x, vectors, g=4.0, max_radius=4.0, symmetric=True):
     r = max_radius
     a = 0.
 
-    for v in vectors:
-        a += math.pow(abs(np.inner(x, v)), g)
+    if symmetric:
+        for v in vectors:
+            a += math.pow(abs(np.inner(x, v)), g)
+    else:
+        for v in vectors:
+            a += math.pow(max(0., np.inner(x, v)), g)
 
     a = math.pow(a, 1/g)
 
@@ -38,8 +42,16 @@ def convexPolytopePoint(x, vectors, g=4.0, max_radius=4.0):
 def convexPolytope2D(vectors, g=4., max_radius=10.0, scale=1.0, **kwargs):
     def f(t):
         x = unitVec2D(t)
-        return x * min([convexPolytopePoint(x, v, g, max_radius) for v, g in zip(vectors, g)]) * scale
+        return x * min([convexPolytopePoint(x, v, g1, max_radius) for v, g1 in zip(vectors, g)]) * scale
     return ParametricFunction(f, (0, 2*PI), **kwargs)
+
+
+def convexPolytope2D(vectors, g=[4.], max_radius=10.0, scale=1.0, symmetric=True, **kwargs):
+    def f(t):
+        x = unitVec2D(t)
+        return x * min([convexPolytopePoint(x, v, g1, max_radius, symmetric) for v, g1 in zip(vectors, g)]) * scale
+    return ParametricFunction(f, (0, 2*PI), **kwargs)
+
 
 def convexPolytope3D(vectors, g=4., max_radius=4.0, scale=1.0, **kwargs):
     n = len(vectors)
@@ -113,8 +125,7 @@ class Intersect2D(Scene):
     show_B = 1
     show_o = False
 
-    def construct(self):
-        MathTex.set_default(font_size=120)
+    def shapeparams(self):
         theta = 25*DEGREES
         scale=1.2
         vectors = [
@@ -126,9 +137,16 @@ class Intersect2D(Scene):
             unitVec2D(135*DEGREES) / 2.4
         ]
         g = [2.5, 3]
-        setA = convexPolytope2D([vectors], g=[g[0]], stroke_opacity=0, fill_color=red, fill_opacity=1, scale=scale).set_z_index(0)
-        setB = convexPolytope2D([vectors2], g=[g[1]], stroke_opacity=0, fill_color=blue, fill_opacity=1, scale=scale).set_z_index(0)
-        setC = convexPolytope2D([vectors, vectors2], g, fill_color=(red+blue)*0.5, fill_opacity=1, stroke_opacity=0, scale=scale).set_z_index(1)
+
+        return [vectors, vectors2], g, scale
+
+    def construct(self):
+        MathTex.set_default(font_size=120)
+        vectors, g, scale = self.shapeparams()
+
+        setA = convexPolytope2D([vectors[0]], g=[g[0]], stroke_opacity=0, fill_color=red, fill_opacity=1, scale=scale).set_z_index(0)
+        setB = convexPolytope2D([vectors[1]], g=[g[1]], stroke_opacity=0, fill_color=blue, fill_opacity=1, scale=scale).set_z_index(0)
+        setC = convexPolytope2D(vectors, g, fill_color=(red+blue)*0.5, fill_opacity=1, stroke_opacity=0, scale=scale).set_z_index(1)
 
         if self.show_eqs == 1:
             eq1 = MathTex(r'C_1').move_to((LEFT*2.4 + DOWN*1.17)*scale).set_z_index(2)
@@ -149,6 +167,73 @@ class Intersect2D(Scene):
             self.add(setC, eq3)
         if self.show_o:
             self.add(Dot(radius=0.2, color=WHITE, fill_opacity=0.6).set_z_index(5))
+
+
+class Convexity(Intersect2D):
+    def construct(self):
+        vectors, g, scale = self.shapeparams()
+
+        vec1 = [vectors[1]]
+        g1 = [g[1]]
+
+        setB = convexPolytope2D(vec1, g=g1, stroke_opacity=0, fill_color=blue, fill_opacity=1, scale=scale).set_z_index(0)
+
+        def f(t):
+            x = unitVec2D(t)
+            res = x * min([convexPolytopePoint(x, v, g, 4.) for v, g in zip(vec1, g1)]) * scale
+
+            a = PI * 0.85
+            b = PI * 1.35
+            s, t1 = 1, t
+            if b > t - PI > a:
+                s, t1 = -1, t - PI
+            if b > t + PI > a:
+                s, t1 = -1, t + PI
+            if b > t1 > a:
+                print('s=', s, 't1', t1)
+                res += RIGHT * (1 - math.cos((t1 - a) / (b-a) * 2 * PI)) * s * 0.45
+
+            return res
+
+        setC = ParametricFunction(f, (0, 2 * PI), stroke_opacity=0, fill_color=blue, fill_opacity=1)
+
+        self.add(setB)
+        self.wait(0.1)
+        dot1 = Dot(UP * 1.7 + LEFT*1.55, radius=0.2, fill_color=WHITE).set_z_index(10)
+        dot2 = Dot(DOWN*2.4 + LEFT*0.85, radius=0.2, fill_color=WHITE).set_z_index(10)
+        self.play(FadeIn(dot1, dot2))
+        line1 = Line(dot1, dot2, color=YELLOW, stroke_width=8).set_z_index(9)
+        self.play(Create(line1))
+        setB2 = setB.copy()
+        self.play(Transform(setB, setC))
+        self.wait(0.1)
+        self.play(Transform(setB, setB2))
+        self.wait(0.1)
+        self.play(FadeOut(dot2, line1))
+
+        dot3 = Dot(-dot1.get_center(), radius=0.2, fill_color=WHITE).set_z_index(10)
+        doto = Dot(ORIGIN, radius=0.2, fill_color=WHITE, fill_opacity=0.6).set_z_index(10)
+        line2 = Line(dot1.get_center(), dot3.get_center(), color=YELLOW, stroke_width=8).set_z_index(9)
+
+        self.play(FadeIn(doto, dot3), Create(line2))
+        self.wait(0.1)
+#        self.play(setB.animate.scale(-1), run_time=2)
+
+        vec2 = [[
+            UP*1.03,
+            unitVec2D(-30 * DEGREES)*1.03,
+            unitVec2D(210 * DEGREES)*1.03
+#            (RIGHT * math.sqrt(3) + DOWN)/2,
+#            (LEFT * math.sqrt(3) + DOWN) / 2,
+        ]]
+        setD = convexPolytope2D(vec2, g=[4.], stroke_opacity=0, fill_color=blue, fill_opacity=1, symmetric=False,
+                                scale=2).set_z_index(1)
+        setE = setD.copy().set_fill(color=GREY_C).set_z_index(0)
+        self.play(ReplacementTransform(setB, setD))
+        self.wait(0.1)
+        self.add(setE)
+        self.play(setD.animate.scale(-1, about_point=ORIGIN), run_time=2)
+
 
 
 class Intersect3D(ThreeDScene):
@@ -317,6 +402,88 @@ class GCIStatement(Scene):
             self.wait()
 
 
+class StandardNormal(ThreeDScene):
+    def construct(self):
+        self.set_camera_orientation(phi=PI/2, theta=-PI/2)
+
+        def p0(x):
+            return math.exp(-x*x/2)
+
+        xmax = 2.5
+        ax = Axes(x_range=[-xmax, xmax + 0.2], y_range=[0, 1.15], x_length=8, y_length=2,
+                  axis_config={'color': WHITE, 'stroke_width': 4, 'include_ticks': False,
+                               "tip_width": 0.5 * DEFAULT_ARROW_TIP_LENGTH,
+                               "tip_height": 0.5 * DEFAULT_ARROW_TIP_LENGTH,
+                               "shade_in_3d": True,
+                               },
+#                  shade_in_3d=True,
+                  ).set_z_index(1)
+
+
+#        ax.x_axis.set(shade_in_3d=True)
+        ax[0].submobjects[0].set(shade_in_3d=True)
+        ax_o = ax.coords_to_point(0, 0)
+        ax.shift(-ax_o)
+        ax_o=ORIGIN
+        xlen = ax.coords_to_point(xmax, 0)[0] - ax_o[0]
+        ylen = ax.coords_to_point(0, 1)[1] - ax_o[1]
+
+        plt1 = ax.plot(p0, x_range=[-xmax, xmax], color=BLUE, shade_in_3d=True).set_z_index(2)
+        fill1 = ax.get_area(plt1, color=BLUE, opacity=0.5, shade_in_3d=True).set_z_index(2)
+        eq1 = MathTex(r'p(x)=\frac1{\sqrt{2\pi}}e^{-\frac12x^2}', font_size=35, shade_in_3d=True)[0]
+        eq2 = MathTex(r'{p(x,y)=\frac1{2\pi}e^{-\frac12(x^2+y^2)}}', font_size=35, color=WHITE, stroke_width=1.7, stroke_color=WHITE, shade_in_3d=True)[0]
+
+        eq1.set_z_index(3).move_to(ax.coords_to_point(-xmax, 1.1), UL)
+        eq2.set_z_index(3).move_to(ax.coords_to_point(-xmax, 1), UL)
+
+        gp1 = VGroup(ax, plt1, fill1, eq1, eq2).rotate(PI/2, axis=RIGHT, about_point=ax_o)
+        eq2.shift(DOWN*xlen/2)
+        self.add(ax)
+        self.wait(0.2)
+        self.play(LaggedStart(AnimationGroup(Create(plt1, rate_func=linear), FadeIn(eq1)),
+                              FadeIn(fill1), lag_ratio=0.5), run_time=1.5)
+        self.wait(0.1)
+
+        sq1 = Surface(lambda u, v: u * RIGHT + v * UP, u_range=[-xlen, xlen], v_range=[-xlen, xlen], fill_opacity=0.3,
+                      stroke_opacity=0.4, checkerboard_colors=[RED_D, RED_E])
+        self.remove(ax)
+        self.add(ax)
+
+        self.move_camera(phi=70*DEGREES, theta=-120*DEGREES)
+        gp2 = gp1[:-2].copy()
+        gp2.set(shade_in_3d=True)
+        self.play(Rotate(gp2, -90*DEGREES, OUT, about_point=ax_o), FadeIn(sq1))
+        ax.y_axis.set_z_index(3)
+        self.play(gp1[1:-1].animate.shift(xlen*UP), gp2[1:].animate.shift(xlen*RIGHT))
+
+        def p1(x, y):
+            return (RIGHT * x + UP * y) * xlen/xmax + OUT * math.exp(-(x*x+y*y)/2) * ylen
+        sq1.set_z_index(4)
+        colors = [
+            ManimColor(RED_D.to_rgb()*0.5),
+            ManimColor(RED_E.to_rgb() * 0.5)
+        ]
+        surf1 = Surface(p1, u_range=[-xmax, xmax], v_range=[-xmax, xmax], fill_opacity=0.9,
+                      stroke_opacity=0.8, checkerboard_colors=colors, stroke_color=WHITE).set_z_index(200, family=True)
+        line1 = Line(OUT * ylen, OUT * ylen * 1.12, stroke_width=4, stroke_color=WHITE).set_z_index(300)
+        self.add(line1)
+        self.play(ReplacementTransform(sq1, surf1, rate_func=lambda t: smooth(min(t*2, 1))),
+                  FadeIn(eq2, rate_func=lambda t: smooth(min(t*2, 1) - max(t*4 - 3, 0))),
+                  FadeOut(eq1, rate_func=lambda t: smooth(max(t*4 - 3, 0))),
+                  run_time=4)
+
+
+class VectorX(Scene):
+    def construct(self):
+        eq1 = MathTex(r'X = (X_1,X_2,\ldots, X_n)', stroke_width=1.3)[0]
+        eq1[0].set(stroke_width=1.5)
+        self.add(eq1)
+
+class DensityX(Scene):
+    def construct(self):
+        eq1 = MathTex(r'p_X(x_1,\ldots,x_n) = (2\pi)^{-\frac n2}e^{-\frac12(x_1^2+\cdots+x_n^2)}', stroke_width=1.3)[0]
+        self.add(eq1)
+
 class GCIforms(Scene):
     def construct(self):
         eq1 = MathTex(r'\mu_n(A\cap B)\ge\mu_n(A)\mu_n(B)')
@@ -443,5 +610,5 @@ class threed(ThreeDScene):
 
 
 if __name__ == "__main__":
-    with tempconfig({"quality": "low_quality", "preview": False, 'fps': 30}):
-        Intersect3D().render()
+    with tempconfig({"quality": "low_quality", "preview": True, 'fps': 15}):
+        StandardNormal().render()
