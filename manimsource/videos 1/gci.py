@@ -39,13 +39,6 @@ def convexPolytopePoint(x, vectors, g=4.0, max_radius=4.0, symmetric=True):
     return r
 
 
-def convexPolytope2D(vectors, g=4., max_radius=10.0, scale=1.0, **kwargs):
-    def f(t):
-        x = unitVec2D(t)
-        return x * min([convexPolytopePoint(x, v, g1, max_radius) for v, g1 in zip(vectors, g)]) * scale
-    return ParametricFunction(f, (0, 2*PI), **kwargs)
-
-
 def convexPolytope2D(vectors, g=[4.], max_radius=10.0, scale=1.0, symmetric=True, **kwargs):
     def f(t):
         x = unitVec2D(t)
@@ -55,7 +48,6 @@ def convexPolytope2D(vectors, g=[4.], max_radius=10.0, scale=1.0, symmetric=True
 
 def convexPolytope3D(vectors, g=4., max_radius=4.0, scale=1.0, **kwargs):
     n = len(vectors)
-    weights = np.ones(n) / n
     def f(u, v):
         x = unitvec3D(u, v)
         return x * convexPolytopePoint(x, vectors, g, max_radius) * scale
@@ -371,9 +363,11 @@ class Intersect3DGeneral(Intersect3D):
 
 class GCIStatement(Scene):
     anim = True # put in animation on formula
+    do_indep = False # just do independence
+
     def construct(self):
         txt1 = Tex(r'\bf\underline{The Gaussian Correlation Inequality}', color=BLUE)
-        txt2 = Tex(r'For centrally symmetric convex $A,B\subseteq\mathbb R^n$ then,')
+        txt2 = Tex(r'For centrally symmetric convex $A,B\subseteq\mathbb R^n$ then')
         txt3 = MathTex(r'\mathbb P(A\cap B)\ge\mathbb P(A)\mathbb P(B)')[0]
         txt4 = Tex(r'under the standard normal distribution on $\mathbb R^n$.')
 
@@ -386,19 +380,28 @@ class GCIStatement(Scene):
         gp.move_to(ORIGIN).to_edge(UP)
         txt3[0][:6].set(stroke_width=2, family=True)
 
-        self.add(txt1, txt2, txt3, txt4)
-        if self.anim:
+        if not self.do_indep:
+            self.add(txt1, txt2, txt3, txt4)
+            if self.anim:
+                self.wait()
+                txtbig = txt3.copy()
+                for x in txtbig:
+                    x.set(stroke_width=2)
+                txtbig[:6].scale(1.2, about_point=txt3[3].get_center())
+                txtbig[6:7].scale(1.2)
+                txtbig[7:].scale(1.2, about_point=txt3[8].get_center())
+    #            self.play(txt3[:6].animate.scale(1.2).set(stroke_width=4), rate_func=rate_functions.there_and_back, run_time=2)
+                self.play(Transform(txt3[:6], txtbig[:6]), rate_func=rate_functions.there_and_back, run_time=2)
+                self.play(Transform(txt3[6:7], txtbig[6:7]), rate_func=rate_functions.there_and_back, run_time=2)
+                self.play(Transform(txt3[7:], txtbig[7:]), rate_func=rate_functions.there_and_back, run_time=2)
+                self.wait()
+        if self.do_indep:
+            txt5 = Tex(r'\underline{$A, B$ independent}', stroke_width=1.7).to_edge(LEFT, buff=0.6)
+            txt6 = MathTex(r'\mathbb P(A\cap B)=\mathbb P(A)\mathbb P(B)', stroke_width=1.5)[0]
+            txt6.next_to(txt5, DOWN, buff=0.3).align_to(txt5, LEFT)
+            self.add(txt5)
             self.wait()
-            txtbig = txt3.copy()
-            for x in txtbig:
-                x.set(stroke_width=2)
-            txtbig[:6].scale(1.2, about_point=txt3[3].get_center())
-            txtbig[6:7].scale(1.2)
-            txtbig[7:].scale(1.2, about_point=txt3[8].get_center())
-#            self.play(txt3[:6].animate.scale(1.2).set(stroke_width=4), rate_func=rate_functions.there_and_back, run_time=2)
-            self.play(Transform(txt3[:6], txtbig[:6]), rate_func=rate_functions.there_and_back, run_time=2)
-            self.play(Transform(txt3[6:7], txtbig[6:7]), rate_func=rate_functions.there_and_back, run_time=2)
-            self.play(Transform(txt3[7:], txtbig[7:]), rate_func=rate_functions.there_and_back, run_time=2)
+            self.play(ReplacementTransform(txt3.copy(), txt6), run_time=2)
             self.wait()
 
 
