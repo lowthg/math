@@ -483,9 +483,48 @@ class VectorX(Scene):
         self.add(eq1)
 
 class DensityX(Scene):
+    stroke_width=1.3
+    def eq1(self):
+        return MathTex(r'p_X(x_1,\ldots,x_n) {{=}} (2\pi)^{-\frac n2} {{e^{-\frac12(x_1^2+\cdots+x_n^2) } }}', stroke_width=self.stroke_width)
+
     def construct(self):
-        eq1 = MathTex(r'p_X(x_1,\ldots,x_n) = (2\pi)^{-\frac n2}e^{-\frac12(x_1^2+\cdots+x_n^2)}', stroke_width=1.3)[0]
+        self.add(self.eq1())
+
+
+class DensityGeneral(DensityX):
+    stroke_width = 1.2
+
+    def construct(self):
+        eq1 = self.eq1()
+        MathTex.set_default(stroke_width=self.stroke_width)
         self.add(eq1)
+        self.wait()
+        eq2 = MathTex(r'p_X(x){{=}}\frac1{(2\pi)^{\frac n2}\lvert C\rvert }\, {{e^{-\frac12x^Tx} } }}')
+        eq2.next_to(eq1[1], ORIGIN, submobject_to_align=eq2[1]).align_to(eq1, LEFT)
+        eq2[2][2:9].move_to(eq2[2], coor_mask=RIGHT)
+#        eq2[0][:3].move_to(eq1[0][:3], coor_mask=RIGHT)
+        eq2_1 = eq2[0][3].copy().move_to(eq1[0][3:-1], coor_mask=RIGHT)
+        eq2_2 = eq2[3][5:].copy().move_to(eq1[3][6:-1], coor_mask=RIGHT)
+        self.play(FadeOut(eq1[0][3:-1], eq1[3][6:-1]), FadeIn(eq2_1, eq2_2), rate_func=linear)
+        self.play(ReplacementTransform(eq1[0][:3] + eq2_1 + eq1[0][-1] + eq1[1] + eq1[3][:5] + eq2_2 +
+                                       eq1[2][:4] + eq1[2][5:8],
+                                       eq2[0][:3] + eq2[0][3] + eq2[0][-1] + eq2[1] + eq2[3][:5] + eq2[3][5:] +
+                                       eq2[2][2:6] + eq2[2][6:9]),
+                  FadeOut(eq1[3][5], target_position=eq2[3][5].get_left()),
+                  FadeOut(eq1[3][-1], target_position=eq2[3][-1].get_right()),
+                  FadeOut(eq1[2][4], target_position=eq2[2][7]),
+                  FadeIn(eq2[2][:2], target_position=eq1[2][:8].get_top() + eq2[2][:2].height/2*UP),
+                  run_time=2)
+        eq3 = MathTex(r'p_X(x){{=}}\frac1{(2\pi)^{\frac n2}\lvert C\rvert }\, {{e^{-\frac12x^TC^{-1}x} } }}')
+        eq3.next_to(eq2[1], ORIGIN, submobject_to_align=eq3[1]).align_to(eq2, LEFT)
+        self.play(ReplacementTransform(eq2[:2] + eq2[2][:-3] + eq2[3][:7] + eq2[3][-1],
+                                       eq3[:2] + eq3[2][:-3] + eq3[3][:7] + eq3[3][-1]),
+                  FadeIn(eq3[2][-3:], eq3[3][-4:-1]))
+        self.add(eq3)
+
+        self.wait()
+
+
 
 class GCIforms(Scene):
     def construct(self):
