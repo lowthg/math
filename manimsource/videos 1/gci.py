@@ -701,6 +701,19 @@ class MatrixVals(Scene):
             self.play(tval.animate.set_value(times[i]), run_time=times[i]-times[i-1], rate_func=jn.rate_func[0])
         self.wait(1)
 
+class DensityFuncsBad(Scene):
+    def construct(self):
+        eq1 = MathTex(r'p_X(x) = \frac1{(2\pi)^{\frac n2}\lvert C\rvert}\,e^{-\frac12 x^TCx}')
+        eq2 = MathTex(r'p_Z(z)=\frac1{(8\pi)^{\frac n2}\lvert C\rvert\sqrt{\lvert z_1\ldots z_n\rvert}}',
+                      r'\sum_{\epsilon_1,\ldots,\epsilon_n=\pm1}e^{-\frac12x^TCx}')
+        eq3 = Tex(r'where $x=(\epsilon_1\sqrt{z_1},\ldots,\epsilon_n\sqrt{z_n})$')
+        eq2.next_to(eq1, DOWN)
+        eq3.next_to(eq2[1], DOWN)
+        gp = VGroup(eq1, eq2, eq3).move_to(ORIGIN).to_edge(DOWN).set_z_index(1)
+        box = SurroundingRectangle(gp, fill_opacity=0.7, fill_color=BLACK, stroke_opacity=0, corner_radius=0.15)
+
+        self.add(box, eq1, eq2, eq3)
+
 class GCIforms(Scene):
     def construct(self):
         eq1 = MathTex(r'\mu_n(A\cap B)\ge\mu_n(A)\mu_n(B)')
@@ -723,7 +736,7 @@ class Trick(Scene):
         eq2 = MathTex(r'Z=(X_1^{2\!\!\!\!\!},X_2^2,\ldots,X_n^2)')[0].set_z_index(1)
         eq2.next_to(eq1, DOWN).align_to(eq1, LEFT)
         VGroup(eq1[4], eq1[8], eq1[16]).set_opacity(0)
-        box1 = SurroundingRectangle(VGroup(eq1, eq2), corner_radius=0.15, fill_color=BLACK, fill_opacity=1,
+        box1 = SurroundingRectangle(VGroup(eq1, eq2), corner_radius=0.15, fill_color=BLACK, fill_opacity=0.7,
                                     stroke_opacity=0)
         VGroup(eq1, eq2, box1).to_edge(DOWN)
         self.add(eq1, box1)
@@ -737,6 +750,167 @@ class Trick(Scene):
                   run_time=2)
         self.wait()
 
+class NonconvexZ(Scene):
+    def construct(self):
+        ax = Axes(x_range=[-1, 1.1], y_range=[-1, 1], x_length=6, y_length=4,
+                  axis_config={'color': WHITE, 'stroke_width': 2, 'include_ticks': False,
+                               "tip_width": 0.5 * DEFAULT_ARROW_TIP_LENGTH,
+                               "tip_height": 0.5 * DEFAULT_ARROW_TIP_LENGTH,
+                               "stroke_opacity": 1,
+                               },
+                  ).set_z_index(2)
+        ax.shift(-ax.coords_to_point(0, 0))
+        ax2 = ax.copy().set_z_index(4)
+        ax2.x_axis.set_stroke(opacity=0.5)
+        ax2.y_axis.set_stroke(opacity=0.5)
+
+        eq1 = MathTex(r'X_1', font_size=36).next_to(ax.x_axis.get_right(), UL, buff=0.17).set_z_index(1)
+        eq2 = MathTex(r'X_2', font_size=36).next_to(ax.y_axis.get_top(), DR, buff=0.1).set_z_index(1)
+
+        theta = 30*DEGREES
+        vectors = [ unitVec2D(theta) * 0.4, unitVec2D(theta+90*DEGREES) * 1.2]
+        setA = convexPolytope2D([vectors], g=[2.3], stroke_opacity=0, fill_color=blue, fill_opacity=1).set_z_index(3)
+        dotpos = unitVec2D(theta) * 2
+        dot1 = Dot(radius=0.12, fill_opacity=0.7).move_to(dotpos).set_z_index(5)
+        dot2 = dot1.copy().move_to(dotpos * UL)
+        dot3 = dot1.copy().move_to(dotpos * DR)
+        dot4 = dot1.copy().move_to(dotpos * DL)
+        eq3 = MathTex(r'Z=(X_1^2, X_2^2)', font_size=40).next_to(dot1, UR, buff=0.05).set_z_index(6)
+
+        eqZ = eq3[0][0]
+        txt1 = Tex(r'\bf same $Z$', stroke_color=GREY, fill_color=WHITE, stroke_width=1.2, font_size=40).set_z_index(10)
+        txt1.move_to(dot1.get_corner(DL) + DOWN * 0.3 + LEFT * 0.85).set_z_index(7).scale(1.3)
+
+        arrcol=YELLOW
+        arrop = 0.7
+        arr1 = CurvedArrow(dot1.get_corner(UL), dot2.get_corner(UR), stroke_width=6, radius=6, color=arrcol).set_z_index(6)
+        arr2 = CurvedArrow(dot1.get_corner(DR), dot3.get_corner(UR), stroke_width=6, radius=-6, color=arrcol).set_z_index(6)
+        arr3 = Arrow(dot1.get_corner(DL), dot4.get_corner(UR), stroke_width=6, buff=0, color=arrcol).set_z_index(6)
+        box1 = SurroundingRectangle(ax, fill_color=BLACK, fill_opacity=0.7, stroke_opacity=0, corner_radius=0.15)
+        arr1.set_stroke(opacity=arrop)
+        arr1.tip.set_opacity(arrop)
+        arr2.set_stroke(opacity=arrop)
+        arr2.tip.set_opacity(arrop)
+        arr3.set_stroke(opacity=arrop)
+        arr3.tip.set_opacity(arrop)
+        eqA = MathTex(r'A', stroke_width=1.2, color=blue).move_to(LEFT+UP*0.75).set_z_index(10)
+
+        self.add(box1, ax, ax2, eq1, eq2)
+        self.wait(0.1)
+        self.play(FadeIn(setA, eqA))
+        self.wait(0.1)
+        self.play(FadeIn(dot1, eq3))
+        self.wait(0.1)
+        self.play(ReplacementTransform(dot1.copy(), dot2),
+                  ReplacementTransform(dot1.copy(), dot3),
+                  run_time=2)
+        self.play(ReplacementTransform(dot2.copy(), dot4),
+                  ReplacementTransform(dot3.copy(), dot4),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(FadeIn(arr1, arr2, arr3, txt1))
+        self.wait()
+
+class GCIAlt(Scene):
+    def construct(self):
+        skip=False
+        txt1 = Tex(r'\bf\underline{The Gaussian Correlation Inequality}', color=BLUE)
+        txt2 = Tex(r'\bf (Alternative form)}', color=BLUE)
+        txt3 = Tex(r'For centered multivariate normal $X_1,X_2,\ldots,X_n$')
+        txt4 = Tex(r'and integer $1\le k < n$ then')
+        eq1 = MathTex(r'\mathbb P(\lvert X_1\rvert\le 1,\ldots,\lvert X_n\rvert\le 1)',
+                      r'\ge',
+                      r'\mathbb P(\lvert X_1\rvert\le 1,\ldots,\lvert X_k\rvert\le 1)',
+                      r'\mathbb P(\lvert X_{k+1}\rvert\le 1,\ldots,\lvert X_n\rvert\le 1)')
+        txt2.next_to(txt1, DOWN)
+        txt3.next_to(txt2, DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 1.2)
+        txt4.next_to(txt3, DOWN).align_to(txt3, LEFT)
+        eq1[0].next_to(VGroup(txt3, txt4), DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 1.6)
+        eq1[1].next_to(eq1[0], DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 0.8)
+        eq1[2:].next_to(eq1[1], DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 0.8)
+
+        gp = VGroup(txt1, txt2, txt3, txt4, eq1).move_to(ORIGIN)
+
+        if not skip:
+            self.add(txt1, txt2)
+            self.wait(0.1)
+            self.play(FadeIn(txt3, txt4))
+            self.wait(0.1)
+            self.play(FadeIn(eq1[0]))
+            self.wait(0.1)
+            self.play(FadeIn(eq1[1]))
+            self.wait(0.1)
+            self.play(FadeIn(eq1[2]))
+            self.wait(0.1)
+            self.play(FadeIn(eq1[3]))
+            self.wait(0.1)
+        else:
+            self.add(txt1, txt2, txt3, txt4, eq1)
+
+        eq2 = MathTex(r'\mathbb P(\lvert X_1\rvert\le r_1,\ldots,\lvert X_n\rvert\le r_n)',
+                      r'\ge',
+                      r'\mathbb P(\lvert X_1\rvert\le r_1,\ldots,\lvert X_k\rvert\le r_k)',
+                      r'\mathbb P(\lvert X_{k+1}\rvert\le r_{k+1},\ldots,\lvert X_n\rvert\le r_n)')
+        eq2[0].next_to(eq1[0][0], ORIGIN, submobject_to_align=eq2[0][0]).move_to(eq1[0], coor_mask=RIGHT)
+        eq2[2].next_to(eq1[2][0], ORIGIN, submobject_to_align=eq2[2][0], coor_mask=UP)
+        eq2[3].next_to(eq1[3][0], ORIGIN, submobject_to_align=eq2[3][0], coor_mask=UP)
+        eq2[2:].move_to(eq1[2:], coor_mask=RIGHT)
+
+        to_fade = [eq1[0][7], eq1[0][18], eq1[2][7], eq1[2][18], eq1[3][9], eq1[3][20]]
+        if not skip:
+            self.play(Transform(eq1[0][:7] + eq1[0][8:18] + eq1[0][19],
+                                           eq2[0][:7] + eq2[0][9:19] + eq2[0][21]),
+                      Transform(eq1[2][:7] + eq1[2][8:18] + eq1[2][19],
+                                           eq2[2][:7] + eq2[2][9:19] + eq2[2][21]),
+                      Transform(eq1[3][:9] + eq1[3][10:20] + eq1[3][21],
+                                           eq2[3][:9] + eq2[3][13:23] + eq2[3][25]),
+                      FadeOut(*to_fade),
+                      FadeIn(eq2[0][7:9], eq2[0][19:21], eq2[2][7:9], eq2[2][19:21], eq2[3][9:13], eq2[3][23:25]),
+                      run_time=5, rate_func=there_and_back_with_pause)
+            self.add(*to_fade)
+        self.wait(0.1)
+        eq3 = MathTex(r'\mathbb P(\max_i\lvert X_i\rvert\le 1)', r'\ge',
+                      r'\mathbb P(\max_{i\le k}\lvert X_i\rvert\le 1)',
+                      r'\mathbb P(\max_{i > k}\lvert X_i\rvert\le 1)')
+        eq4 = eq3.copy().move_to(ORIGIN).move_to(eq1[1], coor_mask=UP)
+        eq3[0].next_to(eq1[0][0], ORIGIN, submobject_to_align=eq3[0][0])#.move_to(eq1[0], coor_mask=RIGHT)
+        eq3[1].move_to(eq1[1])
+        eq3[2].next_to(eq1[2][0], ORIGIN, submobject_to_align=eq3[2][0]).move_to(eq1[2], coor_mask=RIGHT)
+        eq3[3].next_to(eq1[3][0], ORIGIN, submobject_to_align=eq3[3][0])#.move_to(eq1[2], coor_mask=RIGHT)
+
+        i = 4
+        j = 6
+        k = 6
+        self.play(ReplacementTransform(eq1[0][:2] + eq1[0][2:4] + eq1[0][5:8],
+                                       eq3[0][:2] + eq3[0][2+i:4+i] + eq3[0][5+i:8+i]),
+                  ReplacementTransform(eq1[0][13:15] + eq1[0][16:20],
+                                       eq3[0][2+i:4+i] + eq3[0][5+i:9+i]),
+                  abra.fade_replace(eq1[0][4], eq3[0][4+i]),
+                  FadeOut(eq1[0][15], target_position=eq3[0][4+i]),
+                  FadeOut(eq1[0][8:13]),
+                  FadeIn(eq3[0][2:2+i]),
+                  ReplacementTransform(eq1[2][:2] + eq1[2][2:4] + eq1[2][5:8],
+                                       eq3[2][:2] + eq3[2][2 + j:4 + j] + eq3[2][5 + j:8 + j]),
+                  ReplacementTransform(eq1[2][13:15] + eq1[2][16:20],
+                                       eq3[2][2 + j:4 + j] + eq3[2][5 + j:9 + j]),
+                  abra.fade_replace(eq1[2][4], eq3[2][4 + j]),
+                  FadeOut(eq1[2][15], target_position=eq3[2][4 + j]),
+                  FadeOut(eq1[2][8:13]),
+                  FadeIn(eq3[2][2:2 + j]),
+                  ReplacementTransform(eq1[3][:2] + eq1[3][2:4] + eq1[3][7:10],
+                                       eq3[3][:2] + eq3[3][2 + k:4 + k] + eq3[3][5 + k:8 + k]),
+                  ReplacementTransform(eq1[3][15:17] + eq1[3][18:22],
+                                       eq3[3][2 + k:4 + k] + eq3[3][5 + k:9 + k]),
+                  abra.fade_replace(eq1[3][4:7], eq3[3][4 + k]),
+                  FadeOut(eq1[3][17], target_position=eq3[3][4 + j]),
+                  FadeOut(eq1[3][10:15]),
+                  FadeIn(eq3[3][2:2 + k]),
+                  ReplacementTransform(eq1[1], eq3[1]),
+                  run_time=3)
+        self.play(ReplacementTransform(eq3, eq4), run_time=2)
+        self.play(eq4.animate.move_to(eq1[0], coor_mask=UP))
+
+        self.wait()
 
 class EqImageA(Scene):
     eq = 'A'
@@ -751,100 +925,6 @@ class EqImageB(EqImageA):
 class EqImagePAB(EqImageA):
     eq = r'\mathbb P(A\cap B)\ge\mathbb P(A)\mathbb P(B)'
 
-
-class SimpleIntersect(ThreeDScene):
-    def __init__(self, *args, **kwargs):
-        config.background_color=WHITE
-        ThreeDScene.__init__(self, *args, **kwargs)
-
-    def construct(self):
-        setA = Cube(side_length=2, fill_opacity=0.5, fill_color=BLUE, stroke_color=WHITE, stroke_opacity=0.5, stroke_width=1)
-        setB = Octahedron(side_length=2, fill_opacity=0.5, fill_color=RED)
-        self.set_camera_orientation(phi=75 * DEGREES, theta=-45 * DEGREES)
-        self.add(setA)
-        dt = 2
-        self.begin_ambient_camera_rotation(rate=PI * 2 / dt)
-        self.wait(dt)
-
-
-class ConvexIntersect(ThreeDScene):
-    def construct(self):
-        self.set_camera_orientation(phi=75 * DEGREES, theta=-45 * DEGREES)
-
-        #        axes = ThreeDAxes()
-        cube = Cube(side_length=3, fill_opacity=0.7, fill_color=BLUE)
-        points = [
-            [1.93192757, 0.44134585, -1.52407061],
-            [-0.93302521, 1.23206983, 0.64117067],
-            [-0.44350918, -0.61043677, 0.21723705],
-            [-0.42640268, -1.05260843, 1.61266094],
-            [-1.84449637, 0.91238739, -1.85172623],
-            [1.72068132, -0.11880457, 0.51881751],
-            [0.41904805, 0.44938012, -1.86440686],
-            [0.83864666, 1.66653337, 1.88960123],
-            [0.22240514, -0.80986286, 1.34249326],
-            [-1.29585759, 1.01516189, 0.46187522],
-            [1.7776499, -1.59550796, -1.70240747],
-            [0.80065226, -0.12530398, 1.70063977],
-            [1.28960948, -1.44158255, 1.39938582],
-            [-0.93538943, 1.33617705, -0.24852643],
-            [-1.54868271, 1.7444399, -0.46170734]
-        ]
-        points = points + [[-x for x in p] for p in points]
-        setA = ConvexHull3D(
-            *points,
-            faces_config = {"stroke_opacity": 0},
-            graph_config = {
-                "vertex_type": Dot3D,
-                "edge_config": {
-                    "stroke_color": BLUE,
-                    "stroke_width": 2,
-                    "stroke_opacity": 0.05,
-                }
-            }
-        )
-
-        dot = Dot3D(color=RED, radius=1).shift(RIGHT*0.5)
-        self.set_camera_orientation(phi=60*DEGREES, theta=35*DEGREES)
-
-        self.play(FadeIn(dot))
-        self.add(setA)
-        self.begin_ambient_camera_rotation(rate=PI * 0.1)
-        self.wait(2)
-
-
-class threed(ThreeDScene):
-    def construct(self):
-        #by default phi = 0, theta = -90
-        self.set_camera_orientation(phi=75*DEGREES, theta=-45*DEGREES)
-
-        axes = ThreeDAxes()
-        cube = Cube(side_length=3, fill_opacity = 0.25, stroke_color = WHITE, stroke_width = 1)
-        self.play(Write(cube))
-
-        self.move_camera(phi = 0, theta = -90*DEGREES)
-        self.wait()
-
-        self.begin_ambient_camera_rotation(rate = -70*DEGREES, about = "theta")
-        self.begin_ambient_camera_rotation(rate = 40*DEGREES, about = "phi")
-        self.play(FadeToColor(cube, RED), run_time = 2)
-        self.stop_ambient_camera_rotation(about = "theta")
-        self.stop_ambient_camera_rotation(about = "phi")
-
-        self.wait()
-        self.play(Write(axes))
-        self.move_camera(zoom = 0.8, theta = 30*DEGREES)
-        self.wait()
-
-        self.play(Rotate(cube, 360*DEGREES))
-        self.wait()
-
-        self.play(cube.animate.shift(RIGHT), cube.animate.scale(0.25))
-        self.play(cube.animate.move_to(axes.c2p(4, 0, 0)))
-        self.wait()
-
-        self.move_camera(phi=75*DEGREES, theta=-45*DEGREES)
-        self.wait()
 
 
 if __name__ == "__main__":
