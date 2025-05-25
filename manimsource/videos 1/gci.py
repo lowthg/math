@@ -1,9 +1,6 @@
 from manim import *
 import numpy as np
 import math
-import random
-import csv
-import datetime
 import sys
 import scipy.interpolate
 
@@ -194,7 +191,7 @@ class Convexity(Intersect2D):
         dot1 = Dot(UP * 1.7 + LEFT*1.55, radius=0.2, fill_color=WHITE).set_z_index(10)
         dot2 = Dot(DOWN*2.4 + LEFT*0.85, radius=0.2, fill_color=WHITE).set_z_index(10)
         self.play(FadeIn(dot1, dot2))
-        line1 = Line(dot1, dot2, color=YELLOW, stroke_width=8).set_z_index(9)
+        line1 = Line(dot1.get_center(), dot2.get_center(), color=YELLOW, stroke_width=8).set_z_index(9)
         self.play(Create(line1))
         setB2 = setB.copy()
         self.play(Transform(setB, setC))
@@ -246,14 +243,15 @@ class Intersect3D(ThreeDScene):
     showA = True
     showB = True
     phi=60*DEGREES
+    colors = [blue, red]
 
     def shapes(self):
         res=[self.res, self.res]
         g = self.g
         convA = convexPolytope3D(self.vectors1, g=g[0], scale=self.scale[0], fill_opacity=0.7, stroke_opacity=0,
-                                 resolution=res, fill_color=blue)
+                                 resolution=res, fill_color=self.colors[0])
         convB = convexPolytope3D(self.vectors2, g=g[1], scale=self.scale[1], fill_opacity=0.7, stroke_opacity=0,
-                                 resolution=res, fill_color=red, max_radius=8)
+                                 resolution=res, fill_color=self.colors[1], max_radius=8)
         if self.showA and self.showB:
             intersect = intersectPolytopes(convA, convB, shift = 0.02, thickness=0.02, color=GREY, resolution=8,
                                            fill_opacity=0.7, stroke_opacity=0.8)
@@ -406,24 +404,26 @@ class GCIStatement(Scene):
 
 
 class StandardNormal(ThreeDScene):
-    def construct(self):
+    colors = [
+        ManimColor(RED_D.to_rgb() * 0.5),
+        ManimColor(RED_E.to_rgb() * 0.5)
+    ]
+
+    def plots(self, display=True, ymax=1.15):
         self.set_camera_orientation(phi=PI/2, theta=-PI/2)
 
         def p0(x):
-            return math.exp(-x*x/2)
+            return math.exp(-x * x / 2)
 
         xmax = 2.5
-        ax = Axes(x_range=[-xmax, xmax + 0.2], y_range=[0, 1.15], x_length=8, y_length=2,
+        ax = Axes(x_range=[-xmax, xmax + 0.2], y_range=[0, ymax], x_length=8, y_length=2*ymax/1.15,
                   axis_config={'color': WHITE, 'stroke_width': 4, 'include_ticks': False,
                                "tip_width": 0.5 * DEFAULT_ARROW_TIP_LENGTH,
                                "tip_height": 0.5 * DEFAULT_ARROW_TIP_LENGTH,
                                "shade_in_3d": True,
                                },
-#                  shade_in_3d=True,
+                  #                  shade_in_3d=True,
                   ).set_z_index(1)
-
-
-#        ax.x_axis.set(shade_in_3d=True)
         ax[0].submobjects[0].set(shade_in_3d=True)
         ax_o = ax.coords_to_point(0, 0)
         ax.shift(-ax_o)
@@ -441,39 +441,52 @@ class StandardNormal(ThreeDScene):
 
         gp1 = VGroup(ax, plt1, fill1, eq1, eq2).rotate(PI/2, axis=RIGHT, about_point=ax_o)
         eq2.shift(DOWN*xlen/2)
-        self.add(ax)
-        self.wait(0.2)
-        self.play(LaggedStart(AnimationGroup(Create(plt1, rate_func=linear), FadeIn(eq1)),
-                              FadeIn(fill1), lag_ratio=0.5), run_time=1.5)
-        self.wait(0.1)
+        if display:
+            self.add(ax)
+            self.wait(0.2)
+            self.play(LaggedStart(AnimationGroup(Create(plt1, rate_func=linear), FadeIn(eq1)),
+                                  FadeIn(fill1), lag_ratio=0.5), run_time=1.5)
+            self.wait(0.1)
 
         sq1 = Surface(lambda u, v: u * RIGHT + v * UP, u_range=[-xlen, xlen], v_range=[-xlen, xlen], fill_opacity=0.3,
                       stroke_opacity=0.4, checkerboard_colors=[RED_D, RED_E])
-        self.remove(ax)
-        self.add(ax)
 
-        self.move_camera(phi=70*DEGREES, theta=-120*DEGREES)
+        if display:
+            self.remove(ax)
+            self.add(ax)
+            self.move_camera(phi=70*DEGREES, theta=-120*DEGREES)
+        else:
+            self.set_camera_orientation(phi=70*DEGREES, theta=-120*DEGREES)
+
         gp2 = gp1[:-2].copy()
         gp2.set(shade_in_3d=True)
-        self.play(Rotate(gp2, -90*DEGREES, OUT, about_point=ax_o), FadeIn(sq1))
         ax.y_axis.set_z_index(3)
-        self.play(gp1[1:-1].animate.shift(xlen*UP), gp2[1:].animate.shift(xlen*RIGHT))
+
+        if display:
+            self.play(Rotate(gp2, -90*DEGREES, OUT, about_point=ax_o), FadeIn(sq1))
+            self.play(gp1[1:-1].animate.shift(xlen*UP), gp2[1:].animate.shift(xlen*RIGHT))
+        else:
+            gp2.rotate(-90*DEGREES, about_point=ax_o)
+            gp1[1:-1].shift(xlen*UP)
+            gp2[1:].shift(xlen*RIGHT)
 
         def p1(x, y):
             return (RIGHT * x + UP * y) * xlen/xmax + OUT * math.exp(-(x*x+y*y)/2) * ylen
         sq1.set_z_index(4)
-        colors = [
-            ManimColor(RED_D.to_rgb()*0.5),
-            ManimColor(RED_E.to_rgb() * 0.5)
-        ]
         surf1 = Surface(p1, u_range=[-xmax, xmax], v_range=[-xmax, xmax], fill_opacity=0.9,
-                      stroke_opacity=0.8, checkerboard_colors=colors, stroke_color=WHITE).set_z_index(200, family=True)
+                      stroke_opacity=0.8, checkerboard_colors=self.colors, stroke_color=WHITE).set_z_index(200, family=True)
         line1 = Line(OUT * ylen, OUT * ylen * 1.12, stroke_width=4, stroke_color=WHITE).set_z_index(300)
-        self.add(line1)
-        self.play(ReplacementTransform(sq1, surf1, rate_func=lambda t: smooth(min(t*2, 1))),
-                  FadeIn(eq2, rate_func=lambda t: smooth(min(t*2, 1) - max(t*4 - 3, 0))),
-                  FadeOut(eq1, rate_func=lambda t: smooth(max(t*4 - 3, 0))),
-                  run_time=4)
+        if display:
+            self.add(line1)
+            self.play(ReplacementTransform(sq1, surf1, rate_func=lambda t: smooth(min(t*2, 1))),
+                      FadeIn(eq2, rate_func=lambda t: smooth(min(t*2, 1) - max(t*4 - 3, 0))),
+                      FadeOut(eq1, rate_func=lambda t: smooth(max(t*4 - 3, 0))),
+                      run_time=4)
+
+        return xmax, xlen, ylen, VGroup(ax, gp2[0], line1)
+
+    def construct(self):
+        self.plots()
 
 
 class VectorX(Scene):
@@ -526,6 +539,168 @@ class DensityGeneral(DensityX):
 
 
 
+class JointNormal(StandardNormal):
+    times = [0., 1., 4.]
+    rate_func=[rate_functions.smooth]
+
+    @staticmethod
+    def scalings(t):
+        t0 = min(t, 1)
+        a = 1 + t0
+        b = 1 / (1 + t0 * 0.5)
+        if t > 1:
+            theta = 45 * DEGREES * (t-1)
+        else:
+            theta = 0.
+        return a, b, theta
+
+    def matrixVals(self, coeffs, t, invert=False):
+        a, b, theta = self.scalings(t)
+        coeffs[3] = a * b
+        c = math.cos(theta)
+        s = math.sin(theta)
+        if invert:
+            a, b, s = 1 / a, 1 / b, -s
+        coeffs[0] = a * c * c + b * s * s
+        coeffs[1] = b * c * c + a * s * s
+        coeffs[2] = 2 * (b - a) * c * s
+
+    def construct(self):
+        ymax = 0.15 + 2/1.5
+        xmax, xlen, ylen, gp = self.plots(display=False, ymax=ymax)
+        self.set_camera_orientation(phi=71 * DEGREES, theta=-110 * DEGREES)
+        xax = gp[0].x_axis.set_opacity(0)
+        gp[1].y_axis.set_opacity(0)
+        # create axis again, due to clipping problems
+        line1 = Arrow(xax.get_start() + LEFT*0.2, xax.get_end() + RIGHT*0.3, color=WHITE, stroke_width=4,
+                      max_tip_length_to_length_ratio=0.4 * DEFAULT_ARROW_TIP_LENGTH / xlen,
+                      ).set_z_index(0).rotate(90*DEGREES, RIGHT, ORIGIN)
+        self.add(gp[:2], line1)
+        #gp[0].x_axis.shift(IN*0.1)#.rotate(3*DEGREES, UP)
+
+        coeffs = [2, 1, 0, 1]
+
+        def p1(x, y):
+            return (RIGHT * x + UP * y) * xlen/xmax + OUT * math.exp(-(coeffs[0] * x*x + coeffs[1]*y*y + coeffs[2]*x*y)/2) * ylen * coeffs[3]
+
+        tval = ValueTracker(self.times[0])
+
+        def f():
+            t = tval.get_value()
+            self.matrixVals(coeffs, t)
+
+            surf1 = Surface(p1, u_range=[-xmax, xmax], v_range=[-xmax, xmax], fill_opacity=0.9,
+                          stroke_opacity=0.8, checkerboard_colors=self.colors, stroke_color=WHITE).set_z_index(200, family=True)
+            return surf1
+
+        surf = always_redraw(f)
+#        cmat = MathTex(r'C=\begin{pmatrix} 2.0 & 2.0 \\ 2.0 & 2.0 \end{pmatrix}').to_edge(DR)
+        self.add(surf)
+        for i in range(1, len(self.times)):
+            self.play(tval.animate.set_value(self.times[i]), run_time=self.times[i]-self.times[i-1], rate_func=self.rate_func[0])
+
+class XMX(Scene):
+    def construct(self):
+        eq1 = MathTex(r'X^\prime =MX', stroke_width=1.3, font_size=100).to_edge(DL)
+        self.add(eq1)
+
+class JointNormal2(JointNormal):
+    times = [0., 8.]
+    rate_func = [linear]
+
+    @staticmethod
+    def scalings(t):
+        a = math.exp(math.sin(t*PI))
+        b = 1/math.pow(a, 0.7)
+        theta = 0.
+        if t > 2.5:
+            if t > 3:
+                theta = t-2.75
+            else:
+                theta = (t-2.5)**2
+
+        return a, b, theta
+
+class ConvexTransforms(Intersect3D):
+    showB = False
+    rtime = 1
+    colors = [blue, blue]
+    vectors1 = [
+        (OUT + RIGHT) * 0.45,
+        (IN + RIGHT) * 0.4,
+        UP * 0.5 * 0.8 + OUT * 0.2,
+        UP*0.5 + RIGHT * 0.5,
+    ]
+    scale = [0.8, 1.09]
+
+    def construct(self):
+        self.set_camera_orientation(phi=self.phi, theta=30 * DEGREES)
+        convA, _, _ = self.shapes()
+
+        tval = ValueTracker(0.)
+        def f():
+            t = tval.get_value()
+            set = convA.copy()
+            mat = np.identity(3)
+            if t < 2:
+                mat[0, 1] = (1 - math.cos(t * PI)) * 0.7
+            if 1.5 < t < 3.5:
+                mat[1, 2] = (1 - math.cos((t-1.5) * PI)) * 0.5
+            if 3 < t < 5:
+                mat[0, 2] = (1 - math.cos((t-3) * PI)) * 0.5
+            if 4 < t < 6:
+                mat[1, 0] = (1 - math.cos((t-4) * PI)) * 0.7
+
+            mat[0, 0] = 1 + 0.3 * math.sin(t*PI/3.5)
+            mat[1, 1] = 1 + 0.2 * (math.sin((t-1)*PI/5.5) + math.sin(PI/5.5))
+            mat[2, 2] = 1 - 0.1 * (math.sin((t-2)*PI/4.5) + math.sin(2*PI/4.5))
+            set.apply_matrix(mat)
+            direct = unitvec3D(t * PI/2, t * PI/4)
+            set.rotate(t * PI/3, direct, ORIGIN)
+
+            return set
+
+        set = always_redraw(f)
+        self.add(set)
+        self.begin_ambient_camera_rotation(rate=PI /3)
+        self.play(tval.animate.set_value(6.), rate_func=linear, run_time=8.)
+
+class MatrixVals(Scene):
+    animclass=JointNormal
+    def construct(self):
+        MathTex.set_default(stroke_width=1.2)
+        cmat = MathTex(r'C=\begin{pmatrix} -2.0 & -2.00 \\ -2.0 & -2.00 \end{pmatrix}')[0].to_edge(DR)
+        self.add(cmat)
+        pts = []
+        for i,j in ((3,7), (7, 12), (12, 16), (16, 21)):
+            cmat[i:j].set_opacity(0)
+            pts.append(cmat[i+2].get_center())
+
+        tval = ValueTracker(0.)
+        coeffs = [0, 0, 0, 0]
+        jn = self.animclass()
+
+        def f():
+            t = tval.get_value()
+            jn.matrixVals(coeffs, t, invert=True)
+            vals = [coeffs[0], coeffs[2]/2, coeffs[2]/2, coeffs[1]]
+            for i in range(len(vals)):
+                if -0.00001 < vals[i] <= 0:
+                    vals[i] = 0.001
+            eq = MathTex(r'{:.1f}'.format(vals[0]), r'{:.1f}'.format(vals[1]),
+                         r'{:.1f}'.format(vals[2]), r'{:.1f}'.format(vals[3]))
+            for i in range(4):
+                j = 1 if vals[i] >= 0 else 2
+                eq[i].next_to(pts[i], ORIGIN, submobject_to_align=eq[i][j])
+            return eq
+
+        mat = always_redraw(f)
+        self.add(mat)
+        times = jn.times
+        for i in range(1, len(times)):
+            self.play(tval.animate.set_value(times[i]), run_time=times[i]-times[i-1], rate_func=jn.rate_func[0])
+        self.wait(1)
+
 class GCIforms(Scene):
     def construct(self):
         eq1 = MathTex(r'\mu_n(A\cap B)\ge\mu_n(A)\mu_n(B)')
@@ -540,6 +715,27 @@ class GCIforms(Scene):
         self.wait(0.1)
         self.play(FadeIn(eq1, eq2, eq3, eq4, eq5), run_time=1)
         self.wait(0.1)
+
+class Trick(Scene):
+
+    def construct(self):
+        eq1 = MathTex(r'X=(X_1^{2\!\!\!\!\!},X_2^{2\!\!\!\!\!},\ldots,X_n^{2\!\!\!\!\!})')[0].set_z_index(1)
+        eq2 = MathTex(r'Z=(X_1^{2\!\!\!\!\!},X_2^2,\ldots,X_n^2)')[0].set_z_index(1)
+        eq2.next_to(eq1, DOWN).align_to(eq1, LEFT)
+        VGroup(eq1[4], eq1[8], eq1[16]).set_opacity(0)
+        box1 = SurroundingRectangle(VGroup(eq1, eq2), corner_radius=0.15, fill_color=BLACK, fill_opacity=1,
+                                    stroke_opacity=0)
+        VGroup(eq1, eq2, box1).to_edge(DOWN)
+        self.add(eq1, box1)
+        self.wait()
+        self.play(ReplacementTransform((eq1[1:4] + eq1[5:8] + eq1[9:16] + eq1[17:]).copy(),
+                                       eq2[1:4] + eq2[5:8] + eq2[9:16] + eq2[17:]),
+                  abra.fade_replace(eq1[0].copy(), eq2[0]),
+                  FadeIn(eq2[4], target_position=eq1[4]),
+                  FadeIn(eq2[8], target_position=eq1[8]),
+                  FadeIn(eq2[16], target_position=eq1[16]),
+                  run_time=2)
+        self.wait()
 
 
 class EqImageA(Scene):
@@ -653,4 +849,4 @@ class threed(ThreeDScene):
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "preview": True, 'fps': 15}):
-        StandardNormal().render()
+        JointNormal().render()
