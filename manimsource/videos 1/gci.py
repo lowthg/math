@@ -812,8 +812,7 @@ class NonconvexZ(Scene):
         self.wait()
 
 class GCIAlt(Scene):
-    def construct(self):
-        skip=False
+    def create_gci(self, skip=False):
         txt1 = Tex(r'\bf\underline{The Gaussian Correlation Inequality}', color=BLUE)
         txt2 = Tex(r'\bf (Alternative form)}', color=BLUE)
         txt3 = Tex(r'For centered multivariate normal $X_1,X_2,\ldots,X_n$')
@@ -829,7 +828,7 @@ class GCIAlt(Scene):
         eq1[1].next_to(eq1[0], DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 0.8)
         eq1[2:].next_to(eq1[1], DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 0.8)
 
-        gp = VGroup(txt1, txt2, txt3, txt4, eq1).move_to(ORIGIN)
+        VGroup(txt1, txt2, txt3, txt4, eq1).move_to(ORIGIN)
 
         if not skip:
             self.add(txt1, txt2)
@@ -844,8 +843,6 @@ class GCIAlt(Scene):
             self.wait(0.1)
             self.play(FadeIn(eq1[3]))
             self.wait(0.1)
-        else:
-            self.add(txt1, txt2, txt3, txt4, eq1)
 
         eq2 = MathTex(r'\mathbb P(\lvert X_1\rvert\le r_1,\ldots,\lvert X_n\rvert\le r_n)',
                       r'\ge',
@@ -881,34 +878,134 @@ class GCIAlt(Scene):
         i = 4
         j = 6
         k = 6
-        self.play(ReplacementTransform(eq1[0][:2] + eq1[0][2:4] + eq1[0][5:8],
-                                       eq3[0][:2] + eq3[0][2+i:4+i] + eq3[0][5+i:8+i]),
-                  ReplacementTransform(eq1[0][13:15] + eq1[0][16:20],
-                                       eq3[0][2+i:4+i] + eq3[0][5+i:9+i]),
-                  abra.fade_replace(eq1[0][4], eq3[0][4+i]),
-                  FadeOut(eq1[0][15], target_position=eq3[0][4+i]),
-                  FadeOut(eq1[0][8:13]),
-                  FadeIn(eq3[0][2:2+i]),
-                  ReplacementTransform(eq1[2][:2] + eq1[2][2:4] + eq1[2][5:8],
-                                       eq3[2][:2] + eq3[2][2 + j:4 + j] + eq3[2][5 + j:8 + j]),
-                  ReplacementTransform(eq1[2][13:15] + eq1[2][16:20],
-                                       eq3[2][2 + j:4 + j] + eq3[2][5 + j:9 + j]),
-                  abra.fade_replace(eq1[2][4], eq3[2][4 + j]),
-                  FadeOut(eq1[2][15], target_position=eq3[2][4 + j]),
-                  FadeOut(eq1[2][8:13]),
-                  FadeIn(eq3[2][2:2 + j]),
-                  ReplacementTransform(eq1[3][:2] + eq1[3][2:4] + eq1[3][7:10],
-                                       eq3[3][:2] + eq3[3][2 + k:4 + k] + eq3[3][5 + k:8 + k]),
-                  ReplacementTransform(eq1[3][15:17] + eq1[3][18:22],
-                                       eq3[3][2 + k:4 + k] + eq3[3][5 + k:9 + k]),
-                  abra.fade_replace(eq1[3][4:7], eq3[3][4 + k]),
-                  FadeOut(eq1[3][17], target_position=eq3[3][4 + j]),
-                  FadeOut(eq1[3][10:15]),
-                  FadeIn(eq3[3][2:2 + k]),
-                  ReplacementTransform(eq1[1], eq3[1]),
-                  run_time=3)
-        self.play(ReplacementTransform(eq3, eq4), run_time=2)
-        self.play(eq4.animate.move_to(eq1[0], coor_mask=UP))
+        if not skip:
+            self.play(ReplacementTransform(eq1[0][:2] + eq1[0][2:4] + eq1[0][5:8],
+                                           eq3[0][:2] + eq3[0][2+i:4+i] + eq3[0][5+i:8+i]),
+                      ReplacementTransform(eq1[0][13:15] + eq1[0][16:20],
+                                           eq3[0][2+i:4+i] + eq3[0][5+i:9+i]),
+                      abra.fade_replace(eq1[0][4], eq3[0][4+i]),
+                      FadeOut(eq1[0][15], target_position=eq3[0][4+i]),
+                      FadeOut(eq1[0][8:13]),
+                      FadeIn(eq3[0][2:2+i]),
+                      ReplacementTransform(eq1[2][:2] + eq1[2][2:4] + eq1[2][5:8],
+                                           eq3[2][:2] + eq3[2][2 + j:4 + j] + eq3[2][5 + j:8 + j]),
+                      ReplacementTransform(eq1[2][13:15] + eq1[2][16:20],
+                                           eq3[2][2 + j:4 + j] + eq3[2][5 + j:9 + j]),
+                      abra.fade_replace(eq1[2][4], eq3[2][4 + j]),
+                      FadeOut(eq1[2][15], target_position=eq3[2][4 + j]),
+                      FadeOut(eq1[2][8:13]),
+                      FadeIn(eq3[2][2:2 + j]),
+                      ReplacementTransform(eq1[3][:2] + eq1[3][2:4] + eq1[3][7:10],
+                                           eq3[3][:2] + eq3[3][2 + k:4 + k] + eq3[3][5 + k:8 + k]),
+                      ReplacementTransform(eq1[3][15:17] + eq1[3][18:22],
+                                           eq3[3][2 + k:4 + k] + eq3[3][5 + k:9 + k]),
+                      abra.fade_replace(eq1[3][4:7], eq3[3][4 + k]),
+                      FadeOut(eq1[3][17], target_position=eq3[3][4 + j]),
+                      FadeOut(eq1[3][10:15]),
+                      FadeIn(eq3[3][2:2 + k]),
+                      ReplacementTransform(eq1[1], eq3[1]),
+                      run_time=3)
+            self.play(ReplacementTransform(eq3, eq4), run_time=2)
+
+        gp1 = VGroup(txt1, txt2, txt3, txt4, eq4)
+        gp1.generate_target().to_edge(UP)
+        gp1.target[-1].next_to(gp1.target[:-1], DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 1.6, coor_mask=UP)
+        if not skip:
+            self.play(MoveToTarget(gp1))
+        else:
+            gp1 = gp1.target
+            self.add(gp1)
+
+        return gp1
+
+    def construct(self):
+        gp1 = self.create_gci(False)
+        eq1 = gp1[-1]
+
+        eq2 = MathTex(r'X^{(1)}=(X_1,\ldots,X_k),\ ', r'X^{(2)}=(X_{k+1},\ldots,X_n)')
+        eq2.next_to(eq1, DOWN, buff=1)
+        self.play(FadeIn(eq2))
+
+        eq3 = MathTex(r'\mathbb P(\max_i\lvert X_i\rvert\le 1)', r'\ge',
+                      r'\mathbb P(\max_i\lvert X^{(1)}_i\rvert\le 1)',
+                      r'\mathbb P(\max_i\lvert X^{(2)}_i\rvert\le 1)')
+        eq4 = MathTex(r'\Updownarrow').next_to(eq1[1], DOWN)
+        eq3.next_to(eq4, DOWN, submobject_to_align=eq3[1])
+        self.play(ReplacementTransform((eq1[:2] + eq1[2][:6] + eq1[2][8:10] + eq1[2][10:]).copy(),
+                                       eq3[:2] + eq3[2][:6] + eq3[2][6:8] + eq3[2][11:]),
+                  ReplacementTransform((eq1[3][:6] + eq1[3][8:10] + eq1[3][10:]).copy(),
+                                       eq3[3][:6] + eq3[3][6:8] + eq3[3][11:]),
+                  FadeIn(eq3[2][8:11], target_position=eq1[2][9].get_corner(UR)),
+                  FadeIn(eq3[3][8:11], target_position=eq1[3][9].get_corner(UR)),
+                  eq2.animate.to_edge(DOWN, buff=0.5),
+                  FadeIn(eq4),
+                  run_time=1.5)
+
+        eq5 = MathTex(r'\mathbb P(X^{(1)}\in A, X^{(2)}\in B)', r'\ge',
+                      r'\mathbb P(X^{(1)}\in A)', r'\mathbb P(X^{(2)}\in B)')
+        eq6 = MathTex(r'A=[-1,1]^k,\ ', r'B=[-1,1]^{n-k}')
+        eq5.next_to(eq3[0][0], ORIGIN, submobject_to_align=eq5[0][0], coor_mask=UP)
+        eq6.move_to((eq5.get_bottom() + eq2.get_top())/2, coor_mask=UP)
+        eq6.align_to(eq2, LEFT)
+        eq5_1 = eq5[2][2:-1].copy().move_to(eq3[2][2:-1], coor_mask=RIGHT)
+
+        self.play(FadeIn(eq6[0]))
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq3[2][7:11], eq5_1[:4]),
+                  FadeOut(eq3[2][2:7], eq3[2][11:-1]),
+                  FadeIn(eq5_1[4:]),
+                  )
+        self.wait(0.1)
+        self.play(FadeIn(eq6[1]))
+        self.wait(0.1)
+        eq5_2 = eq5[3][2:-1].copy().move_to(eq3[3][2:-1], coor_mask=RIGHT)
+        self.play(ReplacementTransform(eq3[3][7:11], eq5_2[:4]),
+                  FadeOut(eq3[3][2:7], eq3[3][11:-1]),
+                  FadeIn(eq5_2[4:]),
+                  )
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq3[0][:2] + eq3[0][-1] + eq3[1],
+                                       eq5[0][:2] + eq5[0][-1] + eq5[1]),
+                  ReplacementTransform(eq3[2][:2] + eq5_1 + eq3[2][-1],
+                                       eq5[2][:2] + eq5[2][2:-1] + eq5[2][-1]),
+                  ReplacementTransform(eq3[3][:2] + eq5_2 + eq3[3][-1],
+                                       eq5[3][:2] + eq5[3][2:-1] + eq5[3][-1]),
+                  FadeOut(eq3[0][2:-1]),
+                  FadeIn(eq5[0][2:-1]))
+        self.wait(0.1)
+        self.play(FadeOut(eq2, eq4, eq5, eq6), run_time=2)
+        self.wait(0.1)
+
+        eq7 = MathTex(r'\lvert X_i\rvert\le1', r'\Leftrightarrow X_i^2\le1', r'\Leftrightarrow Z_i\le1')
+        eq7.next_to(eq1, DOWN, buff=1)
+        for i in range(len(eq7)):
+            self.play(FadeIn(eq7[i]))
+
+        # eq8 = MathTex(r'Z_i')[0].align_to(eq1[0][7:9], DOWN)
+        # eq8 = [eq8.copy().move_to(eq1[0][6:10]),
+        #        eq8.copy().move_to(eq1[2][8:12]),
+        #        eq8.copy().move_to(eq1[3][8:12])]
+        # self.play(FadeOut(eq1[0][6:8], eq1[0][9]), FadeIn(eq8[0][0]), ReplacementTransform(eq1[0][8], eq8[0][1]),
+        #           FadeOut(eq1[2][8:10], eq1[2][11]), FadeIn(eq8[1][0]), ReplacementTransform(eq1[2][10], eq8[1][1]),
+        #           FadeOut(eq1[3][8:10], eq1[3][11]), FadeIn(eq8[2][0]), ReplacementTransform(eq1[3][10], eq8[2][1]))
+
+        eq9 = MathTex(r'\mathbb P(\max_i Z_i\le 1)', r'\ge',
+                      r'\mathbb P(\max_{i\le k} Z_i\le 1)',
+                      r'\mathbb P(\max_{i > k} Z_i\le 1)')
+        eq9.next_to(eq1[0][0], ORIGIN, submobject_to_align=eq9[0][0], coor_mask=UP)
+        self.play(ReplacementTransform(eq1[0][:6] + eq1[0][10:] + eq1[1] + eq1[2][:8] + eq1[2][12:] + eq1[3][:8] +
+                                       eq1[3][12:], # + eq8[0][:] + eq8[1][:] + eq8[2][:],
+                                       eq9[0][:6] + eq9[0][8:] + eq9[1] + eq9[2][:8] + eq9[2][10:] + eq9[3][:8] +
+                                       eq9[3][10:]), # + eq9[0][6:8] + eq9[2][8:10] + eq9[3][8:10]),
+                  ReplacementTransform(eq1[0][8], eq9[0][7]),
+                  ReplacementTransform(eq1[2][10], eq9[2][9]),
+                  ReplacementTransform(eq1[3][10], eq9[3][9]),
+                  FadeOut(eq1[0][6:8], eq1[0][9], eq1[2][8:10], eq1[2][11], eq1[3][8:10], eq1[3][11]),
+                  FadeIn(eq9[0][6], eq9[2][8], eq9[3][8]),
+                  )
+        self.wait(0.1)
+        self.play(FadeOut(eq7))
+
 
         self.wait()
 
