@@ -1229,6 +1229,78 @@ class ProbvsT(CovMatrix):
         self.play(Create(crv), FadeIn(dot1, dot2, eq9, eq10), run_time=2)
         self.wait()
 
+class MGF(Scene):
+    def construct(self):
+        eq1 = Tex(r'Moment Generating Function of $n$-dimensional', r'\\ random vector $X$', color=BLUE)
+        eq2 = MathTex(r'{\rm MGF}_X(\lambda)', r'=', r'\mathbb E[e^{-\lambda\cdot X}]')
+        eq3 = Tex(r'for $\lambda\in\mathbb R^n$.')
+        eq4 = Tex( r'(we suppose finite expectation for $\lambda_i\ge0$)')
+        eq1[1].align_to(eq1[0], LEFT)
+        eq2.next_to(eq1, DOWN)
+        eq3.next_to(eq2, DOWN).align_to(eq1, LEFT)
+        eq4.next_to(eq3, DOWN).align_to(eq1, LEFT)
+        gp1 = VGroup(eq1, eq2, eq3, eq4).to_edge(UP)
+        eq5 = Tex(r'If $X\sim N(0, C)$ ', r'then ',  r'$\lambda\cdot X\sim N(0, \lambda^TC\lambda)$')
+        eq5.next_to(eq4, DOWN, buff=1)
+        eq6 = MathTex(r'\mathbb E[e^{-\lambda\cdot X}]=', r'e^{\frac12{\rm Var}(\lambda\cdot X)}')
+        eq6.next_to(eq5, DOWN)
+        eq7 = MathTex(r'\mathbb E[e^{-\lambda\cdot X}]=', r'e^{\frac12\lambda^TC\lambda}')
+        eq7.next_to(eq6[0][-1], ORIGIN, submobject_to_align=eq7[0][-1])
+
+        self.add(gp1)
+        self.play(FadeIn(eq5[0]), run_time=1)
+        self.wait(0.1)
+        self.play(FadeIn(eq5[1:]), run_time=1)
+        self.wait(0.1)
+        self.play(FadeIn(eq6[0]), run_time=1)
+        self.play(FadeIn(eq6[1]), run_time=1)
+        self.play(ReplacementTransform(eq6[1][:4] + eq6[0], eq7[1][:4] + eq7[0]),
+                  FadeOut(eq6[1][4:]), FadeIn(eq7[1][4:]),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(eq7.animate.next_to(eq5[2][0].get_corner(DL), UR, submobject_to_align=eq7[0][0], buff=0),
+                  FadeOut(eq5[2]), run_time=1.5)
+        eq5[2].set_opacity(0)
+        self.play(VGroup(eq5, eq7).animate.next_to(eq4, DOWN, coor_mask=UP))
+
+        eq8 = Tex(r'If $Z=\frac12(X_1^2,\ldots,X_n^2)$', r' then ', r'$\lambda\cdot Z=\frac12X^T\Lambda X$').next_to(eq5, DOWN).align_to(eq5, LEFT)
+        eq8_1 = Tex(r'If $Z=(X_1^2,\ldots,X_n^2)$')
+        eq8_1.next_to(eq8[0][0], ORIGIN, submobject_to_align=eq8_1[0][0])
+
+        eq9 = MathTex(r'\Lambda = \begin{pmatrix}'
+                      r'\lambda_1 & 0 & \cdots & 0\\'
+                      r'0 & \lambda_2 & \cdots & 0\\'
+                      r'\vdots & \vdots & \ddots & \vdots\\'
+                      r'0 & 0 & \cdots & \lambda_n'
+                      r'\end{pmatrix}', font_size=40)
+        eq9.next_to(eq8, DOWN * 0.8, coor_mask=UP)
+        eq10 = MathTex(r'\mathbb E[e^{-\lambda\cdot Z}]=', r'\mathbb E[e^{-\frac12X^T\Lambda X}]')
+        eq10.next_to(eq8[2][0].get_corner(DL), UR, submobject_to_align=eq10[0][0], buff=0)
+        eq11 = MathTex(r'\mathbb E[e^{-\lambda\cdot Z}]=', r'\lvert 1+\Lambda C\rvert^{-\frac12}')
+        eq11.next_to(eq10[0][0], ORIGIN, submobject_to_align=eq11[0][0])
+
+
+        self.play(FadeIn(eq8_1))
+        self.play(ReplacementTransform(eq8_1[0][:4] + eq8_1[0][4:], eq8[0][:4] + eq8[0][7:]),
+                  FadeIn(eq8[0][4:7]))
+        self.wait(0.1)
+        self.play(FadeIn(eq8[1:]), run_time=1.5)
+        self.play(FadeIn(eq9), run_time=1.5)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq8[2][:3] + eq8[2][4:11] + eq8[2][3],
+                                       eq10[0][4:7] + eq10[1][4:11] + eq10[0][-1]),
+                  FadeIn(eq10[0][:3], eq10[0][7:-1], eq10[1][:3], eq10[1][11:]),
+                  FadeIn(eq10[0][3], target_position=eq8[2][0].get_left()),
+                  FadeIn(eq10[1][3], target_position=eq8[2][5].get_left()),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq10[0], eq11[0]),
+                  ReplacementTransform(eq10[1][9], eq11[1][3]),
+                  FadeOut(eq10[1][:9], eq10[1][10:]),
+                  FadeIn(eq11[1][:3], eq11[1][4:]),
+                  run_time=1.5)
+        self.wait()
+
 
 
 
