@@ -1023,6 +1023,214 @@ class EqImagePAB(EqImageA):
     eq = r'\mathbb P(A\cap B)\ge\mathbb P(A)\mathbb P(B)'
 
 
+class GCIProofForm(Scene):
+    def __init__(self, *args, **kwargs):
+        if not config.transparent:
+            config.background_color = GREY
+        Scene.__init__(self, *args, **kwargs)
+
+    def get_eqs(self):
+        eq1 = MathTex(r'\mathbb P(X^{(1)}\in A, X^{(2)}\in B)', r'\ge',
+                      r'\mathbb P(X^{(1)}\in A)', r'\mathbb P(X^{(2)}\in B)').set_z_index(1)
+        eq2 = MathTex(r'X^{(1)}=(X_1,\ldots,X_k),\ ', r'X^{(2)}=(X_{k+1},\ldots,X_n)').set_z_index(1)
+        eq2.next_to(eq1, DOWN)
+        eq1_1 = eq1[2:].copy().scale(1.1, about_point=eq1[2][5].get_center())
+        eq1_0 = eq1[0].copy().scale(1.1, about_point=eq1[0][-6].get_center())
+        gp = VGroup(eq1, eq2, eq1_1, eq1_0)
+        box1 = SurroundingRectangle(gp, fill_color=BLACK, fill_opacity=0.7, corner_radius=0.15, stroke_opacity=0)
+        VGroup(gp, box1).to_edge(DOWN, buff=0.1)
+        eq3 = MathTex(r'\mathbb P(X^{(1)}\in A, X^{(2)}\in B)', r'\ge',
+                      r'\mathbb P_0(X^{(1)}\in A, X^{(2)}\in B)').set_z_index(1)
+        eq3.next_to(eq1[1], ORIGIN, submobject_to_align=eq3[1])
+
+        return box1, eq1, eq2, eq3, eq1_1, eq1_0
+
+    def construct(self):
+        box1, eq1, eq2, eq3, eq1_1, eq1_0 = self.get_eqs()
+        self.add(box1, eq1, eq2)
+        self.wait()
+        self.play(Transform(eq1[2:], eq1_1), rate_func=there_and_back, run_time=1.9)
+        self.play(Transform(eq1[0], eq1_0), rate_func=there_and_back, run_time=1.9)
+        self.wait(0.3)
+        self.play(ReplacementTransform(eq1[:2] + eq1[2][0] + eq1[2][1:8] + eq1[3][2:],
+                                       eq3[:2] + eq3[2][0] + eq3[2][2:9] + eq3[2][10:]),
+                  FadeIn(eq3[2][1], eq3[2][9]),
+                  FadeOut(eq1[2][8], eq1[3][:2]),
+                  run_time=2)
+        self.wait()
+
+class CovMatrix(Scene):
+    def __init__(self, *args, **kwargs):
+        if not config.transparent:
+            config.background_color=GREY
+        Scene.__init__(self, *args, **kwargs)
+
+    def get_eqs(self, anim=True):
+        eq2 = MathTex(r'C=', r'\begin{pmatrix}'
+                             r'c_{11} & c_{12} & c_{13} & \cdots & c_{1n} \\'
+                             r'c_{21} & c_{22} & c_{23} & \cdots & c_{2n} \\'
+                             r'c_{31} & c_{32} & c_{33} & \cdots & c_{3n} \\'
+                             r'\vdots & \vdots & \vdots & \ddots & \vdots \\'
+                             r'c_{n1} & c_{n2} & c_{n3} & \cdots & c_{nn}'
+                             r'\end{pmatrix}').set_z_index(1)
+        eq1 = MathTex(r'C = ', r'{\rm Cov}(X)').set_z_index(1)
+        eq1.next_to(eq2[0], ORIGIN, submobject_to_align=eq1[0], coor_mask=UP)
+        eq3 = MathTex(r'c_{ij}', r'={\rm Cov}(X_i, X_j)', r'=\mathbb E[X_iX_j]').set_z_index(1)
+        eq3.next_to(eq2, DOWN * 2)
+        eq4 = MathTex(r'C=', r'\begin{pmatrix}'
+                             r'C_1 & A \\'
+                             r'A^T & C_2'
+                             r'\end{pmatrix}').set_z_index(1)
+        #        eq4.next_to(eq1[0], ORIGIN, submobject_to_align=eq4[0], coor_mask=UP)
+        eq5 = MathTex(r'C_1={\rm Cov}(X^{(1)}),', r'C_2={\rm Cov}(X^{(2)}),',
+                      r'A={\rm Cov}(X^{(1)},X^{(2)})').set_z_index(1)
+        eq5[2].next_to(eq5[:2], DOWN)
+        eq5.move_to(ORIGIN).next_to(eq3[1][0], ORIGIN, submobject_to_align=eq5[0][2], coor_mask=UP)
+        box1 = Rectangle(width=2 * config.frame_x_radius, height=2 * config.frame_y_radius, fill_opacity=1,
+                         fill_color=BLACK, stroke_opacity=0)
+        box2 = SurroundingRectangle(eq2, fill_color=BLACK, fill_opacity=0.7, stroke_opacity=0, corner_radius=0.15)
+        box3 = SurroundingRectangle(eq4, fill_color=BLACK, fill_opacity=0.7, stroke_opacity=0, corner_radius=0.15)
+        VGroup(eq4, box3).to_edge(DOWN, buff=0.1)
+
+        if not anim:
+            return box3, eq4
+
+        row2 = eq2[1][22:37]
+        row3 = eq2[1][37:52]
+        col2 = VGroup(eq2[1][10:13], eq2[1][70:73])
+        col3 = VGroup(eq2[1][13:16], eq2[1][73:76])
+        p1 = (row2.get_corner(DL) + row3.get_corner(UL)) / 2
+        p2 = (row2.get_corner(DR) + row3.get_corner(UR)) / 2
+        p3 = (col2.get_corner(UR) + col3.get_corner(UL)) / 2
+        p4 = (col2.get_corner(DR) + col3.get_corner(DL)) / 2
+
+        eq4_1 = eq4[1][1:3].copy()
+        eq4_2 = eq4[1][3].copy()
+        eq4_3 = eq4[1][4:6].copy()
+        eq4_4 = eq4[1][6:8].copy()
+
+        line1 = Line(p1, p2,
+                     stroke_width=4, stroke_opacity=0.5, stroke_color=YELLOW)
+        line2 = Line(p3, p4,
+                     stroke_width=4, stroke_opacity=0.5, stroke_color=YELLOW)
+        line3 = Line((eq4_1.get_corner(UR) + eq4_2.get_corner(UL)) / 2,
+                     (eq4_3.get_corner(DR) + eq4_4.get_corner(DL)) / 2,
+                     stroke_color=YELLOW, stroke_opacity=0)
+        line4 = Line((eq4_1.get_corner(DL) + eq4_3.get_corner(UL)) / 2,
+                     (eq4_2.get_corner(DR) + eq4_4.get_corner(UR)) / 2,
+                     stroke_color=YELLOW, stroke_opacity=0)
+        eq4_1.next_to((p1 + p3) / 2, ORIGIN, submobject_to_align=eq4_1[0], buff=0)
+        eq4_2.next_to((p2 + p3) / 2, ORIGIN, submobject_to_align=eq4_2[0], buff=0)
+        eq4_3.next_to((p1 + p4) / 2, ORIGIN, submobject_to_align=eq4_3[0], buff=0)
+        eq4_4.next_to((p2 + p4) / 2, ORIGIN, submobject_to_align=eq4_4[0], buff=0)
+
+        self.add(box1, eq1)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq1[0], eq2[0]),
+                  FadeOut(eq1[1]), FadeIn(eq2[1], box2),
+                  run_time=2)
+        self.play(FadeIn(eq3))
+        self.wait(0.1)
+        self.play(FadeIn(line1, line2))
+        self.wait(0.1)
+        self.play(FadeIn(eq4_1, eq4_2, eq4_3, eq4_4, eq5),
+                  FadeOut(eq2[1][7:82], eq3), run_time=1, rate_func=linear)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq2[0][:] + eq4_1 + eq4_2 + eq4_3 + eq4_4,
+                                       eq4[0][:] + eq4[1][1:3] + eq4[1][3] + eq4[1][4:6] + eq4[1][6:8]),
+                  abra.fade_replace(eq2[1][:7], eq4[1][0]),
+                  abra.fade_replace(eq2[1][82:], eq4[1][8:]),
+                  ReplacementTransform(line2, line3),
+                  ReplacementTransform(line1, line4),
+                  ReplacementTransform(box2, box3),
+                  FadeOut(eq5, box1),
+                  run_time=2)
+        self.wait()
+        return box3, eq4
+
+    def construct(self):
+        box1, eq1 = self.get_eqs(anim=True)
+        eq2 = MathTex(r'0', r'0').set_z_index(1)
+        eq3 = MathTex(r'tA', r'tA^T').set_z_index(1)
+        eq2[0].move_to(eq1[1][3])
+        eq2[1].move_to(eq1[1][4])
+        eq3[0].next_to(eq1[1][3], ORIGIN, submobject_to_align=eq3[0][1])
+        eq3[1].next_to(eq1[1][4:6], ORIGIN, submobject_to_align=eq3[1][1:]).align_to(eq1[1][4], LEFT)
+        self.add(box1, eq1)
+        self.play(FadeOut(eq1[1][3], eq1[1][4:6]),
+                  FadeIn(eq2),
+                  rate_func=there_and_back,
+                  run_time=2)
+        self.add(eq1[1][3], eq1[1][4:6])
+        self.wait()
+        self.play(ReplacementTransform(eq1[1][3], eq3[0][1]),
+                  ReplacementTransform(eq1[1][4:6], eq3[1][1:]),
+                  FadeIn(eq3[0][0], eq3[1][0]),
+                  run_time=1)
+        self.wait(0.1)
+        self.play(VGroup(eq1, eq3, box1).animate.to_edge(UR, buff=0.1), run_time=2)
+        self.wait()
+
+class ProbvsT(CovMatrix):
+    def construct(self):
+        eq1_txt=r'\mathbb P_t(X^{(1)}\in A, X^{(2)}\in B)'
+        eq1 = MathTex(eq1_txt).set_z_index(1)
+        box1 = SurroundingRectangle(eq1, fill_color=BLACK, fill_opacity=0.7, stroke_opacity=0, corner_radius=0.15)
+        VGroup(eq1, box1).to_edge(DOWN, buff=0.1)
+        eq2 = eq1[0][:2].copy().move_to(ORIGIN, coor_mask=RIGHT)
+        ax = Axes(x_range=[0, 1.1], y_range=[0, 1.15], x_length=6, y_length=3,
+                  axis_config={'color': WHITE, 'stroke_width': 4, 'include_ticks': False,
+                               "tip_width": 0.5 * DEFAULT_ARROW_TIP_LENGTH,
+                               "tip_height": 0.5 * DEFAULT_ARROW_TIP_LENGTH,
+                               },
+                  ).set_z_index(1)
+        ax.shift(ax.coords_to_point(0.5, 0) * LEFT)
+
+
+        eq3 = MathTex(r't', font_size=34).next_to(ax.x_axis.get_right(), UL, buff=0.2)
+
+        p0 = ax.coords_to_point(0, 0)
+        p1 = ax.coords_to_point(0, 1)
+        p2 = ax.coords_to_point(1, 0)
+        p3 = ax.coords_to_point(1, 1)
+        line1 = DashedLine(p1, p3).set_z_index(1)
+        line2 = DashedLine(p2, p3).set_z_index(1)
+        eq4 = MathTex(r'1', font_size=34).next_to(p2, DOWN, buff=0.1)
+        eq5 = eq4.copy().next_to(p1, LEFT, buff=0.1)
+        eq6 = MathTex(r'0', font_size=34).next_to(p0, DOWN, buff=0.1)
+        eq7 = eq6.copy().next_to(p0, LEFT, buff=0.1)
+        eq8 = MathTex(eq1_txt, font_size=30).set_z_index(1).next_to(ax.y_axis.get_top(), RIGHT, buff=0.1)
+
+        gp = VGroup(ax, eq3, line1, line2, eq4, eq5, eq6, eq7, eq8)
+        box2 = SurroundingRectangle(gp, fill_color=BLACK, fill_opacity=0.7, stroke_opacity=0, corner_radius=0.15)
+        VGroup(gp, box2).to_edge(DOWN, buff=0.05)
+
+        def f(t):
+            return t*t * 0.5 + 0.25
+
+        crv = ax.plot(f, [0, 1], stroke_color=YELLOW)
+        dot1 = Dot(radius=0.1, fill_color=YELLOW).move_to(ax.coords_to_point(0, f(0)))
+        dot2 = Dot(radius=0.1, fill_color=YELLOW).move_to(ax.coords_to_point(1, f(1)))
+        eq9 = MathTex('\mathbb P(X^{(1)}\in A)\mathbb P(X^{(2)}\in B)', font_size=28).set_z_index(1)
+        eq10 = MathTex('\mathbb P(X^{(1)}\in A,X^{(2)}\in B)', font_size=28).set_z_index(1)
+        eq9.next_to(dot1, DOWN, buff=0).shift(RIGHT*1.6)
+        eq10.next_to(dot2, UP, buff=0).shift(LEFT*1.45)
+
+        self.add(box1, eq2)
+        self.wait()
+        self.play(LaggedStart(ReplacementTransform(eq2, eq1[0][:2]), FadeIn(eq1[0][2:]),
+                  lag_ratio=0.5), run_time=3)
+        self.wait(0.1)
+        self.play(LaggedStart(AnimationGroup(ReplacementTransform(eq1, eq8),
+                  ReplacementTransform(box1, box2)),
+                  FadeIn(gp[:-1]), lag_ratio=0.5),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(Create(crv), FadeIn(dot1, dot2, eq9, eq10), run_time=2)
+        self.wait()
+
+
+
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "preview": True, 'fps': 15}):
