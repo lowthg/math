@@ -1462,10 +1462,24 @@ class MGFDiffZ(MGFDiff):
                       r'\sum_{S}c_S\,\mathbb E[(-\partial)^Sf(\tilde Z)]']
     eqstr2 = [r'where ', r'$c_S=-\frac12\frac{d}{dt}\lvert C_S\rvert$']
 
-    def construct(self):
-        eq1, eq2, eq3, _, box = self.get_eqs()
+    def get_eqs(self, animate=True):
+        eq1, eq2, eq3, _, box = MGFDiff.get_eqs(self)
         self.add(eq1, eq2, eq3, box)
 
+        eq30 = MathTex(*self.eqstr1, font_size=DEFAULT_FONT_SIZE*0.9)
+        eq30.next_to(eq2, DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 0.8)
+        eq31 = Tex(*self.eqstr2, font_size=DEFAULT_FONT_SIZE)
+        eq31.next_to(eq30, DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 0)
+
+        p0 = eq31.get_bottom() * UP + DOWN * 0.2
+        p1 = p0 + LEFT * config.frame_x_radius
+        p2 = p0 + RIGHT * config.frame_x_radius
+        p3 = UP * config.frame_y_radius
+        box2 = VGroup(*box[:2], Line(p1, p2, color = self.linecol, stroke_width=6),
+                     Line(p0, p3, color = self.linecol, stroke_width=6))
+
+        if not animate:
+            return eq1, eq2, eq3, eq30, eq31, box2
 
         self.wait(0.1)
         eq4 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot Z}]', r'=',
@@ -1651,7 +1665,18 @@ class MGFDiffZ(MGFDiff):
                   FadeIn(eq26[0], eq26[1][:3]),
                   FadeOut(eq23),
                   run_time=2)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq25, eq30),
+                  ReplacementTransform(eq26, eq31),
+                  ReplacementTransform(box, box2),
+                  run_time=2)
         self.wait()
+        return eq1, eq2, eq3, eq30, eq31, box2
+
+
+    def construct(self):
+        self.get_eqs()
+
 
 
 if __name__ == "__main__":
