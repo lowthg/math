@@ -1234,11 +1234,29 @@ class ProbvsT(CovMatrix):
         self.wait()
 
 class MGF(Scene):
+    linecol = ManimColor(BLUE.to_rgb() * 0.6)
+
     def get_eqs(self, animate=True):
-        eq7 = MathTex(r'\mathbb E[e^{-\lambda\cdot X}]=', r'e^{\frac12\lambda^TC\lambda}')
-        eq11 = MathTex(r'\mathbb E[e^{-\lambda\cdot Z}]=', r'\lvert 1+\Lambda C\rvert^{-\frac12}')
+        p0 = config.frame_x_radius * LEFT/2
+        p1 = -p0
+        txt1 = Tex(r'for multivariate normal $X$', color=BLUE).move_to(p0)
+        txt2 = Tex(r"for $Z_i=\frac12X_i^2$ (Royen's trick)" , color=BLUE).move_to(p1).to_edge(UP, buff=0.1)
+        txt1.next_to(txt2[0][0], ORIGIN, submobject_to_align=txt1[0][0], coor_mask=UP)
+        eq7 = MathTex(r'\mathbb E[e^{-\lambda\cdot X}]=', r'e^{\frac12\lambda^TC\lambda}').set_z_index(1)
+        eq11 = MathTex(r'\mathbb E[e^{-\lambda\cdot Z}]=', r'\lvert 1+\Lambda C\rvert^{-\frac12}').set_z_index(1)
+        eq7.next_to(txt1, DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 0.8)
+        eq11.move_to(p1).next_to(eq7[0][0], ORIGIN, submobject_to_align=eq11[0][0], coor_mask=UP)
+        p0 = VGroup(eq7 ,eq11).get_bottom() * UP + DOWN * 0.2
+        p1 = p0 + LEFT * config.frame_x_radius
+        p2 = p0 + RIGHT * config.frame_x_radius
+        p3 = UP * config.frame_y_radius
+        box = VGroup(txt1, txt2, Line(p1, p2, color = self.linecol, stroke_width=6),
+                     Line(p0, p3, color = self.linecol, stroke_width=6))
+
         if not animate:
-            return eq7.to_corner(UL), eq11.to_corner(UR)
+            return eq7, eq11, box
+        eq7pos = eq7.get_center()
+        eq11pos = eq11.get_center()
 
         eq1 = Tex(r'Moment Generating Function of $n$-dimensional', r'\\ random vector $X$', color=BLUE)
         eq2 = MathTex(r'{\rm MGF}_X(\lambda)', r'=', r'\mathbb E[e^{-\lambda\cdot X}]')
@@ -1308,30 +1326,55 @@ class MGF(Scene):
                   run_time=1.5)
         self.wait(0.1)
         self.play(FadeOut(eq1, eq2, eq3, eq4, eq5[:2], eq8[:2], eq9),
-                  eq7.animate.to_corner(UL),
-                  eq11.animate.to_corner(UR),
+                  eq7.animate.move_to(eq7pos),
+                  eq11.animate.move_to(eq11pos),
+                  FadeIn(box),
                   run_time=2)
 
         self.wait()
-        return eq7, eq11
+        return eq7, eq11, box
 
     def construct(self):
-        self.get_eqs()
+        self.add(*self.get_eqs())
 
 class MGFDiff(MGF):
-    def construct(self):
-        eq1, eq2 = self.get_eqs(animate=False)
-        p0 = VGroup(eq1 ,eq2).set_z_index(1).get_bottom() * UP + DOWN * 0.5
+    eqstr = [r'\frac{d}{dt}\mathbb E[f(X)]', r'=',
+             r'\frac12\sum_{i,j}{\dot C_{ij} }\, \mathbb E[\partial_i\partial_j f(X)]']
+
+    def get_eqs(self):
+        eq1, eq2, box = MGF.get_eqs(self, animate=False)
+        eq0 = MathTex(*self.eqstr, font_size=DEFAULT_FONT_SIZE*0.9).set_z_index(1)
+        eq0.next_to(eq1, DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 0.8)
+        p0 = eq0.get_bottom() * UP + DOWN * 0.2
         p1 = p0 + LEFT * config.frame_x_radius
         p2 = p0 + RIGHT * config.frame_x_radius
         p3 = UP * config.frame_y_radius
-        line1 = Line(p1, p2, stroke_opacity=0.6, color = BLUE, stroke_width=6)
-        line2 = Line(p0, p3, stroke_opacity=0.6, color = BLUE, stroke_width=6)
-        self.add(line1, line2, eq1, eq2)
+        box2 = VGroup(*box[:2], Line(p1, p2, color = self.linecol, stroke_width=6),
+                     Line(p0, p3, color = self.linecol, stroke_width=6))
+
+        return eq1, eq2, eq0, box, box2
+
+
+    def construct(self):
+        eq1, eq2, eq0, box, box2 = self.get_eqs()
+        eq0 = MathTex(*self.eqstr, font_size=DEFAULT_FONT_SIZE*0.9).set_z_index(1)
+        eq0.next_to(eq1, DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 0.8)
+        p0 = eq0.get_bottom() * UP + DOWN * 0.2
+        p1 = p0 + LEFT * config.frame_x_radius
+        p2 = p0 + RIGHT * config.frame_x_radius
+        p3 = UP * config.frame_y_radius
+        box2 = VGroup(*box[:2], Line(p1, p2, color = self.linecol, stroke_width=6),
+                     Line(p0, p3, color = self.linecol, stroke_width=6))
+
+
+        self.add(box, eq1, eq2)
         self.wait(0.1)
 
+        eq11 = MathTex(*self.eqstr).set_z_index(1)
         eq3 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot X}]', r'=',
                       r'\frac{d}{dt}e^{\frac12\lambda^TC\lambda}').set_z_index(1)
+        eq3.next_to(eq11[1].get_center()/2, ORIGIN, submobject_to_align=eq3[1], coor_mask=RIGHT)
+        eq3.move_to(box.get_bottom()*0.6 + config.frame_y_radius*DOWN*0.4, coor_mask=UP)
         eq4 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot X}]', r'=',
                       r'\frac12\lambda^T{\dot C}\lambda\, e^{\frac12\lambda^TC\lambda}').set_z_index(1)
         eq4.next_to(eq3[1], ORIGIN, submobject_to_align=eq4[1])
@@ -1349,9 +1392,9 @@ class MGFDiff(MGF):
                       r'\frac12\sum_{i,j}{\dot C_{ij} }\, \mathbb E[\partial_i\partial_j e^{-\lambda\cdot X}]').set_z_index(1)
         eq9.next_to(eq8[1], ORIGIN, submobject_to_align=eq9[1])
         eq10 = Tex(r'(writing $\partial_i$ for $\partial/\partial X_i$)').set_z_index(1).next_to(eq9[2], DOWN)
-        eq11 = MathTex(r'\frac{d}{dt}\mathbb E[f(X)]', r'=',
-                      r'\frac12\sum_{i,j}{\dot C_{ij} }\, \mathbb E[\partial_i\partial_j f(X)]').set_z_index(1)
         eq11.next_to(eq9[1], ORIGIN, submobject_to_align=eq11[1])
+        eq12 = Tex(r'Invertability of MGF/Laplace transforms:\\ can replace $e^{-\lambda\cdot X}$ by $f(X)$', color=BLUE).set_z_index(1)
+        eq12.next_to(eq11[2], UP, coor_mask=UP)
 
         self.play(LaggedStart(ReplacementTransform((eq1[0][:-1]+eq1[0][-1] + eq1[1][:]).copy(),
                                        eq3[0][4:] + eq3[1][0] + eq3[2][4:]),
@@ -1394,6 +1437,8 @@ class MGFDiff(MGF):
                   FadeIn(eq9[2][13], eq9[2][15]))
         self.play(FadeIn(eq10))
         self.wait(0.1)
+        self.play(FadeIn(eq12))
+        self.wait(0.1)
         self.remove(eq3[0][10], eq9[2][21])
         self.play(ReplacementTransform(eq3[0][:6] + eq3[0][-1] + scale_to_obj(eq11[0][8].copy(), eq3[0][10]) + eq3[1],
                                        eq11[0][:6] + eq11[0][-1] + eq11[0][8] + eq11[1]),
@@ -1402,7 +1447,13 @@ class MGFDiff(MGF):
                   FadeOut(eq3[0][6:10]),
                   FadeIn(eq11[0][6:8] + eq11[0][9]),
                   FadeOut(eq9[2][17:21]),
-                  FadeIn(eq11[2][17:19], eq11[2][20]))
+                  FadeIn(eq11[2][17:19], eq11[2][20]),
+                  FadeOut(eq10),
+                  run_time=1.5)
+        self.play(ReplacementTransform(box, box2),
+                  ReplacementTransform(eq11, eq0),
+                  FadeOut(eq12),
+                  run_time=2)
         self.wait()
 
 if __name__ == "__main__":
