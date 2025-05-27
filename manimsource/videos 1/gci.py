@@ -11,6 +11,10 @@ import abracadabra as abra
 blue = ManimColor((50, 100, 180))
 red = ManimColor(RED.to_rgb() * 0.7)
 
+def scale_to_obj(source: Mobject, target: Mobject):
+    return source.scale_to_fit_height(target.height).move_to(target)
+
+
 def unitVec2D(theta):
     return RIGHT * math.cos(theta) + UP * math.sin(theta)
 
@@ -1230,7 +1234,12 @@ class ProbvsT(CovMatrix):
         self.wait()
 
 class MGF(Scene):
-    def construct(self):
+    def get_eqs(self, animate=True):
+        eq7 = MathTex(r'\mathbb E[e^{-\lambda\cdot X}]=', r'e^{\frac12\lambda^TC\lambda}')
+        eq11 = MathTex(r'\mathbb E[e^{-\lambda\cdot Z}]=', r'\lvert 1+\Lambda C\rvert^{-\frac12}')
+        if not animate:
+            return eq7.to_corner(UL), eq11.to_corner(UR)
+
         eq1 = Tex(r'Moment Generating Function of $n$-dimensional', r'\\ random vector $X$', color=BLUE)
         eq2 = MathTex(r'{\rm MGF}_X(\lambda)', r'=', r'\mathbb E[e^{-\lambda\cdot X}]')
         eq3 = Tex(r'for $\lambda\in\mathbb R^n$.')
@@ -1244,7 +1253,6 @@ class MGF(Scene):
         eq5.next_to(eq4, DOWN, buff=1)
         eq6 = MathTex(r'\mathbb E[e^{-\lambda\cdot X}]=', r'e^{\frac12{\rm Var}(\lambda\cdot X)}')
         eq6.next_to(eq5, DOWN)
-        eq7 = MathTex(r'\mathbb E[e^{-\lambda\cdot X}]=', r'e^{\frac12\lambda^TC\lambda}')
         eq7.next_to(eq6[0][-1], ORIGIN, submobject_to_align=eq7[0][-1])
 
         self.add(gp1)
@@ -1276,7 +1284,6 @@ class MGF(Scene):
         eq9.next_to(eq8, DOWN * 0.8, coor_mask=UP)
         eq10 = MathTex(r'\mathbb E[e^{-\lambda\cdot Z}]=', r'\mathbb E[e^{-\frac12X^T\Lambda X}]')
         eq10.next_to(eq8[2][0].get_corner(DL), UR, submobject_to_align=eq10[0][0], buff=0)
-        eq11 = MathTex(r'\mathbb E[e^{-\lambda\cdot Z}]=', r'\lvert 1+\Lambda C\rvert^{-\frac12}')
         eq11.next_to(eq10[0][0], ORIGIN, submobject_to_align=eq11[0][0])
 
 
@@ -1299,10 +1306,104 @@ class MGF(Scene):
                   FadeOut(eq10[1][:9], eq10[1][10:]),
                   FadeIn(eq11[1][:3], eq11[1][4:]),
                   run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeOut(eq1, eq2, eq3, eq4, eq5[:2], eq8[:2], eq9),
+                  eq7.animate.to_corner(UL),
+                  eq11.animate.to_corner(UR),
+                  run_time=2)
+
         self.wait()
+        return eq7, eq11
 
+    def construct(self):
+        self.get_eqs()
 
+class MGFDiff(MGF):
+    def construct(self):
+        eq1, eq2 = self.get_eqs(animate=False)
+        p0 = VGroup(eq1 ,eq2).set_z_index(1).get_bottom() * UP + DOWN * 0.5
+        p1 = p0 + LEFT * config.frame_x_radius
+        p2 = p0 + RIGHT * config.frame_x_radius
+        p3 = UP * config.frame_y_radius
+        line1 = Line(p1, p2, stroke_opacity=0.6, color = BLUE, stroke_width=6)
+        line2 = Line(p0, p3, stroke_opacity=0.6, color = BLUE, stroke_width=6)
+        self.add(line1, line2, eq1, eq2)
+        self.wait(0.1)
 
+        eq3 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot X}]', r'=',
+                      r'\frac{d}{dt}e^{\frac12\lambda^TC\lambda}').set_z_index(1)
+        eq4 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot X}]', r'=',
+                      r'\frac12\lambda^T{\dot C}\lambda\, e^{\frac12\lambda^TC\lambda}').set_z_index(1)
+        eq4.next_to(eq3[1], ORIGIN, submobject_to_align=eq4[1])
+        eq5 = Tex(r'(writing $\dot C$ for $dC/dt$)').set_z_index(1).next_to(eq4[2], DOWN)
+        eq6 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot X}]', r'=',
+                      r'\frac12\lambda^T{\dot C}\lambda\, \mathbb E[e^{-\lambda\cdot X}]').set_z_index(1)
+        eq6.next_to(eq4[1], ORIGIN, submobject_to_align=eq6[1])
+        eq7 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot X}]', r'=',
+                      r'\frac12\sum_{i,j}\lambda_i{\dot C_{ij} }\lambda_j\, \mathbb E[e^{-\lambda\cdot X}]').set_z_index(1)
+        eq7.next_to(eq6[1], ORIGIN, submobject_to_align=eq7[1])
+        eq8 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot X}]', r'=',
+                      r'\frac12\sum_{i,j}{\dot C_{ij} }\, \mathbb E[\lambda_i\lambda_j e^{-\lambda\cdot X}]').set_z_index(1)
+        eq8.next_to(eq7[1], ORIGIN, submobject_to_align=eq8[1])
+        eq9 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot X}]', r'=',
+                      r'\frac12\sum_{i,j}{\dot C_{ij} }\, \mathbb E[\partial_i\partial_j e^{-\lambda\cdot X}]').set_z_index(1)
+        eq9.next_to(eq8[1], ORIGIN, submobject_to_align=eq9[1])
+        eq10 = Tex(r'(writing $\partial_i$ for $\partial/\partial X_i$)').set_z_index(1).next_to(eq9[2], DOWN)
+        eq11 = MathTex(r'\frac{d}{dt}\mathbb E[f(X)]', r'=',
+                      r'\frac12\sum_{i,j}{\dot C_{ij} }\, \mathbb E[\partial_i\partial_j f(X)]').set_z_index(1)
+        eq11.next_to(eq9[1], ORIGIN, submobject_to_align=eq11[1])
+
+        self.play(LaggedStart(ReplacementTransform((eq1[0][:-1]+eq1[0][-1] + eq1[1][:]).copy(),
+                                       eq3[0][4:] + eq3[1][0] + eq3[2][4:]),
+                  FadeIn(eq3[0][:4], eq3[2][:4]), lag_ratio=0.5),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq3[2][4:] + eq3[2][5:7].copy() + eq3[2][8:10].copy()
+                                       + scale_to_obj(eq4[2][6].copy(), eq3[2][10])
+                                       + eq3[2][11].copy() + scale_to_obj(eq4[2][2].copy(), eq3[2][7]),
+                                       eq4[2][8:] + eq4[2][:2] + eq4[2][3:5]
+                                       + eq4[2][6]
+                                       + eq4[2][7] + eq4[2][2]),
+                  FadeOut(eq3[2][:4]),
+                  FadeIn(eq4[2][5], target_position=eq3[2][10].get_top()),
+                  run_time=2
+                  )
+        self.play(FadeIn(eq5))
+        self.play(ReplacementTransform(eq4[2][:8], eq6[2][:8]),
+                  FadeOut(eq4[2][8:]),
+                  FadeIn(eq6[2][8:]),
+                  run_time=2)
+        self.play(ReplacementTransform(eq6[2][:3] + eq6[2][3] + eq6[2][5:7] + eq6[2][7] + eq6[2][8:],
+                                       eq7[2][:3] + eq7[2][7] + eq7[2][9:11] + eq7[2][13] + eq7[2][15:]),
+                  FadeOut(eq6[2][4], target_position=eq7[2][7].get_corner(UR)),
+                  FadeIn(eq7[2][8], target_position=eq6[2][3].get_corner(DR)),
+                  FadeIn(eq7[2][11:13], target_position=eq6[2][5:7].get_corner(DR)),
+                  FadeIn(eq7[2][14], target_position=eq6[2][7].get_corner(DR)),
+                  FadeIn(eq7[2][3:7]),
+                  FadeOut(eq5),
+                  run_time=2)
+        self.play(ReplacementTransform(eq7[2][:7] + eq7[2][9:13] + eq7[2][15:17] + eq7[2][17:]
+                                       + eq7[2][7:9] + eq7[2][13:15],
+                                       eq8[2][:7] + eq8[2][7:11] + eq8[2][11:13] + eq8[2][17:]
+                                       + eq8[2][13:15] + eq8[2][15:17]),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq8[2][:13] + eq8[2][14] + eq8[2][16] + eq8[2][17:],
+                                       eq9[2][:13] + eq9[2][14] + eq9[2][16] + eq9[2][17:]),
+                  FadeOut(eq8[2][13], eq8[2][15]),
+                  FadeIn(eq9[2][13], eq9[2][15]))
+        self.play(FadeIn(eq10))
+        self.wait(0.1)
+        self.remove(eq3[0][10], eq9[2][21])
+        self.play(ReplacementTransform(eq3[0][:6] + eq3[0][-1] + scale_to_obj(eq11[0][8].copy(), eq3[0][10]) + eq3[1],
+                                       eq11[0][:6] + eq11[0][-1] + eq11[0][8] + eq11[1]),
+                  ReplacementTransform(eq9[2][:17] + eq9[2][-1] + scale_to_obj(eq11[2][19].copy(), eq9[2][21]),
+                                       eq11[2][:17] + eq11[2][-1] + eq11[2][19]),
+                  FadeOut(eq3[0][6:10]),
+                  FadeIn(eq11[0][6:8] + eq11[0][9]),
+                  FadeOut(eq9[2][17:21]),
+                  FadeIn(eq11[2][17:19], eq11[2][20]))
+        self.wait()
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "preview": True, 'fps': 15}):
