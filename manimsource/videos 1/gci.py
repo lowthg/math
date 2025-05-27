@@ -1489,15 +1489,9 @@ class MGFDiffZ(MGFDiff):
         eq12 = MathTex(r'\lvert 1+\Lambda C\rvert', r'=',
                        r'1+\sum_{\emptyset\not=S\subseteq\{1,\ldots,n\}}\lvert(\Lambda C)_S\rvert')
         eq12.next_to(eq11, DOWN, coor_mask=UP, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER*1.5)
-        eq13 = MathTex(r'\lvert 1+\Lambda C\rvert', r'=',
-                       r'1+\sum_{S}\lvert\Lambda_S C_S\rvert')
-        eq13.next_to(eq12[2][2], ORIGIN, submobject_to_align=eq13[2][2])#.move_to(ORIGIN, coor_mask=RIGHT)
-        eq14 = MathTex(r'\lvert 1+\Lambda C\rvert', r'=',
-                       r'1+\sum_{S}\lvert\Lambda_S \rvert\,\lvert C_S\rvert')
-        eq14.next_to(eq13[1], ORIGIN, submobject_to_align=eq14[1])#.move_to(ORIGIN, coor_mask=RIGHT)
         eq15 = MathTex(r'\lvert 1+\Lambda C\rvert', r'=',
                        r'1+\sum_{S}(\Pi_{i\in S}\lambda_i)\lvert C_S\rvert')
-        eq15.next_to(eq14[1], ORIGIN, submobject_to_align=eq15[1])#.move_to(ORIGIN, coor_mask=RIGHT)
+        eq15.next_to(eq12[1], ORIGIN, submobject_to_align=eq15[1]).align_to(eq12, RIGHT)
 
         self.play(LaggedStart(ReplacementTransform((eq2[0][:-1]+eq2[0][-1] + eq2[1][:]).copy(),
                                        eq4[0][4:] + eq4[1][0] + eq4[2][4:]),
@@ -1547,44 +1541,24 @@ class MGFDiffZ(MGFDiff):
         self.wait(0.1)
         self.play(FadeIn(eq12[2]))
         self.wait(0.1)
-        # shift = eq13[2][3].get_center() - eq12[2][6].get_center()
-        # self.play(ReplacementTransform(eq12[:2] + eq12[2][:3] + eq12[2][6],
-        #                                eq13[:2] + eq13[2][:3] + eq13[2][3]),
-        #           ReplacementTransform(eq12[2][17:18] + eq12[2][19] + eq12[2][20]
-        #                                + eq12[2][22] + eq12[2][22].copy() + eq12[2][23],
-        #                                eq13[2][4:5] + eq13[2][5] + eq13[2][7]
-        #                                + eq13[2][8] + eq13[2][6] + eq13[2][9]),
-        #           FadeOut(eq12[2][3:6], shift=shift),
-        #           FadeOut(eq12[2][7:17], shift=shift),
-        #           FadeOut(eq12[2][18], target_position=eq13[2][4]),
-        #           FadeOut(eq12[2][21], target_position=eq13[2][9]),
-        #           run_time=2)
-        # self.wait(0.1)
-        # self.play(ReplacementTransform(eq13[:2] + eq13[2][:7] + eq13[2][7:],
-        #                                eq14[:2] + eq14[2][:7] + eq14[2][9:]),
-        #           FadeIn(eq14[2][7:9]),
-        #           run_time=1)
-        shift = eq14[2][3].get_center() - eq12[2][6].get_center()
-        self.play(ReplacementTransform(eq12[:2] + eq12[2][:3] + eq12[2][6],
-                                       eq14[:2] + eq14[2][:3] + eq14[2][3]),
-                  ReplacementTransform(eq12[2][17:18] + eq12[2][19] + eq12[2][20]
-                                       + eq12[2][22] + eq12[2][22].copy() + eq12[2][23],
-                                       eq14[2][4:5] + eq14[2][5] + eq14[2][9]
-                                       + eq14[2][10] + eq14[2][6] + eq14[2][11]),
+        shift = eq15[2][3].get_center() - eq12[2][6].get_center()
+        shift2 = (eq15[2][9].get_center() - eq12[2][19].get_center()) * RIGHT
+        self.play(ReplacementTransform(eq12[:2] + eq12[2][:3] + eq12[2][6]
+                                       + eq12[2][17] + eq12[2][20] + eq12[2][22:24]
+                                       + eq12[2][22].copy(),
+                                       eq15[:2] + eq15[2][:3] + eq15[2][3]
+                                       + eq15[2][12] + eq15[2][13] + eq15[2][14:16]
+                                       + eq15[2][8]),
                   FadeOut(eq12[2][3:6], shift=shift),
                   FadeOut(eq12[2][7:17], shift=shift),
-                  FadeOut(eq12[2][18], target_position=eq14[2][4]),
-                  FadeOut(eq12[2][21], target_position=eq14[2][11]),
-                  FadeIn(eq14[2][7:9], target_position=eq12[2][19:21]),
+                  FadeOut(eq12[2][18], target_position=eq15[2][12]),
+                  FadeOut(eq12[2][21], target_position=eq15[2][15]),
+                  abra.fade_replace(eq12[2][19], eq15[2][9]),
+                  FadeIn(eq15[2][4:8], shift=shift2),
+                  FadeIn(eq15[2][10], target_position=eq12[2][19].get_corner(DR)),
+                  FadeIn(eq15[2][11], shift=shift2),
                   run_time=2)
-        self.wait(0.1)
-        self.play(ReplacementTransform(eq14[:2] + eq14[2][:4] + eq14[2][7:] + eq14[2][6],
-                                       eq15[:2] + eq15[2][:4] + eq15[2][11:] + eq15[2][8]),
-                  abra.fade_replace(eq14[2][4], eq15[2][4]),
-                  abra.fade_replace(eq14[2][5], eq15[2][9]),
-                  FadeIn(eq15[2][5:8]),
-                  FadeIn(eq15[2][10], target_position=eq14[2][6]),
-                  run_time=1.5)
+
         self.wait()
 
 
