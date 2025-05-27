@@ -1458,9 +1458,15 @@ class MGFDiff(MGF):
 
 
 class MGFDiffZ(MGFDiff):
+    eqstr1 = [r'\frac{d}{dt}\mathbb E[f(Z)]', r'=',
+                      r'\sum_{S}c_S\,\mathbb E[(-\partial)^Sf(\tilde Z)]']
+    eqstr2 = [r'where ', r'$c_S=-\frac12\frac{d}{dt}\lvert C_S\rvert$']
+
     def construct(self):
         eq1, eq2, eq3, _, box = self.get_eqs()
         self.add(eq1, eq2, eq3, box)
+
+
         self.wait(0.1)
         eq4 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot Z}]', r'=',
                       r'\frac{d}{dt}\lvert 1+\Lambda C\rvert^{-\frac12}')
@@ -1492,6 +1498,34 @@ class MGFDiffZ(MGFDiff):
         eq15 = MathTex(r'\lvert 1+\Lambda C\rvert', r'=',
                        r'1+\sum_{S}(\Pi_{i\in S}\lambda_i)\lvert C_S\rvert')
         eq15.next_to(eq12[1], ORIGIN, submobject_to_align=eq15[1]).align_to(eq12, RIGHT)
+        eq16 = MathTex(r'\frac{d}{dt}\lvert 1+\Lambda C\rvert', r'=',
+                       r'0+\sum_{S}(\Pi_{i\in S}\lambda_i)\frac{d}{dt}\lvert C_S\rvert')
+        eq16.next_to(eq15[1], ORIGIN, submobject_to_align=eq16[1])
+        eq17 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot Z}]', r'=',
+                      r'-\frac12\mathbb E[e^{-\lambda\cdot\tilde Z}]\sum_{S}(\Pi_{i\in S}\lambda_i)\frac{d}{dt}\lvert C_S\rvert')
+        eq17.next_to(eq11[1], ORIGIN, submobject_to_align=eq17[1])#.move_to(ORIGIN, coor_mask=RIGHT)
+        eq17.next_to(eq16[2][-1], ORIGIN, submobject_to_align=eq17[2][-1], coor_mask=RIGHT)
+
+        eq18 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot Z}]', r'=',
+                      r'-\frac12\sum_{S}\frac{d}{dt}\lvert C_S\rvert\,\mathbb E[(\Pi_{i\in S}\lambda_i)e^{-\lambda\cdot\tilde Z}]')
+        eq18.next_to(eq17[1], ORIGIN, submobject_to_align=eq18[1])
+        eq19 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot Z}]', r'=',
+                      r'-\frac12\sum_{S}\frac{d}{dt}\lvert C_S\rvert\,\mathbb E[(\Pi_{i\in S}(-\partial_i))e^{-\lambda\cdot\tilde Z}]')
+        eq19.next_to(eq18[1], ORIGIN, submobject_to_align=eq19[1])
+        eq20 = Tex(r'writing $\partial_i$ for $\partial/\partial \tilde Z_i$').set_z_index(1).next_to(eq19[2], DOWN)
+        eq21 = Tex(r'and ', r'$(-\partial)^S$', r' for $\Pi_{i\in S}(-\partial_i)$').set_z_index(1).next_to(eq20, DOWN)
+
+        eq22 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot Z}]', r'=',
+                      r'-\frac12\sum_{S}\frac{d}{dt}\lvert C_S\rvert\,\mathbb E[(-\partial)^Se^{-\lambda\cdot\tilde Z}]')
+        eq22.next_to(eq19[1], ORIGIN, submobject_to_align=eq22[1])
+        eq23 = Tex(r'Invertability of MGF/Laplace transforms:\\ can replace $e^{-\lambda\cdot Z}$ by $f(Z)$', color=BLUE).set_z_index(1)
+        eq23.next_to(eq22[2], UP, coor_mask=UP, buff=0.05)
+        eq24 = MathTex(r'\frac{d}{dt}\mathbb E[f(Z)]', r'=',
+                      r'-\frac12\sum_{S}\frac{d}{dt}\lvert C_S\rvert\,\mathbb E[(-\partial)^Sf(\tilde Z)]')
+        eq24.next_to(eq22[1], ORIGIN, submobject_to_align=eq24[1])
+        eq25 = MathTex(*self.eqstr1)
+        eq25.next_to(eq24[2][4], ORIGIN, submobject_to_align=eq25[2][0])
+        eq26 = Tex(*self.eqstr2).next_to(eq25, DOWN)
 
         self.play(LaggedStart(ReplacementTransform((eq2[0][:-1]+eq2[0][-1] + eq2[1][:]).copy(),
                                        eq4[0][4:] + eq4[1][0] + eq4[2][4:]),
@@ -1531,8 +1565,8 @@ class MGFDiffZ(MGFDiff):
                                        eq10[2][:7] + eq10[2][7]),
                   FadeIn(eq10[2][-1], target_position=eq9[2][16].get_corner(UR)),
                   run_time=2)
-        self.play(ReplacementTransform(eq6[:2] + eq10[0][:].copy() + eq6[2][13:],
-                                       eq11[:2] + eq11[2][4:13] + eq11[2][13:]),
+        self.play(ReplacementTransform(eq6[:2] + eq10[0][:].copy() + eq6[2][:4] + eq6[2][13:],
+                                       eq11[:2] + eq11[2][4:13] + eq11[2][:4] + eq11[2][13:]),
                   FadeOut(eq6[2][4:13]),
                   FadeOut(eq7, eq10),
                   run_time=2)
@@ -1558,7 +1592,65 @@ class MGFDiffZ(MGFDiff):
                   FadeIn(eq15[2][10], target_position=eq12[2][19].get_corner(DR)),
                   FadeIn(eq15[2][11], shift=shift2),
                   run_time=2)
-
+        self.wait(0.1)
+        self.play(LaggedStart(ReplacementTransform(eq15[0][:] + eq15[1] + eq15[2][1:-4] + eq15[2][-4:],
+                                       eq16[0][4:] + eq16[1] + eq16[2][1:-8:] + eq16[2][-4:]),
+                  AnimationGroup(FadeIn(eq16[0][:4] ,eq16[2][-8:-4]),
+                                 abra.fade_replace(eq15[2][0], eq16[2][0])),
+                              lag_ratio=0.4),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq11[:2] + eq11[2][:13] + eq16[2][2:].copy(),
+                                       eq17[:2] + eq17[2][:13] + eq17[2][13:]),
+                  FadeOut(eq11[2][13:]),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq17[:2] + eq17[2][:4] + eq17[2][13:15],
+                                       eq18[:2] + eq18[2][:4] + eq18[2][4:6]),
+                  ReplacementTransform(eq17[2][-8:], eq18[2][6:14]),# path_arc=-PI/6),
+                  ReplacementTransform(eq17[2][4:6] + eq17[2][6:13],
+                                       eq18[2][14:16] + eq18[2][24:31]),# path_arc=-PI/6),
+                  ReplacementTransform(eq17[2][15:23], eq18[2][16:24]),
+                  FadeOut(eq16, rate_func=lambda t: smooth(min(1,t*2))),
+                  run_time=2.5)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq18[:2] + eq18[2][:21] + eq18[2][23:] + eq18[2][22],
+                                       eq19[:2] + eq19[2][:21] + eq19[2][26:] + eq19[2][24]),
+                  abra.fade_replace(eq18[2][21], eq19[2][23]),
+                  FadeIn(eq19[2][22], target_position=eq18[2][21]),
+                  FadeIn(eq19[2][25], target_position=eq18[2][23].get_left()),
+                  FadeIn(eq19[2][21], target_position=eq18[2][21].get_left()),
+                  run_time=1)
+        self.play(LaggedStart(FadeIn(eq20), FadeIn(eq21), lag_ratio=0.5), run_time=2)
+        self.wait(0.1)
+        eq22_1 = eq21[1][:].copy()
+        self.play(#eq22_1.animate.next_to(eq19[2][16], RIGHT, buff=0).move_to(eq22[2][16:21], coor_mask=UP),#.move_to(eq19[2][17:26]),
+                  ReplacementTransform(eq22_1, eq22[2][16:21]),
+                  FadeOut(eq19[2][16:27]),
+                  run_time=1.5)
+        self.play(ReplacementTransform(eq19[:2] + eq19[2][:16] + eq19[2][27:],
+                                       eq22[:2] + eq22[2][:16] + eq22[2][21:]))
+        self.wait(0.1)
+        self.play(FadeIn(eq23), FadeOut(eq20, eq21))
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq22[0][:6] + eq22[0][-1] + eq22[0][-2] + eq22[1],
+                                       eq24[0][:6] + eq24[0][-1] + eq24[0][-3] + eq24[1]),
+                  ReplacementTransform(eq22[2][:21] + eq22[2][-1] + eq22[2][-3:-1],
+                                       eq24[2][:21] + eq24[2][-1] + eq24[2][-4:-2]),
+                  FadeOut(eq22[0][6:10]),
+                  FadeIn(eq24[0][6:8], eq24[0][-2]),
+                  FadeOut(eq22[2][21:25]),
+                  FadeIn(eq24[2][21:23], eq24[2][-2]),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq24[:2] + eq24[2][4:6] + eq24[2][14:],
+                                       eq25[:2] + eq25[2][:2] + eq25[2][4:]),
+                  FadeIn(eq25[2][2:4], shift=(eq24[2][11].get_center()-eq25[2][2].get_center())*LEFT),
+                  ReplacementTransform(eq24[2][:4] + eq24[2][6:14],
+                                       eq26[1][3:7] + eq26[1][7:]),
+                  FadeIn(eq26[0], eq26[1][:3]),
+                  FadeOut(eq23),
+                  run_time=2)
         self.wait()
 
 
