@@ -1456,6 +1456,138 @@ class MGFDiff(MGF):
                   run_time=2)
         self.wait()
 
+
+class MGFDiffZ(MGFDiff):
+    def construct(self):
+        eq1, eq2, eq3, _, box = self.get_eqs()
+        self.add(eq1, eq2, eq3, box)
+        self.wait(0.1)
+        eq4 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot Z}]', r'=',
+                      r'\frac{d}{dt}\lvert 1+\Lambda C\rvert^{-\frac12}')
+        eq4.move_to(box.get_bottom()*0.65 + config.frame_y_radius*DOWN*0.35, coor_mask=UP)
+        eq5 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot Z}]', r'=',
+                      r'-\frac12\lvert 1+\Lambda C\rvert^{-\frac32}\frac{d}{dt}\lvert 1+\Lambda C\rvert')
+        eq5.next_to(eq4[1], ORIGIN, submobject_to_align=eq5[1]).move_to(ORIGIN, coor_mask=RIGHT)
+        eq6 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot Z}]', r'=',
+                      r'-\frac12\mathbb E[e^{-\lambda\cdot Z}]^3\frac{d}{dt}\lvert 1+\Lambda C\rvert')
+        eq6.next_to(eq5[1], ORIGIN, submobject_to_align=eq6[1]).move_to(ORIGIN, coor_mask=RIGHT)
+        eq7 = Tex(r'setting $\tilde Z = Z + Z^\prime + Z^{\prime\prime}$', r'\\ (sum of independent copies of $Z$)')
+        eq7.next_to(eq6, DOWN)
+        eq8 = MathTex(r'\mathbb E[e^{-\lambda\cdot\tilde Z}]', r'=',
+                      r'\mathbb E[e^{-\lambda\cdot Z}e^{-\lambda\cdot Z^\prime}e^{-\lambda\cdot Z^{\prime\prime}}]')
+        eq8.next_to(eq7, DOWN)
+        eq9 = MathTex(r'\mathbb E[e^{-\lambda\cdot\tilde Z}]', r'=',
+                      r'\mathbb E[e^{-\lambda\cdot Z}]\mathbb E[e^{-\lambda\cdot Z^\prime}]\mathbb E[e^{-\lambda\cdot Z^{\prime\prime}}]')
+        eq9.next_to(eq8[1], ORIGIN, submobject_to_align=eq9[1])#.move_to(ORIGIN, coor_mask=RIGHT)
+        eq10 = MathTex(r'\mathbb E[e^{-\lambda\cdot\tilde Z}]', r'=',
+                       r'\mathbb E[e^{-\lambda\cdot Z}]^3')
+        eq10.next_to(eq9[1], ORIGIN, submobject_to_align=eq10[1]).move_to(ORIGIN, coor_mask=RIGHT)
+        eq11 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot Z}]', r'=',
+                      r'-\frac12\mathbb E[e^{-\lambda\cdot\tilde Z}]\frac{d}{dt}\lvert 1+\Lambda C\rvert')
+        eq11.next_to(eq6[1], ORIGIN, submobject_to_align=eq11[1])#.move_to(ORIGIN, coor_mask=RIGHT)
+
+        eq12 = MathTex(r'\lvert 1+\Lambda C\rvert', r'=',
+                       r'1+\sum_{\emptyset\not=S\subseteq\{1,\ldots,n\}}\lvert(\Lambda C)_S\rvert')
+        eq12.next_to(eq11, DOWN, coor_mask=UP, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER*1.5)
+        eq13 = MathTex(r'\lvert 1+\Lambda C\rvert', r'=',
+                       r'1+\sum_{S}\lvert\Lambda_S C_S\rvert')
+        eq13.next_to(eq12[2][2], ORIGIN, submobject_to_align=eq13[2][2])#.move_to(ORIGIN, coor_mask=RIGHT)
+        eq14 = MathTex(r'\lvert 1+\Lambda C\rvert', r'=',
+                       r'1+\sum_{S}\lvert\Lambda_S \rvert\,\lvert C_S\rvert')
+        eq14.next_to(eq13[1], ORIGIN, submobject_to_align=eq14[1])#.move_to(ORIGIN, coor_mask=RIGHT)
+        eq15 = MathTex(r'\lvert 1+\Lambda C\rvert', r'=',
+                       r'1+\sum_{S}(\Pi_{i\in S}\lambda_i)\lvert C_S\rvert')
+        eq15.next_to(eq14[1], ORIGIN, submobject_to_align=eq15[1])#.move_to(ORIGIN, coor_mask=RIGHT)
+
+        self.play(LaggedStart(ReplacementTransform((eq2[0][:-1]+eq2[0][-1] + eq2[1][:]).copy(),
+                                       eq4[0][4:] + eq4[1][0] + eq4[2][4:]),
+                  FadeIn(eq4[0][:4], eq4[2][:4]), lag_ratio=0.5),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq4[:2] + eq4[2][:4] + eq4[2][4:10] + eq4[2][10:13].copy()
+                                       + scale_to_obj(eq5[2][3].copy(), eq4[2][13])
+                                       + eq4[2][10] + eq4[2][12:14] + eq4[2][4:10].copy(),
+                                       eq5[:2] + eq5[2][14:18] + eq5[2][4:10] + eq5[2][:3]
+                                       + eq5[2][3]
+                                       + eq5[2][10] + eq5[2][12:14] + eq5[2][18:]),
+                  abra.fade_replace(eq4[2][11], eq5[2][11]),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq5[:2] + eq5[2][:4] + eq5[2][11] + eq5[2][14:],
+                                       eq6[:2] + eq6[2][:4] + eq6[2][12] + eq6[2][13:]),
+                  FadeOut(eq5[2][4:11], eq5[2][12:14]),
+                  FadeIn(eq6[2][4:12]),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(LaggedStart(FadeIn(eq7), FadeIn(eq8), lag_ratio=0.4), run_time=2)
+        self.wait(0.1)
+        self.play(LaggedStart(ReplacementTransform(eq8[:2] + eq8[2][:7] + eq8[2][7:13] + eq8[2][13:21],
+                                       eq9[:2] + eq9[2][:7] + eq9[2][10:16] + eq9[2][19:27]),
+                  FadeIn(eq9[2][7:10], eq9[2][16:19]),
+                              lag_ratio=0.4),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(FadeOut(eq9[2][15], eq9[2][24:26]))
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq9[:2] + eq9[2][:8],
+                                       eq10[:2] + eq10[2][:8]),
+                  ReplacementTransform(eq9[2][8:15] + eq9[2][16],
+                                       eq10[2][:7] + eq10[2][7]),
+                  ReplacementTransform(eq9[2][17:24] + eq9[2][26],
+                                       eq10[2][:7] + eq10[2][7]),
+                  FadeIn(eq10[2][-1], target_position=eq9[2][16].get_corner(UR)),
+                  run_time=2)
+        self.play(ReplacementTransform(eq6[:2] + eq10[0][:].copy() + eq6[2][13:],
+                                       eq11[:2] + eq11[2][4:13] + eq11[2][13:]),
+                  FadeOut(eq6[2][4:13]),
+                  FadeOut(eq7, eq10),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(FadeIn(eq12[:2]))
+        self.wait(0.1)
+        self.play(FadeIn(eq12[2]))
+        self.wait(0.1)
+        # shift = eq13[2][3].get_center() - eq12[2][6].get_center()
+        # self.play(ReplacementTransform(eq12[:2] + eq12[2][:3] + eq12[2][6],
+        #                                eq13[:2] + eq13[2][:3] + eq13[2][3]),
+        #           ReplacementTransform(eq12[2][17:18] + eq12[2][19] + eq12[2][20]
+        #                                + eq12[2][22] + eq12[2][22].copy() + eq12[2][23],
+        #                                eq13[2][4:5] + eq13[2][5] + eq13[2][7]
+        #                                + eq13[2][8] + eq13[2][6] + eq13[2][9]),
+        #           FadeOut(eq12[2][3:6], shift=shift),
+        #           FadeOut(eq12[2][7:17], shift=shift),
+        #           FadeOut(eq12[2][18], target_position=eq13[2][4]),
+        #           FadeOut(eq12[2][21], target_position=eq13[2][9]),
+        #           run_time=2)
+        # self.wait(0.1)
+        # self.play(ReplacementTransform(eq13[:2] + eq13[2][:7] + eq13[2][7:],
+        #                                eq14[:2] + eq14[2][:7] + eq14[2][9:]),
+        #           FadeIn(eq14[2][7:9]),
+        #           run_time=1)
+        shift = eq14[2][3].get_center() - eq12[2][6].get_center()
+        self.play(ReplacementTransform(eq12[:2] + eq12[2][:3] + eq12[2][6],
+                                       eq14[:2] + eq14[2][:3] + eq14[2][3]),
+                  ReplacementTransform(eq12[2][17:18] + eq12[2][19] + eq12[2][20]
+                                       + eq12[2][22] + eq12[2][22].copy() + eq12[2][23],
+                                       eq14[2][4:5] + eq14[2][5] + eq14[2][9]
+                                       + eq14[2][10] + eq14[2][6] + eq14[2][11]),
+                  FadeOut(eq12[2][3:6], shift=shift),
+                  FadeOut(eq12[2][7:17], shift=shift),
+                  FadeOut(eq12[2][18], target_position=eq14[2][4]),
+                  FadeOut(eq12[2][21], target_position=eq14[2][11]),
+                  FadeIn(eq14[2][7:9], target_position=eq12[2][19:21]),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq14[:2] + eq14[2][:4] + eq14[2][7:] + eq14[2][6],
+                                       eq15[:2] + eq15[2][:4] + eq15[2][11:] + eq15[2][8]),
+                  abra.fade_replace(eq14[2][4], eq15[2][4]),
+                  abra.fade_replace(eq14[2][5], eq15[2][9]),
+                  FadeIn(eq15[2][5:8]),
+                  FadeIn(eq15[2][10], target_position=eq14[2][6]),
+                  run_time=1.5)
+        self.wait()
+
+
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "preview": True, 'fps': 15}):
         JointNormal().render()
