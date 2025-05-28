@@ -1,5 +1,5 @@
 from manim import *
-import cv2
+#import cv2
 import math
 import abracadabra as abra
 
@@ -587,8 +587,84 @@ class SquareSumEq2(Scene):
     def construct(self):
         self.add(MathTex(r'\left(\sum_{k=1}^nk\right)^2=\sum_{k=1}^nk^3'))
 
+
+class zpowz(Scene):
+    def construct(self):
+        def f(t):
+            s = math.sin(t)
+            c = math.cos(t)
+            a = math.exp(-t*s)
+            return math.cos(t*c)*a, math.sin(t*c)*a
+
+        xlen = config.frame_x_radius * 1.8
+        ylen = config.frame_y_radius * 1.8
+
+        xmax = 2
+        ymax = xmax * ylen/xlen
+        ax = Axes(x_range=[-xmax, xmax], y_range=[-ymax, ymax], x_length=xlen, y_length=ylen,
+                  axis_config={'color': WHITE, 'stroke_width': 5, 'include_ticks': False,
+                               "tip_width": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               "tip_height": 0.6 * DEFAULT_ARROW_TIP_LENGTH,
+                               },
+                  ).set_z_index(200)
+
+        self.add(ax)
+        pt0 = ax.coords_to_point(0, 0)
+        pt1 = ax.coords_to_point(1, 0)
+
+        tval = ValueTracker(0.0)
+        scale=[1.0]
+
+        def draw_func():
+            t = tval.get_value()
+            t0 = 0.0
+            res = VGroup()
+            if t > 0.001:
+                nt = max(int((t-t0) * 1000 / PI), 100)
+                times = np.linspace(t0, t, nt)
+                vals = list(map(f, times))
+                xvals = [v[0] for v in vals]
+                yvals = [v[1] for v in vals]
+                xmax1 = abs(xvals[-1])
+                ymax1 = abs(yvals[-1])
+                if xmax1 * scale[0] > xmax:
+                    scale[0] = xmax/xmax1
+                if ymax1 * scale[0] > ymax:
+                    scale[0] = ymax / ymax1
+
+                eps = 0.1
+                if xmax1 > ymax1:
+                    if eps > xmax1 * scale[0]:
+                        scale[0] = eps/xmax1
+                else:
+                    if eps > ymax1 * scale[0]:
+                        scale[0] = eps/ymax1
+
+                xvals = [min(max(v*scale[0], -10), 10) for v in xvals]
+                yvals = [min(max(v*scale[0], -10), 10) for v in yvals]
+
+                assert len(xvals) > 0
+
+                crv = ax.plot_line_graph(xvals, yvals, line_color=YELLOW, stroke_width=4, add_vertex_dots=False)
+                dot = Dot(radius=0.1, color=RED, stroke_opacity=1).move_to(crv['line_graph'].get_end()).set_z_index(20)
+                res += crv.set_z_index(10)
+                res += dot
+
+            circ = Circle(radius=(pt1[0] - pt0[0])*scale[0], fill_opacity=0, stroke_color=WHITE, stroke_opacity=0.5,
+                          stroke_width=1).move_to(pt0)
+            res += circ
+
+            return res
+
+        obj = always_redraw(draw_func)
+        self.add(obj)
+        tmax = PI*8
+        run_time=tmax
+        self.play(tval.animate(rate_func=linear).set_value(tmax), run_time=run_time)
+        self.wait()
+
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "preview": True}):
-        SquareSum().render()
+        zpowz().render()
 
 
