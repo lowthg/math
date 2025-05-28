@@ -1720,7 +1720,15 @@ def indicator_func_diff(r, h=1.):
 
 
 class Diff1D(Scene):
-    def do_anim(self, r=0.2, name=r'x', scale=1.):
+    """
+    derivatives of f(x)=I([-1,1])
+    """
+    r = 0.2
+    name = r'x'
+    scale = 1.
+    right_only=False
+
+    def do_anim(self, r=0.2, name=r'x', scale=1., right_only=False):
         xmax = 1 + r * 2
         ymax = 1.2
         label_size = 35 * scale
@@ -1747,9 +1755,11 @@ class Diff1D(Scene):
         dx = 0.01
         rval = ValueTracker(0.001)
 
+        xmin = 0. if right_only else -xmax
+
         def smooth_anim():
             f = indicator_func(rval.get_value())
-            plt = ax.plot(f, [-xmax, xmax, dx], color=YELLOW, use_smoothing=False, stroke_width=4).set_z_index(1)
+            plt = ax.plot(f, [xmin, xmax, dx], color=YELLOW, use_smoothing=False, stroke_width=4).set_z_index(1)
             return plt
 
         plt2 = always_redraw(smooth_anim)
@@ -1769,17 +1779,126 @@ class Diff1D(Scene):
         self.wait(0.1)
 
         f = indicator_func_diff(r, r * ymax)
-        plt3 = ax.plot(f, [-xmax, xmax, dx], color=YELLOW, use_smoothing=False, stroke_width=4).set_z_index(1)
+        plt3 = ax.plot(f, [xmin, xmax, dx], color=YELLOW, use_smoothing=False, stroke_width=4).set_z_index(1)
         self.play(FadeOut(plt2, eqf), FadeIn(plt3, eqdf), run_time=1, rate_func=linear)
         self.wait()
 
     def construct(self):
-        self.do_anim(r=0.2, name=r'x', scale=1.)
+        self.do_anim(r=self.r, name=self.name, scale=self.scale, right_only=self.right_only)
 
 
-class ExpCubeZ(ThreeDScene):
+class Diff1DZ(Diff1D):
+    """"
+    derivatives of f(z) = I([-1,1])
+    """
+    name = r'z'
+
+
+class Diff1DZpos(Diff1DZ):
+    """
+    derivatives of f(z) = I([-1,1]) restricted to z > 0
+    """
+    right_only = True
+
+
+class Diff2D(ThreeDScene):
+    r = 0.2
+    scale = 1.0
+    name = r'x'
+    right_only=False
+    ver=0
+
+    def do_anim(self, r=0.2, scale=1., name=r'x', right_only=False, ver=0):
+        xmax = 1 + r * 2
+        zmax = 1.2
+        label_size = 35 * scale
+        eq_size = 40 * scale
+        xrange = [-xmax, xmax]
+        xrange2 = [-xmax*1.1, xmax*1.1]
+        xlen = 8
+        zlen = 2.5 * scale
+
+        if right_only:
+            xrescale = (xrange2[1] - xrange2[0]*0.3)/(xrange2[1] - xrange2[0])
+            xrange2[0] *= 0.3
+            xlen *= xrescale
+
+        ax = ThreeDAxes(xrange2, xrange2, [-0.03, zmax, 1], xlen, xlen, zlen,
+                        axis_config={'color': WHITE, 'stroke_width': 2, 'include_ticks': False,
+                                     "tip_width": 0.5 * DEFAULT_ARROW_TIP_LENGTH * scale,
+                                     "tip_height": 0.5 * DEFAULT_ARROW_TIP_LENGTH * scale,
+                                     "stroke_width": 6
+                                     },
+                        )
+        origin = ORIGIN
+        ax.shift(origin - ax.coords_to_point(0, 0, 0))
+        VGroup(ax.x_axis[:], ax.y_axis[:]).shift(IN*0.05*scale)
+
+        gp = Group(ax)
+        ax.z_axis.rotate(110*DEGREES, OUT, origin)
+        gp.rotate(90*DEGREES, LEFT, origin)
+        gp.rotate(110 * DEGREES, DOWN, origin)
+        gp.rotate(15*DEGREES, RIGHT, origin)
+#        gp.rotate(-90*DEGREES, RIGHT, origin)
+#        gp.rotate(40*DEGREES, UP, origin)
+#        gp.rotate(-10*DEGREES, RIGHT, origin)
+        dx = ax.coords_to_point(1, 0, 0) - origin
+        dy = ax.coords_to_point(0, 1, 0) - origin
+        dz = ax.coords_to_point(0, 0, 1) - origin
+        eqx = MathTex(r'{{ {} }}_1'.format(name), font_size=label_size).move_to(ax.x_axis.get_end() + dx*0.2)
+        eqy = MathTex(r'{{ {} }}_2'.format(name), font_size=label_size).move_to(ax.y_axis.get_end() + dy*0.2)
+        eqz1 = MathTex(r'f({})'.format(name), font_size=eq_size).move_to(ax.z_axis.get_end() + RIGHT*0.15*scale, aligned_edge=LEFT)
+        eqz2 = MathTex(r'-\partial_2f({})'.format(name), font_size=eq_size).move_to(ax.z_axis.get_end() + RIGHT*0.15*scale, aligned_edge=LEFT)
+        eqz3 = MathTex(r'\partial_1\partial_2f({})'.format(name), font_size=eq_size).move_to(ax.z_axis.get_end() + RIGHT*0.15*scale, aligned_edge=LEFT)
+
+        f = indicator_func(r)
+        f1 = indicator_func_diff(r, r * 1.2)
+
+        def g(u, v):
+            return f(u) * f(v)
+
+        def g1(u,v):
+            return f(u) * f1(v)
+
+        def g2(u, v):
+            return f1(u) * f1(v)
+
+        blue2 = ManimColor(blue.to_rgb()*0.5 + WHITE.to_rgb()*0.5)
+        if right_only:
+            xrange[0] = 0.
+        surf1 = ax.plot_surface(g, xrange, xrange, fill_opacity=0.7, resolution=50, colorscale=[blue, blue2])
+        surf2 = ax.plot_surface(g1, xrange, xrange, fill_opacity=0.7, resolution=50, colorscale=[(red, -0.1), (blue,0), (blue2,1)])
+        surf3 = ax.plot_surface(g2, xrange, xrange, fill_opacity=0.7, resolution=100, colorscale=[(red, -0.1), (blue,0), (blue2,1)])
+
+        self.add(ax, eqx, eqy, surf1, eqz1)
+        if ver == 0:
+            self.wait()
+        elif ver == 1:
+            return
+        self.remove(surf1, eqz1)
+        self.add(surf2, eqz2)
+        if ver == 0:
+            self.wait()
+        elif ver == 2:
+            return
+        self.remove(surf2, eqz2)
+        self.add(surf3, eqz3)
+        if ver == 0:
+            self.wait()
+
     def construct(self):
+        self.do_anim(r=self.r, scale=self.scale, name=self.name, right_only=self.right_only, ver=self.ver)
+
+
+class Diff3D(ThreeDScene):
+    name = r'x'
+    show_labels = True
+    right_only = False
+    ver = 0
+
+    def do_surrounds(self):
         eq1, eq2, eq3, eq4, eq5, box = MGFDiffZ().get_eqs()
+
         self.add(eq1, eq2, eq3, eq4, eq5, box)
 
         eq6 = MathTex(r'f(z)', r'=', r'I(z\in[-1,1]^3) ', r'=', r' I(\max_i\lvert z_i\rvert\le 1)').next_to(box, DOWN)
@@ -1789,12 +1908,19 @@ class ExpCubeZ(ThreeDScene):
         self.wait(0.1)
         self.play(FadeIn(eq6[3:]))
 
+    def do_anim(self, name=r'x', show_labels=True, right_only=False, ver=0):
         xmax = 1.5
         xrange = [-xmax, xmax]
         scale = 1.4
         origin = DOWN * 1.8 + RIGHT * 0.5
+        xlen = 2 * xmax * scale
 
-        ax = ThreeDAxes(xrange, xrange, xrange, 2 * xmax * scale, 2 * xmax * scale, 2 * xmax * scale,
+        if right_only:
+            xrescale = (xrange[1] - xrange[0]*0.3)/(xrange[1] - xrange[0])
+            xrange[0] *= 0.3
+            xlen *= xrescale
+
+        ax = ThreeDAxes(xrange, xrange, xrange, xlen, xlen, xlen,
                         axis_config={'color': WHITE, 'stroke_width': 4, 'include_ticks': False,
                                      "tip_width": 0.5 * DEFAULT_ARROW_TIP_LENGTH,
                                      "tip_height": 0.5 * DEFAULT_ARROW_TIP_LENGTH,
@@ -1802,16 +1928,18 @@ class ExpCubeZ(ThreeDScene):
                                      },
                         )
 #        ax.y_axis.rotate(45*DEGREES, UP)
+        ax.shift(-ax.coords_to_point(0, 0, 0))
         ax.z_axis.rotate(90*DEGREES, OUT)
         cube_args = {'fill_opacity': 0.7, 'fill_color': blue, 'stroke_opacity': 1, 'stroke_color': BLUE, 'stroke_width': 2}
-        cube = Cube(side_length=2 * scale, **cube_args)
-        cube2 = Cube(side_length=scale, **cube_args)
-        cube2.shift((RIGHT+UP+OUT) * scale/2)
+        if right_only:
+            cube = Cube(side_length=scale, **cube_args).shift((RIGHT + UP + OUT)*scale/2)
+        else:
+            cube = Cube(side_length=2 * scale, **cube_args)
         dotx = Dot().shift(RIGHT * scale)
         doty = Dot().shift(UP * scale)
         dotz = Dot().shift(OUT * scale)
 
-        gp = VGroup(ax, cube, cube2, dotx, doty, dotz)
+        gp = VGroup(ax, cube, dotx, doty, dotz)
         gp.shift(origin)
         gp.rotate(-40*DEGREES, UP, origin)
         gp.rotate(10*DEGREES, RIGHT, origin)
@@ -1821,39 +1949,314 @@ class ExpCubeZ(ThreeDScene):
         dirx = px - origin
         diry = py - origin
         dirz = pz - origin
-        eqx = MathTex(r'z_1').set_z_index(10).move_to(origin + dirx * (xmax + 0.3))
-        eqy = MathTex(r'z_2').set_z_index(10).move_to(origin + diry * xmax, aligned_edge=UP).shift(RIGHT*0.4)
-        eqz = MathTex(r'z_3').set_z_index(10).move_to(origin + dirz * (xmax + 0.3), aligned_edge=UP).shift(RIGHT*0.4)
-        eq1 = MathTex('f(z)=1', font_size=40).next_to(origin + LEFT * scale * 2 + OUT * scale*2, LEFT, buff=0)
+        eqx = MathTex(r'{}_1'.format(name)).set_z_index(10).move_to(origin + dirx * (xmax + 0.3))
+        eqy = MathTex(r'{}_2'.format(name)).set_z_index(10).move_to(origin + diry * xmax, aligned_edge=UP).shift(RIGHT*0.4)
+        eqz = MathTex(r'{}_3'.format(name)).set_z_index(10).move_to(origin + dirz * (xmax + 0.3), aligned_edge=UP).shift(RIGHT*0.4)
+        eq1 = MathTex(r'f({})=1'.format(name), font_size=40).next_to(origin + LEFT * scale * 2 + OUT * scale*2, LEFT, buff=0)
         arr = Arrow3D(eq1.get_right() + RIGHT*0.1, pz - 0.5 * dirx - 0.4 * dirz, fill_color=RED, resolution=(10, 8),
                      thickness=0.02)
-        self.play(FadeIn(ax, cube, eq1, arr, eqx, eqy, eqz))
 
         p1 = origin + dirx * 1.1 + 0.5 *(diry + dirz)
         p2 = p1 + RIGHT * 2
+        p3 = origin - dirx * 0.9 + 0.5*(diry+dirz)
+        p4 = p3 + dirz * 1 + OUT * 0.5
+
         arr2 = Arrow3D(p2, p1, fill_color=RED, resolution=(10, 8),
                      thickness=0.02).set_z_index(5)
-        eq7 = MathTex(r'(-\partial_1)f(z)', r'=\delta(z_1-1)', font_size=35).next_to(p2, RIGHT)
+        arr2_1 = Arrow3D(p4, p3, fill_color=RED, resolution=(10, 8),
+                     thickness=0.02)
+        eq7 = MathTex(r'(-\partial_1)f({})'.format(name), r'=\delta({}_1-1)'.format(name), font_size=35).next_to(p2, RIGHT)
         eq7[1].next_to(eq7[0], DOWN, buff=0.2).align_to(eq7[0], LEFT)
-        face = cube[3].copy().set_fill(color=GREEN_E, opacity=0.6)
-        self.play(FadeIn(arr2, eq7, face))
-        edge = Line(origin+dirx+diry-dirz, origin+dirx+diry+dirz, stroke_width=6, color=YELLOW).set_z_index(3)
+        eq7_1 = MathTex(r'-\partial_1f({})'.format(name),
+                        r'=-\delta({}_1+1)'.format(name), font_size=35)
+        eq7_1[0].next_to(p4, LEFT, aligned_edge=RIGHT)
+        eq7_1[1].next_to(eq7_1[0], DOWN, buff=0.2).align_to(eq7_1[0], LEFT)
+
+        blue2 = ManimColor(blue.to_rgb()*0.5 + GREEN.to_rgb()*0.5)
+
+        face1 = cube[3].copy().set_fill(color=blue2, opacity=1)
+        face2 = cube[2].copy().set_fill(color=RED, opacity=1)
+
+        edge1 = Line(origin+dirx+diry-dirz, origin+dirx+diry+dirz, stroke_width=6, color=blue2, stroke_opacity=1).set_z_index(3)
+        if right_only:
+            edge1 = Line(origin+dirx+diry, origin+dirx+diry+dirz, stroke_width=6, color=blue2, stroke_opacity=1).set_z_index(3)
+        edge2 = Line(origin-dirx-diry-dirz, origin-dirx-diry+dirz, stroke_width=6, color=blue2).set_z_index(0)
+        edge3 = Line(origin+dirx-diry-dirz, origin+dirx-diry+dirz, stroke_width=6, color=RED).set_z_index(0)
+        edge4 = Line(origin-dirx+diry-dirz, origin-dirx+diry+dirz, stroke_width=6, color=RED).set_z_index(3)
         p3 = origin + dirx + diry + dirz*0.5+RIGHT*0.1
         p4 = p3 + RIGHT*1.5
-        eq8=MathTex(r'(-\partial_1)(-\partial_2)f(z)', font_size=35).next_to(p4, RIGHT)
+        eq8 = MathTex(r'\partial_2\partial_1f({})'.format(name), r'=\delta({}_2-1)\delta({}_1-1)'.format(name, name), font_size=35)
+        eq8[0].next_to(p4, RIGHT)
+        eq8[1].next_to(eq8[0], DOWN, buff=0.1).align_to(eq8[0], LEFT)
         arr3 = Arrow3D(p4, p3, resolution=(10, 8),
                        thickness=0.02).set_z_index(5)
-        self.wait(0.1)
-        self.play(FadeIn(edge, arr3, eq8))
-        p5=origin+dirx+diry+dirz+OUT*0.1
-        p6=p5+DOWN*2+LEFT*0.1
-        eq9=MathTex(r'(-\partial_1)(-\partial_2)(-\partial_3) f(z)', font_size=35).next_to(p6, DOWN)
-        corner=Dot3D(radius=0.08, fill_color=GREEN_A, fill_opacity=1).move_to(origin+dirx+diry+dirz).set_z_index(4)
-        arr4 = Arrow3D(p6, p5, resolution=(10, 8),
+        p5 = origin + dirx - diry + dirz*0.5+UP*0.
+        p6 = p5 + RIGHT*1.5 + UP*0.5
+        eq8_1 = MathTex(r'\partial_2\partial_1f({})'.format(name), r'=-\delta({}_2+1)\delta({}_1-1)'.format(name, name), font_size=35)
+        eq8_1[0].next_to(p6, RIGHT)
+        eq8_1[1].next_to(eq8_1[0], DOWN, buff=0.1).align_to(eq8_1[0], LEFT)
+        arr3_1 = Arrow3D(p6, p5, resolution=(10, 8),
+                       thickness=0.02).set_z_index(10)
+
+        co1=Dot3D(radius=0.08, stroke_color=blue2, color=blue2, fill_opacity=1).move_to(origin+dirx+diry+dirz).set_z_index(4)
+        co2=Dot3D(radius=0.08, color=RED, fill_opacity=1).move_to(origin-dirx+diry+dirz).set_z_index(4)
+        co3=Dot3D(radius=0.08, color=RED, fill_opacity=1).move_to(origin+dirx-diry+dirz).set_z_index(4)
+        co4=Dot3D(radius=0.08, color=RED, fill_opacity=1).move_to(origin+dirx+diry-dirz).set_z_index(4)
+        co5=Dot3D(radius=0.08, color=blue2, fill_opacity=1).move_to(origin+dirx-diry-dirz).set_z_index(4)
+        co6=Dot3D(radius=0.08, color=blue2, fill_opacity=1).move_to(origin-dirx+diry-dirz).set_z_index(4)
+        co7=Dot3D(radius=0.08, color=blue2, fill_opacity=1).move_to(origin-dirx-diry+dirz).set_z_index(4)
+        co8=Dot3D(radius=0.08, color=PURE_RED, fill_opacity=1).move_to(origin-dirx-diry-dirz).set_z_index(0)
+
+        p5=origin-dirx-diry+dirz+OUT*0.1
+        p6=p5+DOWN*0.2+LEFT*0.1
+        eq9=MathTex(r'-\partial_3\partial_2\partial_1f({})'.format(name),
+                    r'=\delta({}_3-1)\delta({}_2+1)\delta({}_1+1)'.format(name, name, name), font_size=35).next_to(p6, DOWN, buff=0)
+        arr4 = Arrow3D(p6+LEFT*1.4, p5, resolution=(10, 8),
                        thickness=0.02).set_z_index(5)
-        self.wait(0.1)
-        self.play(FadeIn(corner, eq9, arr4))
-        self.wait()
+        p7=origin-dirx+diry+dirz+OUT*0.1
+        p8=p7+DOWN*0.7+LEFT*0.1
+        eq9_1=MathTex(r'-\partial_3\partial_2\partial_1f({})'.format(name),
+                    r'=-\delta({}_3-1)\delta({}_2-1)\delta({}_1+1)'.format(name, name, name), font_size=35).next_to(p8, DOWN, buff=0).set_z_index(100)
+        arr4_1 = Arrow3D(p8+LEFT*1.5, p7, resolution=(10, 8),
+                       thickness=0.02).set_z_index(5)
+
+        self.add(ax, cube, eqx, eqy, eqz)
+        if show_labels:
+            self.add(eq1, arr)
+        if ver == 0:
+            self.wait()
+        elif ver == 1:
+            return
+
+        cube.set_opacity(cube_args['fill_opacity'] * 0.7)
+        if right_only:
+            self.add(face1)
+        else:
+            self.add(face1, face2)
+        if show_labels:
+            self.remove(eq1, arr)
+            self.add(arr2, eq7, arr2_1, eq7_1)
+        if ver == 0:
+            self.wait()
+        elif ver == 2:
+            return
+        VGroup(face1, face2).set_fill(opacity=0.5)
+        if right_only:
+            self.add(edge1)
+        else:
+            self.add(edge1, edge2, edge3, edge4)
+        if show_labels:
+            self.remove(arr2, eq7, arr2_1, eq7_1)
+            self.add(arr3, eq8, arr3_1, eq8_1)
+        if ver == 0:
+            self.wait()
+        elif ver == 3:
+            return
+        VGroup(edge1, edge2, edge3, edge4).set_opacity(0.5)
+        if right_only:
+            self.add(co1)
+        else:
+            self.add(co1, co2, co3, co4, co5, co6, co7, co8)
+
+        if show_labels:
+            self.remove(arr3, eq8, arr3_1, eq8_1)
+            self.add(eq9, arr4, eq9_1, arr4_1)
+
+        if ver == 0:
+            self.wait()
+
+    def construct(self):
+        # self.do_surrounds()
+        self.do_anim(name=self.name, show_labels=self.show_labels, right_only=self.right_only, ver=self.ver)
+
+
+class Diff3Dv1(Diff3D):
+    """
+    image of f(x) = I([-1,1]^3)
+    """
+    ver = 1
+
+
+class Diff3Dv2(Diff3D):
+    """
+    image of df for f(x) = I([-1,1]^3)
+    """
+    ver = 2
+
+
+class Diff3Dv3(Diff3D):
+    """
+    image of d2f for f(x) = I([-1,1]^3)
+    """
+    ver = 3
+
+
+class Diff3Dv1_NL(Diff3Dv1):
+    """
+    image of f(x) = I([-1,1]^3), no labels
+    """
+    show_labels = False
+
+
+class Diff3Dv2_NL(Diff3Dv1_NL):
+    """
+    image of df for f(x) = I([-1,1]^3), no labels
+    """
+    ver = 2
+
+
+class Diff3Dv3_NL(Diff3Dv1_NL):
+    """
+    image of d2f for f(x) = I([-1,1]^3), no labels
+    """
+    ver = 3
+
+
+class Diff3DZv1(Diff3Dv1):
+    """
+    image of f(z) = I([-1,1]^3)
+    """
+    name = r'z'
+
+
+class Diff3DZv2(Diff3DZv1):
+    """
+    image of df for f(z) = I([-1,1]^3)
+    """
+    ver = 2
+
+
+class Diff3DZv3(Diff3DZv1):
+    """
+    image of d2f for f(z) = I([-1,1]^3)
+    """
+    ver = 3
+
+
+class Diff3DZv4(Diff3DZv1):
+    """
+    image of d3f for f(z) = I([-1,1]^3)
+    """
+    ver = 4
+
+
+class Diff3DZv1_NL(Diff3DZv1):
+    """
+    image of f(z) = I([-1,1]^3), no labels
+    """
+    show_labels = False
+
+
+class Diff3DZv2_NL(Diff3DZv1_NL):
+    """
+    image of df for f(z) = I([-1,1]^3), no labels
+    """
+    ver = 2
+
+
+class Diff3DZv3_NL(Diff3DZv1_NL):
+    """
+    image of d2f for f(z) = I([-1,1]^3), no labels
+    """
+    ver = 3
+
+
+class Diff3DZv4_NL(Diff3DZv1_NL):
+    """
+    image of d3f for f(z) = I([-1,1]^3), no labels
+    """
+    ver = 4
+
+
+class Diff3DZPosv1(Diff3DZv1_NL):
+    """
+    image of f(z) = I([-1,1]^3), on z > 0
+    """
+    right_only = True
+
+
+class Diff3DZPosv2(Diff3DZPosv1):
+    """
+    image of df for f(z) = I([-1,1]^3), on z > 0
+    """
+    ver = 2
+
+
+class Diff3DZPosv3(Diff3DZPosv1):
+    """
+    image of d2f for f(z) = I([-1,1]^3), on z > 0
+    """
+    ver = 3
+
+
+class Diff3DZPosv4(Diff3DZPosv1):
+    """
+    image of d3f for f(z) = I([-1,1]^3), on z > 0
+    """
+    ver = 4
+
+
+class Diff2Dv1(Diff2D):
+    """
+    image of f(x) = I([-1,1]^2)
+    """
+    ver=1
+
+
+class Diff2Dv2(Diff2D):
+    """
+    image of df for f(x) = I([-1,1]^2)
+    """
+    ver = 2
+
+
+class Diff2Dv3(Diff2D):
+    """
+    image of d2f for f(x) = I([-1,1]^2)
+    """
+    ver = 3
+
+
+class Diff2DZv1(Diff2Dv1):
+    """
+    image of f(z) = I([-1,1]^2)
+    """
+    name = r'z'
+
+
+class Diff2DZv2(Diff2DZv1):
+    """
+    image of df for f(z) = I([-1,1]^2)
+    """
+    ver = 2
+
+
+class Diff2DZv3(Diff2DZv1):
+    """
+    image of d2f for f(z) = I([-1,1]^2)
+    """
+    ver = 3
+
+
+class Diff2DZPosv1(Diff2DZv1):
+    """
+    image of f(z) = I([-1,1]^2) on z > 0
+    """
+    right_only = True
+
+
+class Diff2DZPosv2(Diff2DZPosv1):
+    """
+    image of df for f(z) = I([-1,1]^2) on z > 0
+    """
+    ver = 2
+
+
+class Diff2DZPosv3(Diff2DZPosv1):
+    """
+    image of d2f for f(z) = I([-1,1]^2) on z > 0
+    """
+    ver = 3
 
 
 if __name__ == "__main__":
