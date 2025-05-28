@@ -1215,8 +1215,8 @@ class ProbvsT(CovMatrix):
         crv = ax.plot(f, [0, 1], stroke_color=YELLOW)
         dot1 = Dot(radius=0.1, fill_color=YELLOW).move_to(ax.coords_to_point(0, f(0)))
         dot2 = Dot(radius=0.1, fill_color=YELLOW).move_to(ax.coords_to_point(1, f(1)))
-        eq9 = MathTex('\mathbb P(X^{(1)}\in A)\mathbb P(X^{(2)}\in B)', font_size=28).set_z_index(1)
-        eq10 = MathTex('\mathbb P(X^{(1)}\in A,X^{(2)}\in B)', font_size=28).set_z_index(1)
+        eq9 = MathTex(r'\mathbb P(X^{(1)}\in A)\mathbb P(X^{(2)}\in B)', font_size=28).set_z_index(1)
+        eq10 = MathTex(r'\mathbb P(X^{(1)}\in A,X^{(2)}\in B)', font_size=28).set_z_index(1)
         eq9.next_to(dot1, DOWN, buff=0).shift(RIGHT*1.6)
         eq10.next_to(dot2, UP, buff=0).shift(LEFT*1.45)
 
@@ -1357,8 +1357,11 @@ class MGFDiff(MGF):
 
     def construct(self):
         eq1, eq2, eq0, box, box2 = self.get_eqs()
-        eq0 = MathTex(*self.eqstr, font_size=DEFAULT_FONT_SIZE*0.9).set_z_index(1)
-        eq0.next_to(eq1, DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 0.8)
+        self.add(eq1, eq2, eq0, box2)
+        self.wait()
+        return
+#        eq0 = MathTex(*self.eqstr, font_size=DEFAULT_FONT_SIZE*0.9).set_z_index(1)
+#        eq0.next_to(eq1, DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 0.8)
         p0 = eq0.get_bottom() * UP + DOWN * 0.2
         p1 = p0 + LEFT * config.frame_x_radius
         p2 = p0 + RIGHT * config.frame_x_radius
@@ -1456,15 +1459,13 @@ class MGFDiff(MGF):
                   run_time=2)
         self.wait()
 
-
 class MGFDiffZ(MGFDiff):
     eqstr1 = [r'\frac{d}{dt}\mathbb E[f(Z)]', r'=',
                       r'\sum_{S}c_S\,\mathbb E[(-\partial)^Sf(\tilde Z)]']
     eqstr2 = [r'where ', r'$c_S=-\frac12\frac{d}{dt}\lvert C_S\rvert$']
 
-    def get_eqs(self, animate=True):
+    def get_eqs(self, animate=False):
         eq1, eq2, eq3, _, box = MGFDiff.get_eqs(self)
-        self.add(eq1, eq2, eq3, box)
 
         eq30 = MathTex(*self.eqstr1, font_size=DEFAULT_FONT_SIZE*0.9)
         eq30.next_to(eq2, DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 0.8)
@@ -1480,6 +1481,8 @@ class MGFDiffZ(MGFDiff):
 
         if not animate:
             return eq1, eq2, eq3, eq30, eq31, box2
+
+        self.add(eq1, eq2, eq3, box)
 
         self.wait(0.1)
         eq4 = MathTex(r'\frac{d}{dt}\mathbb E[e^{-\lambda\cdot Z}]', r'=',
@@ -1673,12 +1676,88 @@ class MGFDiffZ(MGFDiff):
         self.wait()
         return eq1, eq2, eq3, eq30, eq31, box2
 
-
     def construct(self):
-        self.get_eqs()
+        self.get_eqs(animate=True)
 
+class ExpCubeZ(ThreeDScene):
+    def construct(self):
+        eq1, eq2, eq3, eq4, eq5, box = MGFDiffZ().get_eqs()
+        self.add(eq1, eq2, eq3, eq4, eq5, box)
+
+        eq6 = MathTex(r'f(z)', r'=', r'I(z\in[-1,1]^3) ', r'=', r' I(\max_i\lvert z_i\rvert\le 1)').next_to(box, DOWN)
+        eq6.to_edge(LEFT)
+        eq6[3:].next_to(eq6[:3], DOWN).align_to(eq6[1], LEFT)
+        self.play(FadeIn(eq6[:3]))
+        self.wait(0.1)
+        self.play(FadeIn(eq6[3:]))
+
+        xmax = 1.5
+        xrange = [-xmax, xmax]
+        scale = 1.4
+        origin = DOWN * 1.8 + RIGHT * 0.5
+
+        ax = ThreeDAxes(xrange, xrange, xrange, 2 * xmax * scale, 2 * xmax * scale, 2 * xmax * scale,
+                        axis_config={'color': WHITE, 'stroke_width': 4, 'include_ticks': False,
+                                     "tip_width": 0.5 * DEFAULT_ARROW_TIP_LENGTH,
+                                     "tip_height": 0.5 * DEFAULT_ARROW_TIP_LENGTH,
+                                     "shade_in_3d": True,
+                                     },
+                        )
+#        ax.y_axis.rotate(45*DEGREES, UP)
+        ax.z_axis.rotate(90*DEGREES, OUT)
+        cube_args = {'fill_opacity': 0.7, 'fill_color': blue, 'stroke_opacity': 1, 'stroke_color': BLUE, 'stroke_width': 2}
+        cube = Cube(side_length=2 * scale, **cube_args)
+        cube2 = Cube(side_length=scale, **cube_args)
+        cube2.shift((RIGHT+UP+OUT) * scale/2)
+        dotx = Dot().shift(RIGHT * scale)
+        doty = Dot().shift(UP * scale)
+        dotz = Dot().shift(OUT * scale)
+
+        gp = VGroup(ax, cube, cube2, dotx, doty, dotz)
+        gp.shift(origin)
+        gp.rotate(-40*DEGREES, UP, origin)
+        gp.rotate(10*DEGREES, RIGHT, origin)
+        px = dotx.get_center()
+        py = doty.get_center()
+        pz = dotz.get_center()
+        dirx = px - origin
+        diry = py - origin
+        dirz = pz - origin
+        eqx = MathTex(r'z_1').set_z_index(10).move_to(origin + dirx * (xmax + 0.3))
+        eqy = MathTex(r'z_2').set_z_index(10).move_to(origin + diry * xmax, aligned_edge=UP).shift(RIGHT*0.4)
+        eqz = MathTex(r'z_3').set_z_index(10).move_to(origin + dirz * (xmax + 0.3), aligned_edge=UP).shift(RIGHT*0.4)
+        eq1 = MathTex('f(z)=1', font_size=40).next_to(origin + LEFT * scale * 2 + OUT * scale*2, LEFT, buff=0)
+        arr = Arrow3D(eq1.get_right() + RIGHT*0.1, pz - 0.5 * dirx - 0.4 * dirz, fill_color=RED, resolution=(10, 8),
+                     thickness=0.02)
+        self.play(FadeIn(ax, cube, eq1, arr, eqx, eqy, eqz))
+
+        p1 = origin + dirx * 1.1 + 0.5 *(diry + dirz)
+        p2 = p1 + RIGHT * 2
+        arr2 = Arrow3D(p2, p1, fill_color=RED, resolution=(10, 8),
+                     thickness=0.02).set_z_index(5)
+        eq7 = MathTex(r'(-\partial_1)f(z)', r'=\delta(z_1-1)', font_size=35).next_to(p2, RIGHT)
+        eq7[1].next_to(eq7[0], DOWN, buff=0.2).align_to(eq7[0], LEFT)
+        face = cube[3].copy().set_fill(color=GREEN_E, opacity=0.6)
+        self.play(FadeIn(arr2, eq7, face))
+        edge = Line(origin+dirx+diry-dirz, origin+dirx+diry+dirz, stroke_width=6, color=YELLOW).set_z_index(3)
+        p3 = origin + dirx + diry + dirz*0.5+RIGHT*0.1
+        p4 = p3 + RIGHT*1.5
+        eq8=MathTex(r'(-\partial_1)(-\partial_2)f(z)', font_size=35).next_to(p4, RIGHT)
+        arr3 = Arrow3D(p4, p3, resolution=(10, 8),
+                       thickness=0.02).set_z_index(5)
+        self.wait(0.1)
+        self.play(FadeIn(edge, arr3, eq8))
+        p5=origin+dirx+diry+dirz+OUT*0.1
+        p6=p5+DOWN*2+LEFT*0.1
+        eq9=MathTex(r'(-\partial_1)(-\partial_2)(-\partial_3) f(z)', font_size=35).next_to(p6, DOWN)
+        corner=Dot3D(radius=0.08, fill_color=GREEN_A, fill_opacity=1).move_to(origin+dirx+diry+dirz).set_z_index(4)
+        arr4 = Arrow3D(p6, p5, resolution=(10, 8),
+                       thickness=0.02).set_z_index(5)
+        self.wait(0.1)
+        self.play(FadeIn(corner, eq9, arr4))
+        self.wait()
 
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "preview": True, 'fps': 15}):
-        JointNormal().render()
+        ExpCubeZ().render()
