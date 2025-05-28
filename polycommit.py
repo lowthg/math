@@ -13,6 +13,14 @@ r = 32
 s = 30
 N = 2**s
 
+for k in range(4,1000):
+    p = k * 2**30 + 1
+    if sympy.isprime(p):
+        print('p = {}.2^30 + 1'.format(k))
+        break
+else:
+    raise "Could not find prime p"
+
 for k in range(1000):
     p = 2**128 - 2**s * k + 1
     if sympy.isprime(p):

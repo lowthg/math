@@ -16,6 +16,13 @@ def putPrice(mean, c, x):
     else:
         return x * (1-mean)
 
+def betadot(mean, c, x, dt):
+    a = mean * c
+    b = (1 - mean)*c
+    a1 = mean * (c+dt)
+    b1 = (1 - mean)* (c+dt)
+
+    res1 = scipy.special.betainc(a, b, x) * scipy.special.beta(a, b)
 
 def var(mean, c, x, dt):
     dPdt = (putPrice(mean, c, x) - putPrice(mean, c + dt, x)) / dt
@@ -26,8 +33,8 @@ def var(mean, c, x, dt):
     return 2 * dPdt / dens
 
 
-smax = 6.
-smin = 1
+smax = 5.
+smin = 2.
 ns = 200
 nx = 300
 dx = 1 / (nx+1)
@@ -42,9 +49,15 @@ X3, Y3 = np.meshgrid(xvals, svals)
 
 for i in range(nx):
     for j in range(ns):
-        Z3[j, i] = (putPrice(mean, svals[j], xvals[i]) - putPrice(mean, svals[j]+ds, xvals[i]))/ds
+#        Z3[j, i] = (putPrice(mean, svals[j], xvals[i]) - putPrice(mean, svals[j]+ds, xvals[i]))/ds
 #        Z3[j, i] = (putPrice(mean, svals[j], xvals[i]-dx) + putPrice(mean, svals[j], xvals[i]+dx) - 2*putPrice(mean, svals[j], xvals[i]))/dx/dx
-#        Z3[j, i] = var(mean, svals[j], xvals[i], ds) * math.pow(0.05+svals[j], 1.7)
+#        Z3[j, i] = (var(mean, svals[j], xvals[i], ds) * math.pow(svals[j], 2))
+        a = mean * svals[j]
+        b = (1-mean) * svals[j]
+        a1 = mean * (svals[j] + ds)
+        b1 = (1-mean) * (svals[j] + ds)
+        x = xvals[i]
+        Z3[j, i] = (scipy.special.betainc(a, b, x) - scipy.special.betainc(a1, b1, x))/ds
 
 print(mean)
 fig = plt.figure()
