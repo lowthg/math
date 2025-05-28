@@ -1794,7 +1794,7 @@ class Diff1DZ(Diff1D):
     name = r'z'
 
 
-class Diff1DZpos(Diff1DZ):
+class Diff1DZPos(Diff1DZ):
     """
     derivatives of f(z) = I([-1,1]) restricted to z > 0
     """
@@ -2070,6 +2070,69 @@ class Diff3D(ThreeDScene):
         self.do_anim(name=self.name, show_labels=self.show_labels, right_only=self.right_only, ver=self.ver)
 
 
+class Diff2Dv1(Diff2D):
+    """
+    image of f(x) = I([-1,1]^2)
+    """
+    ver=1
+
+
+class Diff2Dv2(Diff2D):
+    """
+    image of df for f(x) = I([-1,1]^2)
+    """
+    ver = 2
+
+
+class Diff2Dv3(Diff2D):
+    """
+    image of d2f for f(x) = I([-1,1]^2)
+    """
+    ver = 3
+
+
+class Diff2DZv1(Diff2Dv1):
+    """
+    image of f(z) = I([-1,1]^2)
+    """
+    name = r'z'
+
+
+class Diff2DZv2(Diff2DZv1):
+    """
+    image of df for f(z) = I([-1,1]^2)
+    """
+    ver = 2
+
+
+class Diff2DZv3(Diff2DZv1):
+    """
+    image of d2f for f(z) = I([-1,1]^2)
+    """
+    ver = 3
+
+
+class Diff2DZPosv1(Diff2DZv1):
+    """
+    image of f(z) = I([-1,1]^2) on z > 0
+    """
+    right_only = True
+
+
+class Diff2DZPosv2(Diff2DZPosv1):
+    """
+    image of df for f(z) = I([-1,1]^2) on z > 0
+    """
+    ver = 2
+
+
+class Diff2DZPosv3(Diff2DZPosv1):
+    """
+    image of d2f for f(z) = I([-1,1]^2) on z > 0
+    """
+    ver = 3
+
+
 class Diff3Dv1(Diff3D):
     """
     image of f(x) = I([-1,1]^3)
@@ -2194,69 +2257,6 @@ class Diff3DZPosv4(Diff3DZPosv1):
     image of d3f for f(z) = I([-1,1]^3), on z > 0
     """
     ver = 4
-
-
-class Diff2Dv1(Diff2D):
-    """
-    image of f(x) = I([-1,1]^2)
-    """
-    ver=1
-
-
-class Diff2Dv2(Diff2D):
-    """
-    image of df for f(x) = I([-1,1]^2)
-    """
-    ver = 2
-
-
-class Diff2Dv3(Diff2D):
-    """
-    image of d2f for f(x) = I([-1,1]^2)
-    """
-    ver = 3
-
-
-class Diff2DZv1(Diff2Dv1):
-    """
-    image of f(z) = I([-1,1]^2)
-    """
-    name = r'z'
-
-
-class Diff2DZv2(Diff2DZv1):
-    """
-    image of df for f(z) = I([-1,1]^2)
-    """
-    ver = 2
-
-
-class Diff2DZv3(Diff2DZv1):
-    """
-    image of d2f for f(z) = I([-1,1]^2)
-    """
-    ver = 3
-
-
-class Diff2DZPosv1(Diff2DZv1):
-    """
-    image of f(z) = I([-1,1]^2) on z > 0
-    """
-    right_only = True
-
-
-class Diff2DZPosv2(Diff2DZPosv1):
-    """
-    image of df for f(z) = I([-1,1]^2) on z > 0
-    """
-    ver = 2
-
-
-class Diff2DZPosv3(Diff2DZPosv1):
-    """
-    image of d2f for f(z) = I([-1,1]^2) on z > 0
-    """
-    ver = 3
 
 
 if __name__ == "__main__":
