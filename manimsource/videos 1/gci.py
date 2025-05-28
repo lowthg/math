@@ -1063,6 +1063,7 @@ class GCIProofForm(Scene):
                   run_time=2)
         self.wait()
 
+
 class CovMatrix(Scene):
     def __init__(self, *args, **kwargs):
         if not config.transparent:
@@ -1175,6 +1176,7 @@ class CovMatrix(Scene):
         self.play(VGroup(eq1, eq3, box1).animate.to_edge(UR, buff=0.1), run_time=2)
         self.wait()
 
+
 class ProbvsT(CovMatrix):
     def construct(self):
         eq1_txt=r'\mathbb P_t(X^{(1)}\in A, X^{(2)}\in B)'
@@ -1232,6 +1234,7 @@ class ProbvsT(CovMatrix):
         self.wait(0.1)
         self.play(Create(crv), FadeIn(dot1, dot2, eq9, eq10), run_time=2)
         self.wait()
+
 
 class MGF(Scene):
     linecol = ManimColor(BLUE.to_rgb() * 0.6)
@@ -1336,6 +1339,7 @@ class MGF(Scene):
 
     def construct(self):
         self.add(*self.get_eqs())
+
 
 class MGFDiff(MGF):
     eqstr = [r'\frac{d}{dt}\mathbb E[f(X)]', r'=',
@@ -1458,6 +1462,7 @@ class MGFDiff(MGF):
                   FadeOut(eq12),
                   run_time=2)
         self.wait()
+
 
 class MGFDiffZ(MGFDiff):
     eqstr1 = [r'\frac{d}{dt}\mathbb E[f(Z)]', r'=',
@@ -1679,6 +1684,99 @@ class MGFDiffZ(MGFDiff):
     def construct(self):
         self.get_eqs(animate=True)
 
+
+def indicator_func(r, h=1.):
+    """
+    smoothed indicator of [-1,1], height h
+    """
+    beta = PI/r
+    scale = h / (2 * r)
+
+    def f(t):
+        s = 1 - abs(t)
+        if s >= r:
+            return h
+        elif s <= -r:
+            return 0.
+        return (s + r + math.sin(s*beta)/beta) * scale
+    return f
+
+
+def indicator_func_diff(r, h=1.):
+    """
+    differentiated smoothed indicator of [-1,1] of height h
+    derivative max value is h/r
+    """
+    beta = PI/r
+    scale = h / (2 * r)
+
+    def f(t):
+        s, u = (1 - t, 1) if t > 0 else (1 + t, -1)
+        if -r < s < r:
+            return (1 + math.cos(s*beta)) * scale * u
+        else:
+            return 0.
+    return f
+
+
+class Diff1D(Scene):
+    def do_anim(self, r=0.2, name=r'x', scale=1.):
+        xmax = 1 + r * 2
+        ymax = 1.2
+        label_size = 35 * scale
+        eq_size = 40 * scale
+
+        ax = Axes(x_range=[-xmax, xmax + 0.2, 1], y_range=[0, ymax], x_length=8 * scale, y_length=2.5 * scale,
+                  axis_config={'color': WHITE, 'stroke_width': 4, 'include_ticks': False,
+                               "tip_width": 0.5 * DEFAULT_ARROW_TIP_LENGTH * scale,
+                               "tip_height": 0.5 * DEFAULT_ARROW_TIP_LENGTH * scale,
+                               "tick_size": 0.1 * scale
+                               },
+                  x_axis_config={'include_ticks': True}
+                  ).set_z_index(1)
+
+        pt1 = ax.coords_to_point(0, 0)
+        pt2 = ax.coords_to_point(1, 0)
+        pt3 = ax.coords_to_point(-1, 0)
+        buff = 0.15 * scale
+        eq1 = MathTex(r'0', font_size=label_size).next_to(pt1, DOWN, buff=buff)
+        eq2 = MathTex(r'1', font_size=label_size).next_to(pt2, DOWN, buff=buff)
+        eq3 = MathTex(r'-1', font_size=label_size)
+        eq3.next_to(pt3, DOWN, buff=buff, submobject_to_align=eq3[0][1])
+        eq4 = MathTex(r'{{ {} }}_1'.format(name), font_size=label_size).next_to(ax.x_axis.get_right(), UL, buff=0.2 * scale)
+        dx = 0.01
+        rval = ValueTracker(0.001)
+
+        def smooth_anim():
+            f = indicator_func(rval.get_value())
+            plt = ax.plot(f, [-xmax, xmax, dx], color=YELLOW, use_smoothing=False, stroke_width=4).set_z_index(1)
+            return plt
+
+        plt2 = always_redraw(smooth_anim)
+        eqf = MathTex(r'f({})'.format(name), r' (smoothed)', font_size=eq_size)
+        eqdf = MathTex(r'-\partial_1f({})'.format(name), font_size=eq_size)
+        # eqf[1].next_to(eqf[0], DOWN).align_to(eqf[0], LEFT)
+        eqf.next_to(ax.y_axis.get_top(), RIGHT, buff=0.2*scale, aligned_edge=UP).shift(UP*0.2*scale)
+        eqdf.next_to(ax.y_axis.get_top(), RIGHT, buff=0.2*scale, aligned_edge=UP).shift(UP*0.2*scale)
+
+        self.add(ax, eq1, eq2, eq3, eq4, plt2, eqf[0])
+        self.wait(0.1)
+        self.play(rval.animate.set_value(r), FadeIn(eqf[1]), run_time=2.5)
+        self.remove(plt2)
+        plt2 = smooth_anim()
+        self.add(plt2)
+        r = rval.get_value()
+        self.wait(0.1)
+
+        f = indicator_func_diff(r, r * ymax)
+        plt3 = ax.plot(f, [-xmax, xmax, dx], color=YELLOW, use_smoothing=False, stroke_width=4).set_z_index(1)
+        self.play(FadeOut(plt2, eqf), FadeIn(plt3, eqdf), run_time=1, rate_func=linear)
+        self.wait()
+
+    def construct(self):
+        self.do_anim(r=0.2, name=r'x', scale=1.)
+
+
 class ExpCubeZ(ThreeDScene):
     def construct(self):
         eq1, eq2, eq3, eq4, eq5, box = MGFDiffZ().get_eqs()
@@ -1760,4 +1858,4 @@ class ExpCubeZ(ThreeDScene):
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "preview": True, 'fps': 15}):
-        ExpCubeZ().render()
+        Diff1D().render()
