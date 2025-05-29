@@ -2488,6 +2488,7 @@ class Diff3DZPosv4(Diff3DZPosv1):
 
 class SubMatrix(Scene):
     def construct(self):
+        line1 = MGFDiff().get_eqs()[4][-2]
         eq1 = MathTex(r'A', r'=', r'\begin{pmatrix}'
                       r'a_{11} & a_{12} & a_{13} & a_{14} \\ '
                       r'a_{21} & a_{22} & a_{23} & a_{24} \\ '
@@ -2495,15 +2496,19 @@ class SubMatrix(Scene):
                       r'a_{41} & a_{42} & a_{43} & a_{44}'
                       r'\end{pmatrix}').set_z_index(10)
         eq2 = MathTex(r'S = \{2, 4\}')
-        eq2.next_to(eq1, DOWN, buff=0.5).align_to(eq1, LEFT)
-        eq3 = Tex(r'{\bf Submatrices:}\\ (example)', color=BLUE)
+        eq3 = Tex(r'{\bf Submatrices}\\ (example)', color=BLUE)
+        pos1 = line1.get_center()/2 + UP * config.frame_y_radius/2
+        eq1.move_to(pos1)
         eq3.next_to(eq1, LEFT, buff=1, submobject_to_align=eq3[0])
-        VGroup(eq1, eq2, eq3).move_to(ORIGIN).to_edge(UP)
+        eq2.next_to(eq3, DOWN, buff=0.25)
+        VGroup(eq2, eq3).move_to(pos1, coor_mask=UP)
+        VGroup(eq1, eq2, eq3).move_to(ORIGIN, coor_mask=RIGHT)
         eq4 = MathTex(r'A_S', r'=', r'\begin{pmatrix}'
                       r'a_{22} & a_{24} \\ '
                       r'a_{42} & a_{44}'
                       r'\end{pmatrix}').set_z_index(10)
         mh.align_sub(eq4, eq4[1], eq1[1])
+
         row2 = eq1[2][16:28]
         row4 = eq1[2][40:52]
         col2 = eq1[2][7:10] + eq1[2][43:46]
@@ -2527,7 +2532,7 @@ class SubMatrix(Scene):
         rec8 = SurroundingRectangle(col2b, stroke_opacity=0, fill_opacity=opacity, fill_color=color, buff=buff)
         recs2 = VGroup(rec5, rec6, rec7, rec8).set_opacity(0)
 
-        self.add(eq1, eq2, eq3)
+        self.add(eq1, eq2, eq3, line1)
         self.wait(0.1)
         self.play(FadeIn(recs1), rate_func=linear)
         self.play(FadeOut(eq1[2][4:19], eq1[2][22:25], eq1[2][28:43], eq1[2][46:49], rate_func=linear),
