@@ -2,11 +2,8 @@ from manim import *
 import numpy as np
 import math
 import sys
+sys.path.append('../../')
 import manimhelper as mh
-import scipy.interpolate
-
-
-print(sys.path)
 
 blue = ManimColor((50, 100, 180))
 red = ManimColor(RED.to_rgb() * 0.7)
@@ -248,6 +245,8 @@ class Intersect3D(ThreeDScene):
     showB = True
     phi=60*DEGREES
     colors = [blue, red]
+    intersect = {'thickness': 0.02, 'shift': 0.02, 'color': GREY,
+                 'resolution': 8, 'fill_opacity': 0.7, 'stroke_opacity': 0.8}
 
     def shapes(self):
         res=[self.res, self.res]
@@ -257,8 +256,7 @@ class Intersect3D(ThreeDScene):
         convB = convexPolytope3D(self.vectors2, g=g[1], scale=self.scale[1], fill_opacity=0.7, stroke_opacity=0,
                                  resolution=res, fill_color=self.colors[1], max_radius=8)
         if self.showA and self.showB:
-            intersect = intersectPolytopes(convA, convB, shift = 0.02, thickness=0.02, color=GREY, resolution=8,
-                                           fill_opacity=0.7, stroke_opacity=0.8)
+            intersect = intersectPolytopes(convA, convB, **self.intersect)
         else:
             intersect = VGroup()
         return convA, convB, intersect
@@ -312,7 +310,8 @@ class Intersect3DEllipsoids(Intersect3D):
         RIGHT * 0.45,
         UP * 0.8,
     ]
-    showB = False
+    # showA = False
+    # showB = False
     phi=80*DEGREES
     def __init__(self, *args, **kwargs):
         Intersect3D.__init__(self, *args, **kwargs)
@@ -323,6 +322,11 @@ class Intersect3DEllipsoids(Intersect3D):
 
     g = [2, 2]
     rtime = 4
+
+
+class Intersect3DEllipsoidsBoundary(Intersect3DEllipsoids):
+    intersect = {'thickness': 0.05, 'shift': 0.04, 'color': YELLOW,
+                 'resolution': 16, 'fill_opacity': 1, 'stroke_opacity': 1}
 
 
 class Intersect3DEllipsoid(Intersect3D):
@@ -1463,10 +1467,146 @@ class MGFDiff(MGF):
                   run_time=2)
         self.wait()
 
-def align_subobject(source, subobject, target, **kwargs):
-    return source.next_to(target, ORIGIN, submobject_to_align=subobject, **kwargs)
 
-class MGFDiffExample(MGFDiff):
+class MGFDiffExample(MGFDiff): # overly complex
+    def construct(self):
+        skip = False
+        eq1, eq2, eq3, _, box = MGFDiff.get_eqs(self)
+        box2 = SurroundingRectangle(box, fill_opacity=0.4, fill_color=BLACK, stroke_opacity=0, buff=0.05).set_z_index(10)
+        eq4 = MathTex(r'f', r'=', r'I([-1, 1]^n)')
+        eq5 = MathTex(r'f(X)', r'=', r'I(X\in[-1, 1]^n)')
+        eq5_1 = MathTex(r'f(X)', r'=', r'I(\max_i \lvert X_i\rvert\le1)')
+        eq6 = MathTex(r'\mathbb E[f(X)]', r'=', r'\mathbb E[I(\max_i \lvert X_i\rvert\le1)]')
+        eq7 = MathTex(r'\mathbb E[f(X)]', r'=', r'\mathbb P(\max_i \lvert X_i\rvert\le1)')
+        eq8 = MathTex(r'\frac{d}{dt}\mathbb P(\max_i \lvert X_i\rvert\le1)', r'=', r'\frac{d}{dt}\mathbb E[f(X)]')
+        eq9str = [r'\frac{d}{dt}\mathbb P(\max_i\lvert X_i\rvert\le1)', r'=', r'\frac12\sum_{i,j}\dot C_{ij}\mathbb E[\partial_i\partial_jf(X)]']
+        eq9 =  MathTex(*eq9str)
+        eq10 = MathTex(*eq9str, font_size=35).next_to(box, DOWN).to_edge(LEFT, buff=0.1)
+        eq4.move_to(box.get_bottom()*0.6 + config.frame_y_radius*DOWN*0.4, coor_mask=UP)
+        box3 = SurroundingRectangle(eq10, fill_opacity=0.4, fill_color=BLACK, stroke_opacity=0, buff=0).set_z_index(1)
+        mh.align_sub(eq5, eq5[1], eq4[1])
+        mh.align_sub(eq5_1, eq5_1[1], eq4[1])
+        mh.align_sub(eq6, eq6[1], eq5[1])
+        mh.align_sub(eq7, eq7[1], eq6[1])
+        mh.align_sub(eq7[2], eq7[2][1], eq6[2][3])
+        mh.align_sub(eq8, eq8[1], eq7[1])
+        mh.align_sub(eq9, eq9[1], eq8[1])
+        br2 = BraceLabel(eq8[0][:], r'{\rm exactly\ what\ we\ need}\\ {\rm to\ show\ is\ positive!', label_constructor=mh.mathlabel_ctr2, font_size=40,
+                         brace_config={'color': RED}).set_z_index(2)
+        br3 = BraceLabel(eq9[2][7:], r'{\rm is\ this\ positive?', label_constructor=mh.mathlabel_ctr2, font_size=50,
+                         brace_config={'color': RED}).set_z_index(2)
+
+        br4 = br3.copy().scale(eq10.width/eq9.width).shift(eq10[2].get_center() - eq9[2].get_center()).set_opacity(0)
+
+        if not skip:
+            self.add(eq1, eq2, eq3, eq4, box, box2)
+            self.wait(0.1)
+            self.play(ReplacementTransform(eq4[0][:1] + eq4[1] + eq4[2][:2] + eq4[2][2:],
+                                           eq5[0][:1] + eq5[1] + eq5[2][:2] + eq5[2][4:]),
+                      FadeIn(eq5[0][1:], target_position=eq4[0].get_right()),
+                      FadeIn(eq5[2][2:4]),
+                      run_time=1.5)
+            self.wait(0.1)
+            self.play(ReplacementTransform(eq5[:2] + eq5[2][:2] + eq5[2][-1],
+                                           eq5_1[:2] + eq5_1[2][:2] + eq5_1[2][-1]),
+                      FadeOut(eq5[2][2:-1]),
+                      FadeIn(eq5_1[2][2:-1]),
+                      run_time=1.5)
+            self.wait(0.1)
+            self.play(ReplacementTransform(eq5_1[0][:] + eq5_1[1] + eq5_1[2][:],
+                                           eq6[0][2:-1] + eq6[1] + eq6[2][2:-1]),
+                      FadeIn(eq6[0][:2], eq6[0][-1], eq6[2][:2], eq6[2][-1]),
+                      run_time=1.5)
+            self.wait(0.1)
+            self.play(ReplacementTransform(eq6[:2] + eq6[2][3:-1],
+                                           eq7[:2] + eq7[2][1:]),
+                      mh.fade_replace(eq6[2][0], eq7[2][0]),
+                      FadeOut(eq6[2][1], target_position=eq7[2][1]),
+                      FadeOut(eq6[2][2], target_position=eq7[2][1]),
+                      FadeOut(eq6[2][-1], target_position=eq7[2][-1]),
+                      run_time=1)
+            self.wait(0.1)
+            self.play(ReplacementTransform(eq7[0][:] + eq7[1] + eq7[2][:],
+                                           eq8[2][4:] + eq8[1] + eq8[0][4:]),
+                      run_time=2)
+            self.play(FadeIn(eq8[0][:4], eq8[2][:4]),
+                      FadeIn(br2),
+                      run_time=1.5)
+            self.wait(0.1)
+            self.play(ReplacementTransform(eq8[:2] + eq3[2].copy().set_z_index(20),
+                                           eq9[:2] + eq9[2]),
+                      FadeOut(eq8[2]), run_time=2)
+            self.wait(0.1)
+            self.play(
+                ReplacementTransform(br2.brace, br3.brace),
+                mh.fade_replace(br2.label, br3.label),
+                run_time=2)
+            self.wait(0.1)
+            self.play(ReplacementTransform(eq9, eq10),
+                      ReplacementTransform(br3, br4),
+                      run_time=2)
+            self.play(FadeIn(box3), rate_func=linear)
+        else:
+            self.add(eq10, box3)
+
+        eq11 = MathTex(r'\dot C', r'=', r'\begin{pmatrix}'
+                                   r'C_1 & tA \\ tA^T & C_2\end{pmatrix}').set_z_index(2)
+        eq12 = MathTex(r'0', r'0')
+        eq13 = MathTex(r'\dot C', r'=', r'\begin{pmatrix}'
+                                   r'I_m & tI_m \\ tI_m & I_m\end{pmatrix}').set_z_index(2)
+        eq11.to_edge(LEFT).move_to((eq10.get_bottom() + DOWN * config.frame_y_radius)/2, coor_mask=UP)
+        mh.align_sub(eq11[2][1:3], eq11[2][1], eq11[2][6], coor_mask=RIGHT)
+        mh.align_sub(eq11[2][3:5], eq11[2][4], eq11[2][8], coor_mask=RIGHT)
+        eq13[2][1:3].move_to(eq13[2][7:9], coor_mask=RIGHT)
+        mh.align_sub(eq13, eq13[1], eq11[1])
+        eq12[0].move_to(eq11[2][1])
+        eq12[1].move_to(eq11[2][8])
+
+        self.play(LaggedStart(ReplacementTransform(eq10[2][8].copy().set_z_index(2), eq11[0][1]),
+                  FadeIn(eq11[1:]), lag_ratio=0.4),
+                  run_time=2.5)
+        tofade = [eq11[2][1:4], eq11[2][5], eq11[2][8:10]]
+        self.play(FadeIn(eq11[0][0], eq12), FadeOut(*tofade),
+                  rate_func=linear)
+        self.wait(0.1)
+        VGroup(*tofade).set_opacity(0)
+        self.play(ReplacementTransform(eq11[0][1:] + eq11[1] + eq11[2][0] + eq11[2][-1],
+                                       eq13[0][1:] + eq13[1] + eq13[2][0] + eq13[2][-1]),
+                  FadeOut(eq12, eq11[2][4], eq11[2][6:8], eq11[0][0]),
+                  FadeIn(eq13[2][1:-1]),
+                  run_time=2)
+        self.wait(0.1)
+        eq12[0].move_to(eq13[2][1:3])
+        eq12[1].move_to(eq13[2][9:11])
+        tofade = [eq13[2][1:4], eq13[2][6], eq13[2][9:-1]]
+        self.play(FadeIn(eq13[0][0], eq12),
+                  FadeOut(*tofade), rate_func=linear)
+        VGroup(*tofade).set_opacity(0)
+        self.wait(0.1)
+        self.play(FadeOut(eq10))
+        self.wait(0.1)
+        self.play(FadeOut(eq12, eq13), rate_func=linear)
+        self.remove(box3)
+
+        eq14 = MathTex(r'\int\limits_{\partial A\cap\partial B}p(x)\cot(\theta)\,dx')
+        eq15 = Tex(r'angle between $\partial A$ and $\partial B$', font_size=40)
+        eq14.move_to(eq13).to_edge(LEFT)
+        eq15.to_edge(DL).shift(RIGHT*0.3)
+        arr = Arrow(eq15.get_top(), eq14[0][-4].get_bottom(), buff=0.2)
+        gp2 =  VGroup(eq14, eq15, arr).move_to(eq4)
+        mh.align_sub(gp2, eq14, eq4.get_center() * UP + LEFT * config.frame_x_radius/2)
+
+        self.play(FadeIn(eq14))
+        self.play(FadeIn(eq15, arr))
+        self.wait(0.1)
+        self.play(FadeOut(eq14, eq15, arr), rate_func=linear)
+        self.wait(0.1)
+        self.play(FadeOut(box2), rate_func=linear)
+        self.wait(0.1)
+
+
+
+class MGFDiffExample2(MGFDiff): # overly complex
     def construct(self):
         eq1, eq2, eq3, _, box = MGFDiff.get_eqs(self)
         box2 = SurroundingRectangle(box, fill_opacity=0.4, fill_color=BLACK, stroke_opacity=0, buff=0).set_z_index(10)
@@ -1476,13 +1616,27 @@ class MGFDiffExample(MGFDiff):
         eq8 = MathTex(r'\frac{d}{dt}\mathbb P(X\in A\times B)', r'=', r'\frac{d}{dt}\mathbb E[f(X)]')
         eq9 = MathTex(r'\frac{d}{dt}\mathbb P(X\in A\times B)', r'=', r'\frac12\sum_{i,j}\dot C_{ij}\mathbb E[\partial_i\partial_jf(X)]')
         eq4.move_to(box.get_bottom()*0.6 + config.frame_y_radius*DOWN*0.4, coor_mask=UP)
-        align_subobject(eq6, eq6[1], eq4[1])
-        align_subobject(eq7, eq7[1], eq6[1])
-        align_subobject(eq7[2], eq7[2][1], eq6[2][3])
-        align_subobject(eq8, eq8[1], eq7[1])
-        align_subobject(eq9, eq9[1], eq8[1])
-        br1 = BraceLabel(eq6[2][4:-3], r'M\sim N_H', label_constructor=mh.mathlabel_ctr, font_size=60)
+        mh.align_sub(eq6, eq6[1], eq4[1])
+        mh.align_sub(eq7, eq7[1], eq6[1])
+        mh.align_sub(eq7[2], eq7[2][1], eq6[2][3])
+        mh.align_sub(eq8, eq8[1], eq7[1])
+        mh.align_sub(eq9, eq9[1], eq8[1])
+        br1 = BraceLabel(eq6[2][4:-2], r'{\rm equivalently:\ }X^{(1)}\in A,X^{(2)}\in B', label_constructor=mh.mathlabel_ctr2, font_size=40,
+                         brace_config={'color': RED})
+        br2 = BraceLabel(eq8[0][:], r'{\rm exactly\ what\ we\ need}\\ {\rm to\ show\ is\ positive!', label_constructor=mh.mathlabel_ctr2, font_size=40,
+                         brace_config={'color': RED})
+        br3 = BraceLabel(eq9[2][7:], r'{\rm is\ this\ positive?', label_constructor=mh.mathlabel_ctr2, font_size=50,
+                         brace_config={'color': RED})
 
+        eq10 = Tex(r'\underline{\bf Hypercubes}', color=BLUE, font_size=40)
+        eq11 = Tex(r'{\rm (sufficient\ to\ prove\ the\ GCI)}', color=BLUE, font_size=40)
+        eq12 = Tex(r'$A=[-1,1]^k, B=[-1,1]^{n-k}$', color=BLUE, font_size=40)
+        eq13 = Tex(r'$f(x)=I(\max_i\lvert x_i\rvert\le1)$', font_size=40).set_z_index(2)
+        gp1 = VGroup(eq10, eq11, eq12, eq13).arrange(direction=DOWN, center=True, buff=0.15)
+        gp1.next_to(eq9[0], DOWN, buff=0.15).align_to(eq9[1], RIGHT)
+
+        eq14 =  MathTex(r'\frac{d}{dt}\mathbb P(\max_i\lvert X_i\rvert\le1)', r'=', r'\frac12\sum_{i,j}\dot C_{ij}\mathbb E[\partial_i\partial_jf(X)]')
+        mh.align_sub(eq14, eq14[1], eq9[1]).set_z_index(2)
 
         self.add(eq1, eq2, eq3, eq4, box, box2)
         self.wait(0.1)
@@ -1490,8 +1644,8 @@ class MGFDiffExample(MGFDiff):
                                        eq6[0][:1] + eq6[1] + eq6[2][2:4] + eq6[2][6:-1]),
                   FadeIn(eq6[0][1:], target_position=eq4[0].get_right()),
                   FadeIn(eq6[2][4:6]),
-                  FadeIn(br1),
                   run_time=1.5)
+        self.play(FadeIn(br1))
         self.wait(0.1)
         self.play(FadeIn(eq6[2][:2], eq6[2][-1]), run_time=1)
         self.play(ReplacementTransform(eq6[:2] + eq6[2][3:-1],
@@ -1504,12 +1658,34 @@ class MGFDiffExample(MGFDiff):
         self.wait(0.1)
         self.play(ReplacementTransform(eq7[0][:] + eq7[1] + eq7[2][:],
                                        eq8[2][4:] + eq8[1] + eq8[0][4:]),
+                  br1.animate.shift(eq8[0][4:].get_center() - eq7[2][:].get_center()),
                   run_time=2)
-        self.play(FadeIn(eq8[0][:4], eq8[2][:4]), run_time=1.5)
+        self.play(FadeIn(eq8[0][:4], eq8[2][:4]),
+#                  FadeIn(br2),
+                  ReplacementTransform(br1.brace, br2.brace),
+                  mh.fade_replace(br1.label, br2.label),
+                  run_time=1.5)
         self.wait(0.1)
         self.play(ReplacementTransform(eq8[:2] + eq3[2].copy().set_z_index(20),
                                        eq9[:2] + eq9[2]),
                   FadeOut(eq8[2]), run_time=2)
+        self.wait(0.1)
+        self.play(
+            ReplacementTransform(br2.brace, br3.brace),
+            mh.fade_replace(br2.label, br3.label),
+            run_time=2)
+        self.wait(0.1)
+        self.play(FadeIn(gp1[:-1]))
+        self.play(FadeIn(gp1[-1]))
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq9[1:] + eq9[0][:6] + eq9[0][-1],
+                                       eq14[1:] + eq14[0][:6] + eq14[0][-1]),
+                  FadeOut(eq9[0][6:-1]),
+                  ReplacementTransform((eq13[0][7:12] + eq13[0][13:-1]).copy(),
+                                       eq14[0][6:11] + eq14[0][12:-1]),
+                  mh.fade_replace(eq13[0][12].copy(), eq14[0][11]),
+                  run_time=2)
+
         self.wait()
 
 
@@ -2309,6 +2485,65 @@ class Diff3DZPosv4(Diff3DZPosv1):
     """
     ver = 4
 
+
+class SubMatrix(Scene):
+    def construct(self):
+        eq1 = MathTex(r'A', r'=', r'\begin{pmatrix}'
+                      r'a_{11} & a_{12} & a_{13} & a_{14} \\ '
+                      r'a_{21} & a_{22} & a_{23} & a_{24} \\ '
+                      r'a_{31} & a_{32} & a_{33} & a_{34} \\ '
+                      r'a_{41} & a_{42} & a_{43} & a_{44}'
+                      r'\end{pmatrix}').set_z_index(10)
+        eq2 = MathTex(r'S = \{2, 4\}')
+        eq2.next_to(eq1, DOWN, buff=0.5).align_to(eq1, LEFT)
+        eq3 = Tex(r'{\bf Submatrices:}\\ (example)', color=BLUE)
+        eq3.next_to(eq1, LEFT, buff=1, submobject_to_align=eq3[0])
+        VGroup(eq1, eq2, eq3).move_to(ORIGIN).to_edge(UP)
+        eq4 = MathTex(r'A_S', r'=', r'\begin{pmatrix}'
+                      r'a_{22} & a_{24} \\ '
+                      r'a_{42} & a_{44}'
+                      r'\end{pmatrix}').set_z_index(10)
+        mh.align_sub(eq4, eq4[1], eq1[1])
+        row2 = eq1[2][16:28]
+        row4 = eq1[2][40:52]
+        col2 = eq1[2][7:10] + eq1[2][43:46]
+        col4 = eq1[2][13:16] + eq1[2][49:52]
+        row1b = eq4[2][1:7]
+        row2b = eq4[2][7:13]
+        col1b = eq4[2][1:4] + eq4[2][7:10]
+        col2b = eq4[2][4:7] + eq4[2][10:13]
+
+        color = ManimColor(WHITE.to_rgb() * 0.5)
+        buff = 0.07
+        opacity = 0.5
+        rec1 = SurroundingRectangle(row2, stroke_opacity=0, fill_opacity=opacity, fill_color=color, buff=buff)
+        rec2 = SurroundingRectangle(row4, stroke_opacity=0, fill_opacity=opacity, fill_color=color, buff=buff)
+        rec3 = SurroundingRectangle(col2, stroke_opacity=0, fill_opacity=opacity, fill_color=color, buff=buff)
+        rec4 = SurroundingRectangle(col4, stroke_opacity=0, fill_opacity=opacity, fill_color=color, buff=buff)
+        recs1 = VGroup(rec1, rec2, rec3, rec4)
+        rec5 = SurroundingRectangle(row1b, stroke_opacity=0, fill_opacity=opacity, fill_color=color, buff=buff)
+        rec6 = SurroundingRectangle(row2b, stroke_opacity=0, fill_opacity=opacity, fill_color=color, buff=buff)
+        rec7 = SurroundingRectangle(col1b, stroke_opacity=0, fill_opacity=opacity, fill_color=color, buff=buff)
+        rec8 = SurroundingRectangle(col2b, stroke_opacity=0, fill_opacity=opacity, fill_color=color, buff=buff)
+        recs2 = VGroup(rec5, rec6, rec7, rec8).set_opacity(0)
+
+        self.add(eq1, eq2, eq3)
+        self.wait(0.1)
+        self.play(FadeIn(recs1), rate_func=linear)
+        self.play(FadeOut(eq1[2][4:19], eq1[2][22:25], eq1[2][28:43], eq1[2][46:49], rate_func=linear),
+                  ReplacementTransform(eq1[0][0], eq4[0][0]),
+                  FadeIn(eq4[0][1], shift=eq4[0][0].get_center() - eq1[0][0].get_center(), rate_func=linear),
+                  run_time=1.5
+                  )
+        self.wait(0.1)
+        self.play(ReplacementTransform(VGroup(eq1[1], *[eq1[2][i:i+3] for i in (19, 25, 43, 49)]),
+                                       VGroup(eq4[1], *[eq4[2][i:i+3] for i in (1, 4, 7, 10)])),
+                  mh.stretch_replace(eq1[2][:4], eq4[2][0]),
+                  mh.stretch_replace(eq1[2][-4:], eq4[2][-1]),
+                  ReplacementTransform(recs1, recs2),
+                  run_time=2.5)
+
+        self.wait()
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "preview": True, 'fps': 15}):
