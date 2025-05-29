@@ -6,12 +6,33 @@ import numpy as np
 import math
 
 
+def align_sub(source, subobject, target, **kwargs):
+    """
+    move object to align subobject with target
+    """
+    return source.next_to(target, ORIGIN, submobject_to_align=subobject, **kwargs)
+
+
 def fade_replace(obj1, obj2, **kwargs):
     """
-    Fade out obj1 into obj1
+    Fade out obj1 into obj2
     For when the objects differ so that ReplacementTransform doesn't work
     """
     return FadeOut(obj1, target_position=obj2.get_center(), **kwargs), FadeIn(obj2, target_position=obj1.get_center(), **kwargs)
+
+
+def stretch_replace(source: Mobject, target: Mobject, **kwargs):
+    """
+    Fade out obj1 into obj2, stretching to fit
+    For when the objects differ so that ReplacementTransform doesn't work
+    """
+    w1 = source.width
+    w2 = target.width
+    h1 = source.height
+    h2 = target.height
+    source2 = target.copy().move_to(source).stretch_to_fit_height(h1).stretch_to_fit_width(w1).set_opacity(0)
+    target2 = source.copy().move_to(target).stretch_to_fit_height(h2).stretch_to_fit_width(w2).set_opacity(0)
+    return ReplacementTransform(VGroup(source, source2), VGroup(target2, target), **kwargs)
 
 
 def circle_eq(eq) -> ParametricFunction:
