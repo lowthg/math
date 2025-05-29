@@ -2,11 +2,11 @@ from manim import *
 import numpy as np
 import math
 import sys
+import manimhelper as mh
 import scipy.interpolate
 
-sys.path.append('../abracadabra/')
-# noinspection PyUnresolvedReferences
-import abracadabra as abra
+
+print(sys.path)
 
 blue = ManimColor((50, 100, 180))
 red = ManimColor(RED.to_rgb() * 0.7)
@@ -747,7 +747,7 @@ class Trick(Scene):
         self.wait()
         self.play(ReplacementTransform((eq1[1:4] + eq1[5:8] + eq1[9:16] + eq1[17:]).copy(),
                                        eq2[1:4] + eq2[5:8] + eq2[9:16] + eq2[17:]),
-                  abra.fade_replace(eq1[0].copy(), eq2[0]),
+                  mh.fade_replace(eq1[0].copy(), eq2[0]),
                   FadeIn(eq2[4], target_position=eq1[4]),
                   FadeIn(eq2[8], target_position=eq1[8]),
                   FadeIn(eq2[16], target_position=eq1[16]),
@@ -887,7 +887,7 @@ class GCIAlt(Scene):
                                            eq3[0][:2] + eq3[0][2+i:4+i] + eq3[0][5+i:8+i]),
                       ReplacementTransform(eq1[0][13:15] + eq1[0][16:20],
                                            eq3[0][2+i:4+i] + eq3[0][5+i:9+i]),
-                      abra.fade_replace(eq1[0][4], eq3[0][4+i]),
+                      mh.fade_replace(eq1[0][4], eq3[0][4+i]),
                       FadeOut(eq1[0][15], target_position=eq3[0][4+i]),
                       FadeOut(eq1[0][8:13]),
                       FadeIn(eq3[0][2:2+i]),
@@ -895,7 +895,7 @@ class GCIAlt(Scene):
                                            eq3[2][:2] + eq3[2][2 + j:4 + j] + eq3[2][5 + j:8 + j]),
                       ReplacementTransform(eq1[2][13:15] + eq1[2][16:20],
                                            eq3[2][2 + j:4 + j] + eq3[2][5 + j:9 + j]),
-                      abra.fade_replace(eq1[2][4], eq3[2][4 + j]),
+                      mh.fade_replace(eq1[2][4], eq3[2][4 + j]),
                       FadeOut(eq1[2][15], target_position=eq3[2][4 + j]),
                       FadeOut(eq1[2][8:13]),
                       FadeIn(eq3[2][2:2 + j]),
@@ -903,7 +903,7 @@ class GCIAlt(Scene):
                                            eq3[3][:2] + eq3[3][2 + k:4 + k] + eq3[3][5 + k:8 + k]),
                       ReplacementTransform(eq1[3][15:17] + eq1[3][18:22],
                                            eq3[3][2 + k:4 + k] + eq3[3][5 + k:9 + k]),
-                      abra.fade_replace(eq1[3][4:7], eq3[3][4 + k]),
+                      mh.fade_replace(eq1[3][4:7], eq3[3][4 + k]),
                       FadeOut(eq1[3][17], target_position=eq3[3][4 + j]),
                       FadeOut(eq1[3][10:15]),
                       FadeIn(eq3[3][2:2 + k]),
@@ -1143,8 +1143,8 @@ class CovMatrix(Scene):
         self.wait(0.1)
         self.play(ReplacementTransform(eq2[0][:] + eq4_1 + eq4_2 + eq4_3 + eq4_4,
                                        eq4[0][:] + eq4[1][1:3] + eq4[1][3] + eq4[1][4:6] + eq4[1][6:8]),
-                  abra.fade_replace(eq2[1][:7], eq4[1][0]),
-                  abra.fade_replace(eq2[1][82:], eq4[1][8:]),
+                  mh.fade_replace(eq2[1][:7], eq4[1][0]),
+                  mh.fade_replace(eq2[1][82:], eq4[1][8:]),
                   ReplacementTransform(line2, line3),
                   ReplacementTransform(line1, line4),
                   ReplacementTransform(box2, box3),
@@ -1463,6 +1463,55 @@ class MGFDiff(MGF):
                   run_time=2)
         self.wait()
 
+def align_subobject(source, subobject, target, **kwargs):
+    return source.next_to(target, ORIGIN, submobject_to_align=subobject, **kwargs)
+
+class MGFDiffExample(MGFDiff):
+    def construct(self):
+        eq1, eq2, eq3, _, box = MGFDiff.get_eqs(self)
+        box2 = SurroundingRectangle(box, fill_opacity=0.4, fill_color=BLACK, stroke_opacity=0, buff=0).set_z_index(10)
+        eq4 = MathTex(r'f', r'=', r'I(A\times B)')
+        eq6 = MathTex(r'\mathbb E[f(X)]', r'=', r'\mathbb E[I(X\in A\times B)]')
+        eq7 = MathTex(r'\mathbb E[f(X)]', r'=', r'\mathbb P(X\in A\times B)')
+        eq8 = MathTex(r'\frac{d}{dt}\mathbb P(X\in A\times B)', r'=', r'\frac{d}{dt}\mathbb E[f(X)]')
+        eq9 = MathTex(r'\frac{d}{dt}\mathbb P(X\in A\times B)', r'=', r'\frac12\sum_{i,j}\dot C_{ij}\mathbb E[\partial_i\partial_jf(X)]')
+        eq4.move_to(box.get_bottom()*0.6 + config.frame_y_radius*DOWN*0.4, coor_mask=UP)
+        align_subobject(eq6, eq6[1], eq4[1])
+        align_subobject(eq7, eq7[1], eq6[1])
+        align_subobject(eq7[2], eq7[2][1], eq6[2][3])
+        align_subobject(eq8, eq8[1], eq7[1])
+        align_subobject(eq9, eq9[1], eq8[1])
+        br1 = BraceLabel(eq6[2][4:-3], r'M\sim N_H', label_constructor=mh.mathlabel_ctr, font_size=60)
+
+
+        self.add(eq1, eq2, eq3, eq4, box, box2)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq4[0][:] + eq4[1] + eq4[2][:2] + eq4[2][2:],
+                                       eq6[0][:1] + eq6[1] + eq6[2][2:4] + eq6[2][6:-1]),
+                  FadeIn(eq6[0][1:], target_position=eq4[0].get_right()),
+                  FadeIn(eq6[2][4:6]),
+                  FadeIn(br1),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeIn(eq6[2][:2], eq6[2][-1]), run_time=1)
+        self.play(ReplacementTransform(eq6[:2] + eq6[2][3:-1],
+                                       eq7[:2] + eq7[2][1:]),
+                  mh.fade_replace(eq6[2][0], eq7[2][0]),
+                  FadeOut(eq6[2][1], target_position=eq7[2][1]),
+                  FadeOut(eq6[2][2], target_position=eq7[2][1]),
+                  FadeOut(eq6[2][-1], target_position=eq7[2][-1]),
+                  run_time=1)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq7[0][:] + eq7[1] + eq7[2][:],
+                                       eq8[2][4:] + eq8[1] + eq8[0][4:]),
+                  run_time=2)
+        self.play(FadeIn(eq8[0][:4], eq8[2][:4]), run_time=1.5)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq8[:2] + eq3[2].copy().set_z_index(20),
+                                       eq9[:2] + eq9[2]),
+                  FadeOut(eq8[2]), run_time=2)
+        self.wait()
+
 
 class MGFDiffZ(MGFDiff):
     eqstr1 = [r'\frac{d}{dt}\mathbb E[f(Z)]', r'=',
@@ -1560,7 +1609,7 @@ class MGFDiffZ(MGFDiff):
                                        eq5[:2] + eq5[2][14:18] + eq5[2][4:10] + eq5[2][:3]
                                        + eq5[2][3]
                                        + eq5[2][10] + eq5[2][12:14] + eq5[2][18:]),
-                  abra.fade_replace(eq4[2][11], eq5[2][11]),
+                  mh.fade_replace(eq4[2][11], eq5[2][11]),
                   run_time=2)
         self.wait(0.1)
         self.play(ReplacementTransform(eq5[:2] + eq5[2][:4] + eq5[2][11] + eq5[2][14:],
@@ -1609,7 +1658,7 @@ class MGFDiffZ(MGFDiff):
                   FadeOut(eq12[2][7:17], shift=shift),
                   FadeOut(eq12[2][18], target_position=eq15[2][12]),
                   FadeOut(eq12[2][21], target_position=eq15[2][15]),
-                  abra.fade_replace(eq12[2][19], eq15[2][9]),
+                  mh.fade_replace(eq12[2][19], eq15[2][9]),
                   FadeIn(eq15[2][4:8], shift=shift2),
                   FadeIn(eq15[2][10], target_position=eq12[2][19].get_corner(DR)),
                   FadeIn(eq15[2][11], shift=shift2),
@@ -1618,7 +1667,7 @@ class MGFDiffZ(MGFDiff):
         self.play(LaggedStart(ReplacementTransform(eq15[0][:] + eq15[1] + eq15[2][1:-4] + eq15[2][-4:],
                                        eq16[0][4:] + eq16[1] + eq16[2][1:-8:] + eq16[2][-4:]),
                   AnimationGroup(FadeIn(eq16[0][:4] ,eq16[2][-8:-4]),
-                                 abra.fade_replace(eq15[2][0], eq16[2][0])),
+                                 mh.fade_replace(eq15[2][0], eq16[2][0])),
                               lag_ratio=0.4),
                   run_time=1.5)
         self.wait(0.1)
@@ -1638,7 +1687,7 @@ class MGFDiffZ(MGFDiff):
         self.wait(0.1)
         self.play(ReplacementTransform(eq18[:2] + eq18[2][:21] + eq18[2][23:] + eq18[2][22],
                                        eq19[:2] + eq19[2][:21] + eq19[2][26:] + eq19[2][24]),
-                  abra.fade_replace(eq18[2][21], eq19[2][23]),
+                  mh.fade_replace(eq18[2][21], eq19[2][23]),
                   FadeIn(eq19[2][22], target_position=eq18[2][21]),
                   FadeIn(eq19[2][25], target_position=eq18[2][23].get_left()),
                   FadeIn(eq19[2][21], target_position=eq18[2][21].get_left()),
@@ -1719,6 +1768,8 @@ def indicator_func_diff(r, h=1.):
     return f
 
 
+red1 = ManimColor((255, 50, 0))
+
 class Diff1D(Scene):
     """
     derivatives of f(x)=I([-1,1])
@@ -1759,15 +1810,15 @@ class Diff1D(Scene):
 
         def smooth_anim():
             f = indicator_func(rval.get_value())
-            plt = ax.plot(f, [xmin, xmax, dx], color=YELLOW, use_smoothing=False, stroke_width=4).set_z_index(1)
+            plt = ax.plot(f, [xmin, xmax, dx], color=BLUE, use_smoothing=False, stroke_width=6).set_z_index(1)
             return plt
 
         plt2 = always_redraw(smooth_anim)
-        eqf = MathTex(r'f({})'.format(name), r' (smoothed)', font_size=eq_size)
+        eqf = MathTex(r'f({})'.format(name), r' ({\rm smoothed})', font_size=eq_size)
         eqdf = MathTex(r'-\partial_1f({})'.format(name), font_size=eq_size)
         # eqf[1].next_to(eqf[0], DOWN).align_to(eqf[0], LEFT)
         eqf.next_to(ax.y_axis.get_top(), RIGHT, buff=0.2*scale, aligned_edge=UP).shift(UP*0.2*scale)
-        eqdf.next_to(ax.y_axis.get_top(), RIGHT, buff=0.2*scale, aligned_edge=UP).shift(UP*0.2*scale)
+        eqdf.next_to(ax.y_axis.get_top(), RIGHT, buff=0.2*scale, aligned_edge=UP).shift(UP*0.05*scale)
 
         self.add(ax, eq1, eq2, eq3, eq4, plt2, eqf[0])
         self.wait(0.1)
@@ -1778,8 +1829,8 @@ class Diff1D(Scene):
         r = rval.get_value()
         self.wait(0.1)
 
-        f = indicator_func_diff(r, r * ymax)
-        plt3 = ax.plot(f, [xmin, xmax, dx], color=YELLOW, use_smoothing=False, stroke_width=4).set_z_index(1)
+        f = indicator_func_diff(r, r * 1.1)
+        plt3 = ax.plot(f, [xmin, xmax, dx], colorscale=[(red1, -0.5), (BLUE, 0)], use_smoothing=False, stroke_width=6).set_z_index(1)
         self.play(FadeOut(plt2, eqf), FadeIn(plt3, eqdf), run_time=1, rate_func=linear)
         self.wait()
 
@@ -1977,12 +2028,12 @@ class Diff3D(ThreeDScene):
         face1 = cube[3].copy().set_fill(color=blue2, opacity=1)
         face2 = cube[2].copy().set_fill(color=RED, opacity=1)
 
-        edge1 = Line(origin+dirx+diry-dirz, origin+dirx+diry+dirz, stroke_width=6, color=blue2, stroke_opacity=1).set_z_index(3)
+        edge1 = Line(origin+dirx+diry-dirz, origin+dirx+diry+dirz, stroke_width=10, color=blue2, stroke_opacity=1).set_z_index(3)
         if right_only:
             edge1 = Line(origin+dirx+diry, origin+dirx+diry+dirz, stroke_width=6, color=blue2, stroke_opacity=1).set_z_index(3)
-        edge2 = Line(origin-dirx-diry-dirz, origin-dirx-diry+dirz, stroke_width=6, color=blue2).set_z_index(0)
-        edge3 = Line(origin+dirx-diry-dirz, origin+dirx-diry+dirz, stroke_width=6, color=RED).set_z_index(0)
-        edge4 = Line(origin-dirx+diry-dirz, origin-dirx+diry+dirz, stroke_width=6, color=RED).set_z_index(3)
+        edge2 = Line(origin-dirx-diry-dirz, origin-dirx-diry+dirz, stroke_width=10, color=blue2, shade_in_3d=True).set_z_index(0)
+        edge3 = Line(origin+dirx-diry-dirz, origin+dirx-diry+dirz, stroke_width=10, color=RED, shade_in_3d=True).set_z_index(0)
+        edge4 = Line(origin-dirx+diry-dirz, origin-dirx+diry+dirz, stroke_width=10, color=RED, shade_in_3d=True).set_z_index(3)
         p3 = origin + dirx + diry + dirz*0.5+RIGHT*0.1
         p4 = p3 + RIGHT*1.5
         eq8 = MathTex(r'\partial_2\partial_1f({})'.format(name), r'=\delta({}_2-1)\delta({}_1-1)'.format(name, name), font_size=35)
@@ -2261,4 +2312,4 @@ class Diff3DZPosv4(Diff3DZPosv1):
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "preview": True, 'fps': 15}):
-        Diff1D().render()
+        MGFDiffExample().render()
