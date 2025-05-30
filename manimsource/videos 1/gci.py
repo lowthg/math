@@ -2122,6 +2122,7 @@ class Diff3D(ThreeDScene):
     show_labels = True
     right_only = False
     ver = 0
+    frame_scale = 2
 
     def do_surrounds(self):
         eq1, eq2, eq3, eq4, eq5, box = MGFDiffZ().get_eqs()
@@ -2136,6 +2137,8 @@ class Diff3D(ThreeDScene):
         self.play(FadeIn(eq6[3:]))
 
     def do_anim(self, name=r'x', show_labels=True, right_only=False, ver=0):
+        self.camera.frame_height *= self.frame_scale
+        self.camera.frame_width *= self.frame_scale
         xmax = 1.5
         xrange = [-xmax, xmax]
         scale = 1.4
@@ -2179,25 +2182,28 @@ class Diff3D(ThreeDScene):
         eqx = MathTex(r'{}_1'.format(name)).set_z_index(10).move_to(origin + dirx * (xmax + 0.3))
         eqy = MathTex(r'{}_2'.format(name)).set_z_index(10).move_to(origin + diry * xmax, aligned_edge=UP).shift(RIGHT*0.4)
         eqz = MathTex(r'{}_3'.format(name)).set_z_index(10).move_to(origin + dirz * (xmax + 0.3), aligned_edge=UP).shift(RIGHT*0.4)
-        eq1 = MathTex(r'f({})=1'.format(name), font_size=40).next_to(origin + LEFT * scale * 2 + OUT * scale*2, LEFT, buff=0)
-        arr = Arrow3D(eq1.get_right() + RIGHT*0.1, pz - 0.5 * dirx - 0.4 * dirz, fill_color=RED, resolution=(10, 8),
+        p1 = origin + 0.2 * dirx + 0.5 * diry+0.2 * dirz
+#        p2 = origin + RIGHT * scale * 2.5 + OUT * scale*1 + UP * scale * 0.6
+        p2 = p1 + dirx * 1 + RIGHT
+        eq1 = MathTex(r'f({})=1'.format(name), font_size=40, stroke_width=1.3).next_to(p2, RIGHT, buff=0)
+        arr = Arrow3D(p2, p1, fill_color=RED, resolution=(10, 8),
                      thickness=0.02)
 
         p1 = origin + dirx * 1.1 + 0.5 *(diry + dirz)
         p2 = p1 + RIGHT * 2
-        p3 = origin - dirx * 0.9 + 0.5*(diry+dirz)
-        p4 = p3 + dirz * 1 + OUT * 0.5
+        p3 = origin - dirx * 0.99 + 0.5*(diry+dirz)
+        p4 = p3 + dirz * 1 + OUT * 0.8 + RIGHT * 2.8 + DOWN
 
         arr2 = Arrow3D(p2, p1, fill_color=RED, resolution=(10, 8),
                      thickness=0.02).set_z_index(5)
         arr2_1 = Arrow3D(p4, p3, fill_color=RED, resolution=(10, 8),
                      thickness=0.02)
-        eq7 = MathTex(r'(-\partial_1)f({})'.format(name), r'=\delta({}_1-1)'.format(name), font_size=35).next_to(p2, RIGHT)
-        eq7[1].next_to(eq7[0], DOWN, buff=0.2).align_to(eq7[0], LEFT)
+        eq7 = MathTex(r'(-\partial_1)f({})'.format(name), r'=\delta({}_1-1)'.format(name), font_size=35, stroke_width=1.3).next_to(p2, RIGHT)
+#        eq7[1].next_to(eq7[0], DOWN, buff=0.2).align_to(eq7[0], LEFT)
         eq7_1 = MathTex(r'-\partial_1f({})'.format(name),
-                        r'=-\delta({}_1+1)'.format(name), font_size=35)
-        eq7_1[0].next_to(p4, LEFT, aligned_edge=RIGHT)
-        eq7_1[1].next_to(eq7_1[0], DOWN, buff=0.2).align_to(eq7_1[0], LEFT)
+                        r'=-\delta({}_1+1)'.format(name), font_size=35, stroke_width=1.3)
+        eq7_1.next_to(p4, DOWN, aligned_edge=UP, buff=0.2, submobject_to_align=eq7_1[0]).shift(RIGHT*0.4)
+#        eq7_1[1].next_to(eq7_1[0], DOWN, buff=0.2).align_to(eq7_1[0], LEFT)
 
         blue2 = ManimColor(blue.to_rgb()*0.5 + GREEN.to_rgb()*0.5)
 
@@ -2212,16 +2218,16 @@ class Diff3D(ThreeDScene):
         edge4 = Line(origin-dirx+diry-dirz, origin-dirx+diry+dirz, stroke_width=10, color=RED, shade_in_3d=True).set_z_index(3)
         p3 = origin + dirx + diry + dirz*0.5+RIGHT*0.1
         p4 = p3 + RIGHT*1.5
-        eq8 = MathTex(r'\partial_2\partial_1f({})'.format(name), r'=\delta({}_2-1)\delta({}_1-1)'.format(name, name), font_size=35)
-        eq8[0].next_to(p4, RIGHT)
-        eq8[1].next_to(eq8[0], DOWN, buff=0.1).align_to(eq8[0], LEFT)
+        eq8 = MathTex(r'\partial_2\partial_1f({})'.format(name), r'=\delta({}_2-1)\delta({}_1-1)'.format(name, name), font_size=35, stroke_width=1.3)
+        eq8.next_to(p4, RIGHT, submobject_to_align=eq8[0])
+#        eq8[1].next_to(eq8[0], DOWN, buff=0.1).align_to(eq8[0], LEFT)
         arr3 = Arrow3D(p4, p3, resolution=(10, 8),
                        thickness=0.02).set_z_index(5)
-        p5 = origin + dirx - diry + dirz*0.5+UP*0.
-        p6 = p5 + RIGHT*1.5 + UP*0.5
-        eq8_1 = MathTex(r'\partial_2\partial_1f({})'.format(name), r'=-\delta({}_2+1)\delta({}_1-1)'.format(name, name), font_size=35)
-        eq8_1[0].next_to(p6, RIGHT)
-        eq8_1[1].next_to(eq8_1[0], DOWN, buff=0.1).align_to(eq8_1[0], LEFT)
+        p5 = origin + dirx * 1.05 - diry + dirz*0.0
+        p6 = p5 + RIGHT*1.2 + UP*0.0
+        eq8_1 = MathTex(r'\partial_2\partial_1f({})'.format(name), r'=-\delta({}_2+1)\delta({}_1-1)'.format(name, name), font_size=35, stroke_width=1.3)
+        eq8_1.next_to(p6, RIGHT)
+#        eq8_1[1].next_to(eq8_1[0], DOWN, buff=0.1).align_to(eq8_1[0], LEFT)
         arr3_1 = Arrow3D(p6, p5, resolution=(10, 8),
                        thickness=0.02).set_z_index(10)
 
@@ -2234,17 +2240,17 @@ class Diff3D(ThreeDScene):
         co7=Dot3D(radius=0.08, color=blue2, fill_opacity=1).move_to(origin-dirx-diry+dirz).set_z_index(4)
         co8=Dot3D(radius=0.08, color=PURE_RED, fill_opacity=1).move_to(origin-dirx-diry-dirz).set_z_index(0)
 
-        p5=origin-dirx-diry+dirz+OUT*0.1
-        p6=p5+DOWN*0.2+LEFT*0.1
+        p5=origin+dirx+diry+dirz+OUT*0.1
+        p6=p5+DOWN*0.1+RIGHT*2
         eq9=MathTex(r'-\partial_3\partial_2\partial_1f({})'.format(name),
-                    r'=\delta({}_3-1)\delta({}_2+1)\delta({}_1+1)'.format(name, name, name), font_size=35).next_to(p6, DOWN, buff=0)
-        arr4 = Arrow3D(p6+LEFT*1.4, p5, resolution=(10, 8),
+                    r'=\delta({}_3-1)\delta({}_2-1)\delta({}_1-1)'.format(name, name, name), font_size=35, stroke_width=1.3).next_to(p6, RIGHT, buff=0.15)
+        arr4 = Arrow3D(p6, p5 + RIGHT*0.1, resolution=(10, 8),
                        thickness=0.02).set_z_index(5)
-        p7=origin-dirx+diry+dirz+OUT*0.1
-        p8=p7+DOWN*0.7+LEFT*0.1
+        p7=origin+dirx-diry+dirz+OUT*0.1
+        p8=p7+UP*0.2+RIGHT*2
         eq9_1=MathTex(r'-\partial_3\partial_2\partial_1f({})'.format(name),
-                    r'=-\delta({}_3-1)\delta({}_2-1)\delta({}_1+1)'.format(name, name, name), font_size=35).next_to(p8, DOWN, buff=0).set_z_index(100)
-        arr4_1 = Arrow3D(p8+LEFT*1.5, p7, resolution=(10, 8),
+                    r'=-\delta({}_3+1)\delta({}_2-1)\delta({}_1-1)'.format(name, name, name), font_size=35, stroke_width=1.3).next_to(p8, RIGHT, buff=0.15).shift(UP*0.05).set_z_index(100)
+        arr4_1 = Arrow3D(p8, p7 + RIGHT * 0.1, resolution=(10, 8),
                        thickness=0.02).set_z_index(5)
 
         self.add(ax, cube, eqx, eqy, eqz)
@@ -2262,7 +2268,9 @@ class Diff3D(ThreeDScene):
             self.add(face1, face2)
         if show_labels:
             self.remove(eq1, arr)
-            self.add(arr2, eq7, arr2_1, eq7_1)
+            self.add(arr2, eq7)
+            if not right_only:
+                self.add(arr2_1, eq7_1)
         if ver == 0:
             self.wait()
         elif ver == 2:
@@ -2274,7 +2282,9 @@ class Diff3D(ThreeDScene):
             self.add(edge1, edge2, edge3, edge4)
         if show_labels:
             self.remove(arr2, eq7, arr2_1, eq7_1)
-            self.add(arr3, eq8, arr3_1, eq8_1)
+            self.add(arr3, eq8)
+            if not right_only:
+                self.add(arr3_1, eq8_1)
         if ver == 0:
             self.wait()
         elif ver == 3:
@@ -2287,13 +2297,18 @@ class Diff3D(ThreeDScene):
 
         if show_labels:
             self.remove(arr3, eq8, arr3_1, eq8_1)
-            self.add(eq9, arr4, eq9_1, arr4_1)
+            self.add(eq9, arr4)
+            if not right_only:
+                self.add(eq9_1, arr4_1)
 
         if ver == 0:
             self.wait()
 
     def construct(self):
         # self.do_surrounds()
+#        cam = ThreeDCamera(default_distance=10)
+#        cam.pixel_array
+
         self.do_anim(name=self.name, show_labels=self.show_labels, right_only=self.right_only, ver=self.ver)
 
 
@@ -2458,7 +2473,7 @@ class Diff3DZv4_NL(Diff3DZv1_NL):
     ver = 4
 
 
-class Diff3DZPosv1(Diff3DZv1_NL):
+class Diff3DZPosv1(Diff3DZv1):
     """
     image of f(z) = I([-1,1]^3), on z > 0
     """
@@ -2551,5 +2566,5 @@ class SubMatrix(Scene):
         self.wait()
 
 if __name__ == "__main__":
-    with tempconfig({"quality": "low_quality", "preview": True, 'fps': 15}):
-        MGFDiffExample().render()
+    with tempconfig({"quality": "high_quality", "preview": True, 'fps': 15}):
+        Diff3Dv1().render()
