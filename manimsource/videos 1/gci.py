@@ -1362,12 +1362,10 @@ class MGFDiff(MGF):
 
         return eq1, eq2, eq0, box, box2
 
-
     def construct(self):
         eq1, eq2, eq0, box, box2 = self.get_eqs()
-        self.add(eq1, eq2, eq0, box2)
-        self.wait()
-        return
+#        self.add(eq1, eq2, eq0, box2)
+#        self.wait()
 #        eq0 = MathTex(*self.eqstr, font_size=DEFAULT_FONT_SIZE*0.9).set_z_index(1)
 #        eq0.next_to(eq1, DOWN, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFFER * 0.8)
         p0 = eq0.get_bottom() * UP + DOWN * 0.2
@@ -1406,6 +1404,11 @@ class MGFDiff(MGF):
         eq11.next_to(eq9[1], ORIGIN, submobject_to_align=eq11[1])
         eq12 = Tex(r'Invertability of MGF/Laplace transforms:\\ can replace $e^{-\lambda\cdot X}$ by $f(X)$', color=BLUE).set_z_index(1)
         eq12.next_to(eq11[2], UP, coor_mask=UP)
+        pos1 = eq9[0][6:11].get_bottom()
+        pos2 = eq9[2][-6:-1].get_bottom()
+        arr1 = Arrow(pos1 + DOWN*1.7, pos1, color=RED, stroke_width=10)
+        arr2 = Arrow(pos2 + DOWN*1.7, pos2, color=RED, stroke_width=10)
+
 
         self.play(LaggedStart(ReplacementTransform((eq1[0][:-1]+eq1[0][-1] + eq1[1][:]).copy(),
                                        eq3[0][4:] + eq3[1][0] + eq3[2][4:]),
@@ -1448,7 +1451,7 @@ class MGFDiff(MGF):
                   FadeIn(eq9[2][13], eq9[2][15]))
         self.play(FadeIn(eq10))
         self.wait(0.1)
-        self.play(FadeIn(eq12))
+        self.play(FadeIn(eq12, arr1, arr2), FadeOut(eq10))
         self.wait(0.1)
         self.remove(eq3[0][10], eq9[2][21])
         self.play(ReplacementTransform(eq3[0][:6] + eq3[0][-1] + scale_to_obj(eq11[0][8].copy(), eq3[0][10]) + eq3[1],
@@ -1459,11 +1462,11 @@ class MGFDiff(MGF):
                   FadeIn(eq11[0][6:8] + eq11[0][9]),
                   FadeOut(eq9[2][17:21]),
                   FadeIn(eq11[2][17:19], eq11[2][20]),
-                  FadeOut(eq10),
                   run_time=1.5)
         self.play(ReplacementTransform(box, box2),
                   ReplacementTransform(eq11, eq0),
                   FadeOut(eq12),
+                  FadeOut(arr1, arr2, rate_func=rush_from),
                   run_time=2)
         self.wait()
 
@@ -1767,6 +1770,10 @@ class MGFDiffZ(MGFDiff):
         eq22.next_to(eq19[1], ORIGIN, submobject_to_align=eq22[1])
         eq23 = Tex(r'Invertability of MGF/Laplace transforms:\\ can replace $e^{-\lambda\cdot Z}$ by $f(Z)$', color=BLUE).set_z_index(1)
         eq23.next_to(eq22[2], UP, coor_mask=UP, buff=0.05)
+        pos1 = eq22[0][6:11].get_bottom()
+        pos2 = eq22[2][-7:-1].get_bottom()
+        arr1 = Arrow(pos1 + DOWN*1.7, pos1, color=RED, stroke_width=10)
+        arr2 = Arrow(pos2 + DOWN*1.7, pos2, color=RED, stroke_width=10)
         eq24 = MathTex(r'\frac{d}{dt}\mathbb E[f(Z)]', r'=',
                       r'-\frac12\sum_{S}\frac{d}{dt}\lvert C_S\rvert\,\mathbb E[(-\partial)^Sf(\tilde Z)]')
         eq24.next_to(eq22[1], ORIGIN, submobject_to_align=eq24[1])
@@ -1878,7 +1885,7 @@ class MGFDiffZ(MGFDiff):
         self.play(ReplacementTransform(eq19[:2] + eq19[2][:16] + eq19[2][27:],
                                        eq22[:2] + eq22[2][:16] + eq22[2][21:]))
         self.wait(0.1)
-        self.play(FadeIn(eq23), FadeOut(eq20, eq21))
+        self.play(FadeIn(eq23, arr1, arr2), FadeOut(eq20, eq21))
         self.wait(0.1)
         self.play(ReplacementTransform(eq22[0][:6] + eq22[0][-1] + eq22[0][-2] + eq22[1],
                                        eq24[0][:6] + eq24[0][-1] + eq24[0][-3] + eq24[1]),
@@ -1897,6 +1904,7 @@ class MGFDiffZ(MGFDiff):
                                        eq26[1][3:7] + eq26[1][7:]),
                   FadeIn(eq26[0], eq26[1][:3]),
                   FadeOut(eq23),
+                  FadeOut(arr1, arr2, rate_func=rush_from),
                   run_time=2)
         self.wait(0.1)
         self.play(ReplacementTransform(eq25, eq30),
