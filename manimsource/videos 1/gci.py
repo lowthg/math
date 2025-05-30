@@ -2022,6 +2022,13 @@ class MGFDiffZDeterminants(MGFDiffZ):
                   ).set_z_index(1)
 
         ax.to_edge(DR, buff=0.1).move_to(eq12 ,coor_mask=RIGHT).shift(LEFT)
+        lines = []
+        lineargs = {'stroke_width': 1, 'stroke_color': WHITE, 'stroke_opacity': 0.3, 'dash_length': 0.01, 'dashed_ratio': 0.3}
+        coords = [1/3, 2/3]
+        coords = [0.2, 0.4, 0.6, 0.8]
+        for x in coords + [-y for y in coords]:
+            lines.append(DashedLine(ax.coords_to_point(-1, x), ax.coords_to_point(1, x), **lineargs).set_z_index(1))
+            lines.append(DashedLine(ax.coords_to_point(x, -1), ax.coords_to_point(x, 1), **lineargs).set_z_index(1))
         set1 = Rectangle(width=xlen*0.2, height=xlen*0.2, fill_color=RED, stroke_color=RED,
                          fill_opacity=0.8, stroke_opacity=1).set_z_index(2)
         set1.move_to(ax.coords_to_point(0, 0))
@@ -2063,7 +2070,7 @@ class MGFDiffZDeterminants(MGFDiffZ):
         self.play(FadeIn(eq11))
         self.wait(0.1)
         self.play(VGroup(eq10, eq11).animate.to_edge(LEFT),
-                  FadeIn(eq12, ax, set1, eq14, box3, eq15, arr1),
+                  FadeIn(eq12, ax, set1, eq14, box3, eq15, arr1, *lines),
                   run_time=2)
         self.wait(0.1)
         self.play(ReplacementTransform(eq12[:2] + eq12[2][-9:],
@@ -2077,6 +2084,13 @@ class MGFDiffZDeterminants(MGFDiffZ):
         self.wait(0.1)
         self.play(Create(crv2), run_time=1)
         self.play(FadeIn(eq17), run_time=0.5)
+        self.wait()
+
+class MGFDiffZDeterminants2(MGFDiffZDeterminants):
+    def construct(self):
+        eq1, eq2, eq3, eq4, eq5, box1, box2, eq6 = self.get_eqs()
+
+        self.add(eq1, eq2, eq3, eq4, eq5, box1, box2, eq6)
         self.wait()
 
 def indicator_func(r, h=1.):
