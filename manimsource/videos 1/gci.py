@@ -2,6 +2,9 @@ from manim import *
 import numpy as np
 import math
 import sys
+
+from networkx.classes import edges
+
 sys.path.append('../../')
 import manimhelper as mh
 
@@ -1977,6 +1980,103 @@ class MGFDiffZExample(MGFDiffZ):
 
         self.wait(0.1)
         self.play(FadeOut(eq7, eq11, rate_func=linear))
+        self.wait()
+
+
+class MGFDiffZDeterminants(MGFDiffZ):
+    def get_eqs(self):
+        eq1, eq2, eq3, eq4, eq5, box1 = MGFDiffZ.get_eqs(self, animate=False)
+        box2 = SurroundingRectangle(box1, fill_opacity=0.4, fill_color=BLACK, stroke_opacity=0, buff=0.05).set_z_index(1)
+        eq9 = Tex(r'\underline{Is $\lvert C_S\rvert$ decreasing in $t$?}', color=BLUE, stroke_width=1.1)
+        eq9.next_to(box1.get_bottom(), DOWN, buff=0.1)
+        return eq1, eq2, eq3, eq4, eq5, box1, box2, eq9
+
+    def construct(self):
+        eq1, eq2, eq3, eq4, eq5, box1, box2, eq9 = self.get_eqs()
+
+        pos1 = box1.get_bottom() * 0.6 + mh.pos(DOWN) * 0.4
+
+        eq6 = MathTex(r'c_S', r'=', r'-\frac12\frac{d}{dt}\lvert C_S\rvert').set_z_index(2)
+        eq7 = Tex(r'Is $c_S$ positive?')
+        eq8 = Tex(r'\underline{Is $\lvert C_S\rvert$ decreasing in $t$?}')
+        eq8[0][-1].set_opacity(0)
+
+        eq6.move_to(pos1)
+        eq7.next_to(eq6, DOWN)
+        eq8.next_to(eq7, DOWN)
+
+        eq10 = MathTex(r'C_S', r'=', r'{\rm Cov}(X_S)')
+        eq11 = MathTex(r'p_{X_S}(x)', r'=', r'\frac{1}{\sqrt{2\pi\lvert C_S\rvert}}e^{-\frac12 x^TC_S^{-1}x')
+        eq12 = MathTex(r'\mathbb P(X_S\in A)', r'\approx', r'p_{X_S}(0){\rm volume}(A)')
+        eq13 = MathTex(r'\mathbb P(X_S\in A)', r'\approx', r'\frac{ {\rm volume}(A)}{\sqrt{2\pi\lvert C_S\rvert} }')
+        eq10.move_to(pos1)
+        eq11.next_to(eq10, DOWN)
+        mh.align_sub(eq12, eq12[1], eq10[1]).to_edge(RIGHT)
+        mh.align_sub(eq13, eq13[1], eq12[1]).move_to(eq12, coor_mask=RIGHT)
+
+        xlen = 2
+        ax = Axes(x_range=[-1, 1], y_range=[-1, 1], x_length=xlen, y_length=xlen,
+                  axis_config={'color': WHITE, 'stroke_width': 3, 'include_ticks': False,
+                               "include_tip": False
+                               },
+                  ).set_z_index(1)
+
+        ax.to_edge(DR, buff=0.1).move_to(eq12 ,coor_mask=RIGHT).shift(LEFT)
+        set1 = Rectangle(width=xlen*0.2, height=xlen*0.2, fill_color=RED, stroke_color=RED,
+                         fill_opacity=0.8, stroke_opacity=1).set_z_index(2)
+        set1.move_to(ax.coords_to_point(0, 0))
+        eq14 = MathTex(r'A', color=RED).next_to(set1, UR, buff=0.05).set_z_index(2)
+        box3 = SurroundingRectangle(ax, fill_color=ManimColor(WHITE.to_rgb()*0.1), fill_opacity=1,
+                                    stroke_color=GREY, stroke_opacity=1, stroke_width=2, buff=-0.0)
+        eq15 = Tex('tiny set', font_size=20).move_to(ax.coords_to_point(2, -0.5))
+        arr1 = Arrow(eq15.get_left(), ax.coords_to_point(0.2, -0.1), stroke_width=2, buff=0.05,
+                     max_tip_length_to_length_ratio=0.1)
+
+        crv1 = mh.circle_eq(eq13[0])
+        eq16 = Tex(r'increasing', color=RED, font_size=40).next_to(eq13[0].get_corner(UR), UP, buff=0.3)
+        crv2 = mh.circle_eq(eq13[2][-1]).shift(LEFT*0.2)
+        eq17 = Tex(r'decreasing', color=RED, font_size=40).next_to(crv2, DOWN, buff=0.15)
+
+        self.add(eq1, eq2, eq3, eq4, eq5, box1, box2)
+
+        gp1 = VGroup(eq4, eq5[1])
+        gp1.set_z_index(2).set_opacity(0.6)
+        self.play(gp1.animate.set_opacity(1))
+        eq5_1 = eq5[1].copy()
+        self.play(ReplacementTransform(eq5_1[:2] + eq5_1[2] + eq5_1[7:] + eq5_1[3],
+                                       eq6[0][:] + eq6[1][0] + eq6[2][4:] + eq6[2][0]),
+                  mh.stretch_replace(eq5_1[4:7], eq6[2][1:4]),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(FadeIn(eq7))
+        self.wait(0.1)
+        self.play(FadeIn(eq8))
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq8[0], eq9[0]),
+                  FadeOut(eq6, eq7),
+                  gp1.animate.set_opacity(0.6),
+                  run_time=2)
+#        self.add(eq9, index_labels(eq9[0]))
+        self.wait(0.1)
+        self.play(FadeIn(eq10))
+        self.wait(0.1)
+        self.play(FadeIn(eq11))
+        self.wait(0.1)
+        self.play(VGroup(eq10, eq11).animate.to_edge(LEFT),
+                  FadeIn(eq12, ax, set1, eq14, box3, eq15, arr1),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq12[:2] + eq12[2][-9:],
+                                       eq13[:2] + eq13[2][:9]),
+                  FadeOut(eq12[2][:-9]),
+                  FadeIn(eq13[2][9:]),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(Create(crv1), run_time=1)
+        self.play(FadeIn(eq16), run_time=0.5)
+        self.wait(0.1)
+        self.play(Create(crv2), run_time=1)
+        self.play(FadeIn(eq17), run_time=0.5)
         self.wait()
 
 def indicator_func(r, h=1.):
