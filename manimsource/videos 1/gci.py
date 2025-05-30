@@ -1918,6 +1918,67 @@ class MGFDiffZ(MGFDiff):
         self.get_eqs(animate=True)
 
 
+class MGFDiffZExample(MGFDiffZ):
+    def construct(self):
+        eq1, eq2, eq3, eq4, eq5, box1 = MGFDiffZ.get_eqs(self, animate=False)
+        box2 = SurroundingRectangle(box1, fill_opacity=0.4, fill_color=BLACK, stroke_opacity=0, buff=0.05).set_z_index(1)
+
+
+        pos1 = box1.get_bottom()
+        eq6 = MathTex(r'f', r'=', r'I([-1,1]^3)')
+        eq7 = MathTex(r'f(z)', r'=', r'I(\max_i\lvert z_i\rvert\le1)')
+        eq9 = MathTex(r'\frac{d}{dt}\mathbb P(\max Z_i\le 1)', r'=', r'\frac{d}{dt}\mathbb E[f(Z)]')
+        eq10 = MathTex(r'\frac{d}{dt}\mathbb P(\max Z_i\le 1)', r'=', r'\sum_Sc_S\mathbb E[(-\partial)^Sf(\tilde Z)]')
+        eq11 = Tex(r'$(-\partial)^Sf(\tilde Z)$', r' is positive?')
+
+
+        eq9.to_edge(LEFT, buff=0.1)
+        eq6.move_to(eq9, coor_mask=RIGHT)
+        mh.align_sub(eq7, eq7[1], eq6[1])
+        eq9.next_to(eq7, DOWN)
+        VGroup(eq6, eq7, eq9).move_to(pos1 * 0.6 + config.frame_y_radius * DOWN * 0.4, coor_mask=UP)
+        mh.align_sub(eq10, eq10[1], eq9[1])
+        eq11.next_to(eq10, DOWN)
+        mh.align_sub(eq11, eq11[1][-9:-1], eq10[2][-11:-1], coor_mask=RIGHT)
+
+        arr1 = Arrow(eq11[1][-9:-1].get_top(), eq10[2][-11:-1].get_bottom(),
+                     stroke_width=6, color=RED, buff=0, max_stroke_width_to_length_ratio=10)
+
+        eq12 = eq7.copy().next_to(box1, DOWN).to_edge(LEFT, buff=0.15)
+        eq13 = eq11.copy().next_to(eq12, DOWN).align_to(eq12, LEFT)
+
+        self.add(eq1, eq2, eq3, eq4, eq5, box1, box2)
+        self.add(eq6)
+        self.wait(0.1)
+        self.play(LaggedStart(AnimationGroup(ReplacementTransform(eq6[0][:1] + eq6[1] + eq6[2][:2] + eq6[2][-1],
+                                       eq7[0][:1] + eq7[1] + eq7[2][:2] + eq7[2][-1]),
+                  FadeIn(eq7[0][1:], shift=eq7[0][0].get_center() - eq6[0][0].get_center())),
+                  AnimationGroup(FadeOut(eq6[2][2:-1]),
+                  FadeIn(eq7[2][2:-1], rate_func=linear)), lag_ratio=0.3),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeIn(eq9[0][4:], eq9[1], eq9[2][4:]))
+        self.wait(0.1)
+        self.play(FadeIn(eq9[0][:4], eq9[2][:4]))
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq9[:2] + eq4[2].copy().set_z_index(2),
+                                       eq10[:2] + eq10[2]),
+                  FadeOut(eq9[2]),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(FadeIn(eq11, arr1, rate_func=linear))
+        self.wait(0.1)
+        self.play(Transform(eq7, eq12), Transform(eq11, eq13),
+                  FadeOut(arr1, eq10, rate_func = lambda t: min(1, t*3)),
+                  run_time=2)
+        # self.play(ReplacementTransform(eq10[2][-11:-1].copy(), eq11[0][:]),
+        #           FadeIn(eq11[1]),
+        #           run_time=2)
+
+        self.wait(0.1)
+        self.play(FadeOut(eq7, eq11, rate_func=linear))
+        self.wait()
+
 def indicator_func(r, h=1.):
     """
     smoothed indicator of [-1,1], height h
@@ -2573,6 +2634,10 @@ class SubMatrix(Scene):
 
         self.wait()
 
+class ZGZ(Scene):
+    def construct(self):
+        eq1 = MathTex(r'Z_i\ge0', font_size=80)
+        self.add(eq1)
 if __name__ == "__main__":
     with tempconfig({"quality": "high_quality", "preview": True, 'fps': 15}):
         Diff3Dv1().render()
