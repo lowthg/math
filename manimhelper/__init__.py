@@ -6,7 +6,10 @@ import numpy as np
 import math
 
 
-def align_sub(source, subobject, target, **kwargs):
+def pos(dir=ORIGIN):
+    return RIGHT * config.frame_x_radius * dir[0] + UP * config.frame_y_radius * dir[1]
+
+def align_sub(source, subobject, target, **kwargs) -> Mobject:
     """
     move object to align subobject with target
     """
