@@ -9,12 +9,17 @@ import math
 def pos(dir=ORIGIN):
     return RIGHT * config.frame_x_radius * dir[0] + UP * config.frame_y_radius * dir[1]
 
-def align_sub(source, subobject, target, **kwargs) -> Mobject:
+def align_sub(source, subobject, target, direction=ORIGIN, **kwargs) -> Mobject:
     """
     move object to align subobject with target
     """
-    return source.next_to(target, ORIGIN, submobject_to_align=subobject, **kwargs)
+    return source.next_to(target, direction, submobject_to_align=subobject, **kwargs)
 
+def diff(source: Mobject, target: Mobject):
+    """
+    get difference of positions from source to target
+    """
+    return target.get_center() - source.get_center()
 
 def fade_replace(obj1, obj2, **kwargs):
     """
@@ -36,6 +41,24 @@ def stretch_replace(source: Mobject, target: Mobject, **kwargs):
     source2 = target.copy().move_to(source).stretch_to_fit_height(h1).stretch_to_fit_width(w1).set_opacity(0)
     target2 = source.copy().move_to(target).stretch_to_fit_height(h2).stretch_to_fit_width(w2).set_opacity(0)
     return ReplacementTransform(VGroup(source, source2), VGroup(target2, target), **kwargs)
+
+
+def transform(*args, **kwargs):
+    """
+    for args a1, b1, a2, b2,...
+    Transform a1 to b1, a2 to b2, etc
+    """
+    assert(len(args) % 2 == 0)
+    return Transform(VGroup(*args[0::2]), VGroup(*args[1::2]), **kwargs)
+
+
+def rtransform(*args, **kwargs):
+    """
+    for args a1, b1, a2, b2,...
+    ReplacementTransform a1 to b1, a2 to b2, etc
+    """
+    assert(len(args) % 2 == 0)
+    return ReplacementTransform(VGroup(*args[0::2]), VGroup(*args[1::2]), **kwargs)
 
 
 def circle_eq(eq) -> ParametricFunction:

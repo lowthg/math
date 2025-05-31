@@ -2097,7 +2097,7 @@ class MGFDiffZDeterminants2(MGFDiffZDeterminants):
         cs_str = r"\begin{pmatrix} C'_1 & tA' \\ tA'^T & C'_2 \end{pmatrix}"
         m_str = r'\begin{pmatrix} U & 0 \\ 0 & V \end{pmatrix}'
         mt_str = r'\begin{pmatrix} U^T & 0 \\ 0 & V^T \end{pmatrix}'
-        c2_str = r"\begin{pmatrix} I_k & tA' \\ tA'^T I_{n-k}\end{pmatrix}"
+        c2_str = r"\begin{pmatrix} I_k & tA' \\ tA'^T & I_{n-k}\end{pmatrix}"
         eq7 = MathTex(r'C', r'=', c_str).move_to(pos1)
         eq8 = MathTex(r'C_S', r'=', cs_str).move_to(pos1)
         eq9 = Tex(r'where ', r"$C'_1, C'_2, A'$", r' are submatrices of ', r'$C_1, C_2, A$')
@@ -2108,6 +2108,7 @@ class MGFDiffZDeterminants2(MGFDiffZDeterminants):
         eq13 = MathTex(r"\begin{pmatrix} UC'_1 & tUA' \\ tVA'^T & VC'_2 \end{pmatrix}")[0]
         eq14 = MathTex(r"\begin{pmatrix} UC'_1U^T & tUA'V^T \\ tVA'^TU^T & VC'_2V^T \end{pmatrix}")[0]
         eq15 = MathTex(r'MC_SM^T', r'=', c2_str)
+        eq16 = Tex(r"replace $UA'V^T$ by $A'$ (just a renaming of variables)")
 
         # eq7.next_to(eq6, DOWN)
         mh.align_sub(eq8, eq8[1], eq7[1])
@@ -2121,6 +2122,7 @@ class MGFDiffZDeterminants2(MGFDiffZDeterminants):
         mh.align_sub(eq14, eq14[-1], eq13[-1])
         mh.align_sub(eq15, eq15[1], eq12[1])
         mh.align_sub(eq15, eq15[2][0], eq14[0], coor_mask=RIGHT)
+        eq16.next_to(eq15, DOWN).move_to(ORIGIN, coor_mask=RIGHT)
 
         self.wait(0.1)
         self.play(FadeIn(eq7), rate_func=linear)
@@ -2179,6 +2181,25 @@ class MGFDiffZDeterminants2(MGFDiffZDeterminants):
             FadeOut(eq12[4][0], eq12[4][3:5] + eq12[4][-1]),
             run_time=2)
         self.play(ReplacementTransform(eq12[:2], eq15[:2]), run_time=1.5)
+        self.wait(0.1)
+        eq15_1 = eq15.copy().move_to(ORIGIN, coor_mask=RIGHT)
+        mh.align_sub(eq15[2][1:6], eq15[2][4], eq14[9])
+        eq15[2][1:3].move_to(eq14[1:7], coor_mask=RIGHT)
+        mh.align_sub(eq15[2][6:14], eq15[2][7], eq14[15])
+        eq15[2][10:14].move_to(eq14[20:26], coor_mask=RIGHT)
+        self.play(FadeOut(eq14[1:7], eq14[20:26]),
+                  FadeIn(eq15[2][1:3], eq15[2][10:14]))
+        self.wait(0.1)
+        self.play(FadeOut(eq10, eq11), FadeIn(eq16), run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeOut(eq14[8], eq14[11:13], eq14[14], eq14[18:20]),
+                  mh.rtransform(eq14[7], eq15[2][3], eq14[9:11], eq15[2][4:6],
+                                eq14[13], eq15[2][6], eq14[15:18], eq15[2][7:10]),
+                  )
+        self.play(mh.rtransform(eq14[0], eq15[2][0].move_to(eq15_1[2][0]),
+                                eq14[-1], eq15[2][-1].move_to(eq15_1[2][-1])),
+                  mh.transform(eq15[2][1:-1], eq15_1[2][1:-1], eq15[:2], eq15_1[:2]),
+                  run_time=1.5)
 
         self.wait()
 
