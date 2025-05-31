@@ -2120,6 +2120,16 @@ class MGFDiffZDeterminants2(MGFDiffZDeterminants):
         eq22 = MathTex(r'NMC_SM^TN^T', r'=',
                        r"\begin{pmatrix} I_k - t^2A'A'^T & 0 \\ "
                        r"tA'^TI_{n-k}-tA'^T & I_{n-k} \end{pmatrix}", nt_str)
+        eq23 = MathTex(r'NMC_SM^TN^T', r'=',
+                       r"\begin{pmatrix} I_k - t^2A'A'^T & 0 \\ "
+                       r"0 & I_{n-k} \end{pmatrix}")
+        eq24 = MathTex(r'\lvert NMC_SM^TN^T\rvert', r'=', r"\lvert I_k-t^2A'A'^T\rvert").next_to(eq23, DOWN)
+        eq25 = MathTex(r'\lvert N\rvert\,\lvert M\rvert\,\lvert C_S\rvert\,\lvert M^T\rvert\,\lvert N^T\rvert',
+                       r'=', r"\lvert I_k-t^2A'A'^T\rvert").next_to(eq23, DOWN)
+        eq26 = MathTex(r'\lvert N\rvert^2\,\lvert M\rvert^2\,\lvert C_S\rvert',
+                       r'=', r"\lvert I_k-t^2A'A'^T\rvert").next_to(eq23, DOWN)
+        eq27 = MathTex(r'\lvert N\rvert^2\,\lvert M\rvert^2\,\lvert C_S\rvert',
+                       r'=', r"\prod_i(1-t^2\alpha_i^2)").next_to(eq23, DOWN)
 
         # eq7.next_to(eq6, DOWN)
         mh.align_sub(eq8, eq8[1], eq7[1])
@@ -2141,6 +2151,11 @@ class MGFDiffZDeterminants2(MGFDiffZDeterminants):
         eq21[3][22:26].align_to(eq21[3][1], LEFT)
         eq21[3][26:30].align_to(eq21[3][11], LEFT)
         mh.align_sub(eq22, eq22[1], eq21[1]).move_to(ORIGIN, coor_mask=RIGHT)
+        mh.align_sub(eq23, eq23[1], eq22[1]).move_to(ORIGIN, coor_mask=RIGHT)
+        eq24.next_to(eq23, DOWN)
+        mh.align_sub(eq25, eq25[1], eq24[1])
+        mh.align_sub(eq26, eq26[1], eq25[1])
+        mh.align_sub(eq27, eq27[1], eq26[1])
 
         self.wait(0.1)
         self.play(FadeIn(eq7), rate_func=linear)
@@ -2259,9 +2274,57 @@ class MGFDiffZDeterminants2(MGFDiffZDeterminants):
         self.wait(0.1)
         self.play(mh.rtransform(
             eq22[2][25:29].copy(), eq22[2][16:20],
-            eq22[3][4:9], eq22[2][20:25]
+            eq22[3][4:9], eq22[2][20:25]),
+            FadeOut(eq22[3][:4], eq22[3][9:]),
+        run_time=2)
+        self.wait(0.1)
+        self.play(mh.rtransform(
+            eq22[:2], eq23[:2], eq22[2][:12], eq23[2][:12],
+            eq22[2][25:], eq23[2][13:]
         ),
-        FadeOut(eq22[3][:4], eq22[3][9:]))
+            mh.fade_replace(eq22[2][12:25], eq23[2][12]),
+        run_time=2)
+        self.wait(0.1)
+        self.play(FadeOut(eq18, eq19))
+        self.wait(0.1)
+        self.play(FadeIn(eq24),
+                  run_time=1)
+        self.wait(0.1)
+        self.play(mh.rtransform(
+            eq24[0][:2], eq25[0][:2], eq24[0][2], eq25[0][4],
+            eq24[0][3:5], eq25[0][7:9], eq24[0][5:7], eq25[0][11:13],
+            eq24[0][7:], eq25[0][15:], eq24[1:], eq25[1:]
+        ),
+        FadeIn(eq25[0][2], shift=mh.diff(eq24[0][1], eq25[0][1])),
+        FadeIn(eq25[0][3], eq25[0][5], shift=mh.diff(eq24[0][2], eq25[0][4])),
+        FadeIn(eq25[0][6], eq25[0][9], shift=mh.diff(eq24[0][3], eq25[0][7])),
+        FadeIn(eq25[0][10], eq25[0][13], shift=mh.diff(eq24[0][5], eq25[0][11])),
+        FadeIn(eq25[0][14], shift=mh.diff(eq24[0][7], eq25[0][15])))
+        self.wait(0.1)
+        self.play(mh.rtransform(
+            eq25[0][:3], eq26[0][:3], eq25[0][3:6], eq26[0][4:7], eq25[0][6:10], eq26[0][8:12],
+            eq25[1:], eq26[1:]
+        ), mh.rtransform(
+            eq25[0][10:12], eq26[0][4:6], eq25[0][13], eq26[0][6],
+            eq25[0][14:16], eq26[0][:2], eq25[0][17], eq26[0][2]
+        ), FadeOut(eq25[0][12], shift=mh.diff(eq25[0][11], eq26[0][5])),
+        FadeOut(eq25[0][16], shift=mh.diff(eq25[0][15], eq26[0][1])),
+        FadeIn(eq26[0][3], shift=mh.diff(eq25[0][2], eq26[0][2])),
+        FadeIn(eq26[0][7], shift=mh.diff(eq25[0][5], eq26[0][6])))
+        self.wait(0.1)
+        self.play(mh.rtransform(eq26[:2], eq27[:2], eq26[2][3:6], eq27[2][4:7]
+                                ),
+                  mh.fade_replace(eq26[2][0], eq27[2][2]),
+                  mh.fade_replace(eq26[2][1], eq27[2][3], coor_mask=RIGHT),
+                  FadeOut(eq26[2][2], shift=mh.diff(eq26[2][1], eq27[2][3])),
+                  FadeOut(eq26[2][6:8], shift = mh.diff(eq26[2][6], eq27[2][7], coor_mask=RIGHT)),
+                  FadeIn(eq27[2][7:10], shift=mh.diff(eq26[2][6], eq27[2][7], coor_mask=RIGHT)),
+                  FadeOut(eq26[2][8:11], shift = mh.diff(eq26[2][8], eq27[2][7], coor_mask=RIGHT)),
+                  mh.fade_replace(eq26[2][11], eq27[2][10], coor_mask=RIGHT),
+                  FadeIn(eq27[2][:2], shift=mh.diff(eq26[2][0], eq27[2][2], coor_mask=RIGHT)),
+                  #                  FadeOut(eq26[2][6:8], shift=mh.diff(eq26[2][6], eq27[2][9], coor_mask=RIGHT)),
+#                  mh.fade_replace(eq26[2][8:10], eq27[2][7:9], coor_mask=RIGHT),
+                  run_time=1.5)
 
         self.wait()
 
