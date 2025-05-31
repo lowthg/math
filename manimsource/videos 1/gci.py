@@ -1988,7 +1988,7 @@ class MGFDiffZDeterminants(MGFDiffZ):
         eq1, eq2, eq3, eq4, eq5, box1 = MGFDiffZ.get_eqs(self, animate=False)
         box2 = SurroundingRectangle(box1, fill_opacity=0.4, fill_color=BLACK, stroke_opacity=0, buff=0.05).set_z_index(1)
         eq9 = Tex(r'\underline{Is $\lvert C_S\rvert$ decreasing in $t$?}', color=BLUE, stroke_width=1.1)
-        eq9.next_to(box1.get_bottom(), DOWN, buff=0.1)
+        eq9.next_to(box1.get_bottom(), DOWN, buff=0.15)
         return eq1, eq2, eq3, eq4, eq5, box1, box2, eq9
 
     def construct(self):
@@ -2091,6 +2091,95 @@ class MGFDiffZDeterminants2(MGFDiffZDeterminants):
         eq1, eq2, eq3, eq4, eq5, box1, box2, eq6 = self.get_eqs()
 
         self.add(eq1, eq2, eq3, eq4, eq5, box1, box2, eq6)
+        pos1 = box1.get_bottom() * 0.5 + mh.pos(DOWN) * 0.5
+        pos2 = (eq6.get_bottom() * 0.5 + mh.pos(DOWN) * 0.5) * UP
+        c_str = r'\begin{pmatrix} C_1 & tA \\ tA^T & C_2 \end{pmatrix}'
+        cs_str = r"\begin{pmatrix} C'_1 & tA' \\ tA'^T & C'_2 \end{pmatrix}"
+        m_str = r'\begin{pmatrix} U & 0 \\ 0 & V \end{pmatrix}'
+        mt_str = r'\begin{pmatrix} U^T & 0 \\ 0 & V^T \end{pmatrix}'
+        c2_str = r"\begin{pmatrix} I_k & tA' \\ tA'^T I_{n-k}\end{pmatrix}"
+        eq7 = MathTex(r'C', r'=', c_str).move_to(pos1)
+        eq8 = MathTex(r'C_S', r'=', cs_str).move_to(pos1)
+        eq9 = Tex(r'where ', r"$C'_1, C'_2, A'$", r' are submatrices of ', r'$C_1, C_2, A$')
+        eq10 = Tex(r"Choose matrices $U,V$ such that $UC'_1U^T=I_k$ and $VC'_2V^T=I_{n-k}$",
+                   font_size=40)
+        eq11 = MathTex(r'{\rm set\ }', r'M', r'=', m_str)
+        eq12 = MathTex(r'MC_SM^T', r'=', m_str, cs_str, mt_str)
+        eq13 = MathTex(r"\begin{pmatrix} UC'_1 & tUA' \\ tVA'^T & VC'_2 \end{pmatrix}")[0]
+        eq14 = MathTex(r"\begin{pmatrix} UC'_1U^T & tUA'V^T \\ tVA'^TU^T & VC'_2V^T \end{pmatrix}")[0]
+        eq15 = MathTex(r'MC_SM^T', r'=', c2_str)
+
+        # eq7.next_to(eq6, DOWN)
+        mh.align_sub(eq8, eq8[1], eq7[1])
+        eq9.next_to(eq8, DOWN)
+        eq10.next_to(eq8, DOWN)
+        # eq11.next_to(eq10, DOWN)
+        mh.align_sub(eq11, eq11[1:], eq10, direction=DOWN)
+        gp1 = VGroup(eq8.copy(), eq10.copy(), eq11).move_to(pos2)
+        mh.align_sub(eq12, eq12[1], gp1[0][1]).move_to(ORIGIN, coor_mask=RIGHT)
+        mh.align_sub(eq13, eq13[0], eq12[3][0])
+        mh.align_sub(eq14, eq14[-1], eq13[-1])
+        mh.align_sub(eq15, eq15[1], eq12[1])
+        mh.align_sub(eq15, eq15[2][0], eq14[0], coor_mask=RIGHT)
+
+        self.wait(0.1)
+        self.play(FadeIn(eq7), rate_func=linear)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq7[0][:1] + eq7[1] + eq7[2][:2] + eq7[2][2:5] + eq7[2][5:7] +
+                                       eq7[2][7:9] + eq7[2][9:],
+                                       eq8[0][:1] + eq8[1] + eq8[2][:2] + eq8[2][3:6] + eq8[2][7:9] +
+                                       eq8[2][10:12] + eq8[2][13:]),
+                  FadeIn(eq8[0][1]),
+                  FadeIn(eq8[2][2], eq8[2][6], eq8[2][9], eq8[2][12]))
+        self.wait(0.1)
+        self.play(FadeIn(eq9))
+        self.wait(0.1)
+        self.play(FadeOut(eq9))
+        self.wait(0.1)
+        self.play(FadeIn(eq10))
+        self.wait(0.1)
+        self.play(FadeIn(gp1[2], target_position=eq11),
+                  Transform(eq8, gp1[0]),
+                  Transform(eq10, gp1[1]))
+        eq11 = gp1[2]
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq8[0][:] + eq8[1] + eq8[2],
+                                       eq12[0][1:3] + eq12[1] + eq12[3]),
+                  FadeIn(eq12[0][0], eq12[0][3:], shift=mh.diff(eq8[0][:], eq12[0][1:3])),
+                  FadeIn(eq12[2], eq12[4], shift=mh.diff(eq8[2], eq12[3])),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(
+            ReplacementTransform(
+                eq12[3][-1:] + eq12[3][0] + eq12[3][1:5] + eq12[3][5:8] + eq12[3][8:11] + eq12[3][11:14],
+                eq13[-1:] + eq13[0] + eq13[2:6] + eq13[7:10] + eq13[11:14] + eq13[15:18]
+            ),
+            eq12[4].animate.shift(mh.diff(eq12[3][-1], eq13[-1])),
+            run_time=1.5)
+        self.play(
+            ReplacementTransform(
+                eq12[2][1:2] + eq12[2][1].copy() + eq12[2][4] + eq12[2][4].copy(),
+                eq13[1:2] + eq13[6] + eq13[10] + eq13[14]
+            ),
+            FadeOut(eq12[2][0], eq12[2][2:4], eq12[2][-1], shift=mh.diff(eq12[3][0], eq13[0])),
+            run_time=2
+        )
+        self.wait(0.1)
+        self.play(
+            ReplacementTransform(
+                eq13[:5] + eq13[5:9] + eq13[9:14] + eq13[14:18] + eq13[18],
+                eq14[:5] + eq14[7:11] + eq14[13:18] + eq14[20:24] + eq14[26]
+            ),
+            run_time=1)
+        self.play(
+            ReplacementTransform(
+                eq12[4][1:3] + eq12[4][1:3].copy() + eq12[4][5:7] + eq12[4][5:7].copy(),
+                eq14[5:7] + eq14[18:20] + eq14[11:13] + eq14[24:26]
+            ),
+            FadeOut(eq12[4][0], eq12[4][3:5] + eq12[4][-1]),
+            run_time=2)
+        self.play(ReplacementTransform(eq12[:2], eq15[:2]), run_time=1.5)
+
         self.wait()
 
 def indicator_func(r, h=1.):
