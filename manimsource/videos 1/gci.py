@@ -2098,6 +2098,8 @@ class MGFDiffZDeterminants2(MGFDiffZDeterminants):
         m_str = r'\begin{pmatrix} U & 0 \\ 0 & V \end{pmatrix}'
         mt_str = r'\begin{pmatrix} U^T & 0 \\ 0 & V^T \end{pmatrix}'
         c2_str = r"\begin{pmatrix} I_k & tA' \\ tA'^T & I_{n-k}\end{pmatrix}"
+        n_str = r"\begin{pmatrix} I_k & -tA' \\ 0 & I_{n-k}\end{pmatrix}"
+        nt_str = r"\begin{pmatrix} I_k & 0 \\ -tA'^T & I_{n-k}\end{pmatrix}"
         eq7 = MathTex(r'C', r'=', c_str).move_to(pos1)
         eq8 = MathTex(r'C_S', r'=', cs_str).move_to(pos1)
         eq9 = Tex(r'where ', r"$C'_1, C'_2, A'$", r' are submatrices of ', r'$C_1, C_2, A$')
@@ -2109,6 +2111,15 @@ class MGFDiffZDeterminants2(MGFDiffZDeterminants):
         eq14 = MathTex(r"\begin{pmatrix} UC'_1U^T & tUA'V^T \\ tVA'^TU^T & VC'_2V^T \end{pmatrix}")[0]
         eq15 = MathTex(r'MC_SM^T', r'=', c2_str)
         eq16 = Tex(r"replace $UA'V^T$ by $A'$ (just a renaming of variables)")
+        eq18 = Tex(r"subtract $tA'$ times the second row from the first")
+        eq19 = MathTex(r"{\rm by\  multiplying\ with\ }", r'N=', n_str)
+        eq20 = MathTex(r'NMC_SM^T', r'=', n_str, c2_str)
+        eq21 = MathTex(r'NMC_SM^T', r'=', n_str,
+                       r"\begin{pmatrix} I_k - tA'tA'^T & tA' - tA'I_{n-k} \\ "
+                       r"tA'^T & I_{n-k} \end{pmatrix}")
+        eq22 = MathTex(r'NMC_SM^TN^T', r'=',
+                       r"\begin{pmatrix} I_k - t^2A'A'^T & 0 \\ "
+                       r"tA'^TI_{n-k}-tA'^T & I_{n-k} \end{pmatrix}", nt_str)
 
         # eq7.next_to(eq6, DOWN)
         mh.align_sub(eq8, eq8[1], eq7[1])
@@ -2123,6 +2134,13 @@ class MGFDiffZDeterminants2(MGFDiffZDeterminants):
         mh.align_sub(eq15, eq15[1], eq12[1])
         mh.align_sub(eq15, eq15[2][0], eq14[0], coor_mask=RIGHT)
         eq16.next_to(eq15, DOWN).move_to(ORIGIN, coor_mask=RIGHT)
+        eq18.next_to(eq15, DOWN).move_to(ORIGIN, coor_mask=RIGHT)
+        eq19.next_to(eq18, DOWN)
+        mh.align_sub(eq20, eq20[1], eq15[1]).move_to(ORIGIN, coor_mask=RIGHT)
+        mh.align_sub(eq21, eq21[1], eq20[1]).move_to(ORIGIN, coor_mask=RIGHT)
+        eq21[3][22:26].align_to(eq21[3][1], LEFT)
+        eq21[3][26:30].align_to(eq21[3][11], LEFT)
+        mh.align_sub(eq22, eq22[1], eq21[1]).move_to(ORIGIN, coor_mask=RIGHT)
 
         self.wait(0.1)
         self.play(FadeIn(eq7), rate_func=linear)
@@ -2200,6 +2218,50 @@ class MGFDiffZDeterminants2(MGFDiffZDeterminants):
                                 eq14[-1], eq15[2][-1].move_to(eq15_1[2][-1])),
                   mh.transform(eq15[2][1:-1], eq15_1[2][1:-1], eq15[:2], eq15_1[:2]),
                   run_time=1.5)
+        self.wait()
+        self.play(FadeOut(eq16), FadeIn(eq18))
+        self.play(FadeIn(eq19))
+        self.wait(0.1)
+        self.play(mh.rtransform(eq15[0][:], eq20[0][1:], eq15[1], eq20[1], eq15[2], eq20[3]),
+                  FadeIn(eq20[0][0], shift=mh.diff(eq15[0][:], eq20[0][1:])),
+                  FadeIn(eq20[2], shift=mh.diff(eq15[2], eq20[3])),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq20[:3], eq21[:3], eq20[3][:3], eq21[3][:3], eq20[3][-1], eq21[3][-1],
+                                eq20[3][3:6], eq21[3][11:14], eq20[3][6:10], eq21[3][22:26],
+                                eq20[3][10:14], eq21[3][26:30]),
+                  run_time=1.5)
+        self.play(mh.rtransform(eq21[2][3:7], eq21[3][3:7], eq21[3][22:26].copy(), eq21[3][7:11],
+                                eq21[2][3:7].copy(), eq21[3][14:18], eq21[3][26:30].copy(), eq21[3][18:22]),
+                  FadeOut(eq21[2][:3], eq21[2][7:]),
+                  run_time=2)
+        eq21_1 = mh.align_sub(eq22[2][1:11].copy(), eq22[2][1], eq21[3][1])
+        eq21_2 = eq22[2][11].copy().move_to(eq21[3][12], aligned_edge=DOWN)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq21[3][1:5], eq21_1[:4], eq21[3][5:7], eq21_1[5:7],
+                                eq21[3][8:11], eq21_1[7:10]),
+                  ReplacementTransform(eq21[3][7], eq21_1[3]),
+                  FadeIn(eq21_1[4]),
+                  )
+        self.wait(0.1)
+        self.play(FadeOut(eq21[3][11:14]),
+                  FadeOut(eq21[3][14], target_position=eq21[3][12]),
+                  FadeOut(eq21[3][15:22], shift=mh.diff(eq21[3][15], eq21[3][11])),
+                  FadeIn(eq21_2))
+        self.wait(0.1)
+        self.play(mh.rtransform(eq21[0][:], eq22[0][:-2], eq21[1], eq22[1],
+                                eq21[3][0], eq22[2][0], eq21_1, eq22[2][1:11],
+                                eq21_2, eq22[2][11],
+                                eq21[3][22:26], eq22[2][12:16],
+                                eq21[3][26:], eq22[2][25:]))
+        self.wait(0.1)
+        self.play(FadeIn(eq22[0][-2:], eq22[3]), run_time=1.5)
+        self.wait(0.1)
+        self.play(mh.rtransform(
+            eq22[2][25:29].copy(), eq22[2][16:20],
+            eq22[3][4:9], eq22[2][20:25]
+        ),
+        FadeOut(eq22[3][:4], eq22[3][9:]))
 
         self.wait()
 
