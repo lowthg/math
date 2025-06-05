@@ -504,16 +504,25 @@ class StandardNormal(ThreeDScene):
 
 
 class LinearComb(GCIStatement):
+    def statement(self):
+        gp1 = GCIStatement.statement(self)
+        txt5 = Tex(r'under any centered normal distribution on $\mathbb R^n$.')
+        mh.align_sub(txt5, txt5[0][:5], gp1[3]).move_to(ORIGIN, coor_mask=RIGHT)
+        txt2 = gp1[1].copy().align_to(txt5, LEFT)
+
+        return gp1, txt2, txt5
+
+
     def construct(self):
-        gp1 = self.statement()
-        txt4 = gp1[3]
+        gp1, txt2, txt5 = self.statement()
 
         red3 = ManimColor((255, 50, 0))
+        txt4 = gp1[3]
         line1 = Line(txt4[0][5:16].get_corner(DL), txt4[0][5:16].get_corner(UR),
                      stroke_width=10, stroke_color=red3)
-        mat_str = [[r'm_{11}Z_1', r'm_{12}Z_2', r'\cdots', r'm_{1n}Z_n'],
-                   [r'm_{21}Z_1', r'm_{22}Z_2', r'\cdots', r'm_{2n}Z_n'],
-                   [r'm_{n1}Z_1', r'm_{n2}Z_2', r'\cdots', r'm_{nn}Z_n']]
+        mat_str = [[r'u_{11}Z_1', r'u_{12}Z_2', r'\cdots', r'u_{1m}Z_m'],
+                   [r'u_{21}Z_1', r'u_{22}Z_2', r'\cdots', r'u_{2m}Z_m'],
+                   [r'u_{n1}Z_1', r'u_{n2}Z_2', r'\cdots', r'u_{nm}Z_m']]
         eq1_str = ['+'.join(row) for row in mat_str]
         eq1 = MathTex(r'X_1', r'=', eq1_str[0])
         eq2 = MathTex(r'X_2', r'=', eq1_str[1])
@@ -522,8 +531,10 @@ class LinearComb(GCIStatement):
 
         eq5 = MathTex(r'\begin{pmatrix} X_1 \\ X_2 \\ \vdots \\ X_n\end{pmatrix}', r'=',
                       ''.join([r'\begin{pmatrix}', eq1_str[0], r'\\', eq1_str[1], r'\\ \vdots\vdots\vdots \\', eq1_str[2], r'\end{pmatrix}']),
-                      r'\begin{pmatrix} Z_1 \\ Z_2 \\ \vdots \\ Z_n\end{pmatrix}')
-        eq6 = MathTex(r'X', r'=', r'MZ')
+                      r'\begin{pmatrix} Z_1 \\ Z_2 \\ \vdots \\ Z_m\end{pmatrix}')
+        eq6 = MathTex(r'X', r'=', r'UZ')
+        eq7 = Tex(r'joint normal', font_size=45, color=RED)
+        eq8 = Tex(r'independent standard normal', font_size=45, color=RED)
 
         # eq5 = MathTex(r'\begin{pmatrix} X_1 \\ X_2 \\ \vdots \\ X_n\end{pmatrix}', r'=',
         #               r'\begin{pmatrix} m_{11}Z_1 & m_{12}Z_2 & \cdots & m_{1n}Z_n\\'
@@ -531,31 +542,46 @@ class LinearComb(GCIStatement):
         #               r'\vdots & \vdots & & \vdots \\'
         #               r'm_{n1}Z_1 & m_{n2}Z_2 & \cdots & m_{nn}Z_n \end{pmatrix}')
 
-        eq5.next_to(gp1, DOWN, submobject_to_align=eq5[:3])
+        # eq5.next_to(gp1, DOWN, submobject_to_align=eq5[:3])
+        mh.align_sub(eq5, eq5[:3], ORIGIN).to_edge(DOWN)
         mh.align_sub(eq1, eq1[0][0], eq5[0][5])
         mh.align_sub(eq2, eq2[0][0], eq5[0][7])
         mh.align_sub(eq4, eq4[0][0], eq5[0][12])
         mh.align_sub(eq1, eq1[1][0], eq5[1], coor_mask=RIGHT)
+        eq7.next_to(eq1[0], UP, buff=1)
+        mh.align_sub(eq8, eq8[0][-1], eq7[0][-1]).move_to(eq1[2], coor_mask=RIGHT).shift(RIGHT)
+        arr1 = Arrow(eq7[0][-6].get_bottom(), eq1[0].get_top(), color=RED, stroke_width=4, buff=0.1)
+        arr2 = Arrow(eq8[0][-14].get_bottom(), eq1[2][3].get_top(), color=RED, stroke_width=4, buff=0.1)
+        arr3 = Arrow(eq8[0][-14].get_bottom(), eq1[2][9].get_top(), color=RED, stroke_width=4, buff=0.1)
+        arr4 = Arrow(eq8[0][-14].get_bottom(), eq1[2][19].get_top(), color=RED, stroke_width=4, buff=0.1)
         mh.align_sub(eq2, eq2[1][0], eq5[1], coor_mask=RIGHT)
         mh.align_sub(eq4, eq4[1][0], eq5[1], coor_mask=RIGHT)
         eq3.move_to(eq5[0][9:12]).move_to(eq2[1], coor_mask=RIGHT)
         eq5[2][47:50].move_to(eq5[2][26:29], coor_mask=RIGHT)
         eq5[2][50:53].move_to(eq5[2][32:35], coor_mask=RIGHT)
         eq5[2][53:56].move_to(eq5[2][42:45], coor_mask=RIGHT)
-        mh.align_sub(eq6, eq6[1], eq5[1])
+        mh.align_sub(eq6, eq6[1], eq5[1]).move_to(ORIGIN, coor_mask=RIGHT)
+        gp2 = VGroup(*(eq5[2][i:j] for i,j in ((5, 8), (11,14), (17, 20), (21, 24),
+                                               (26, 29), (32,35), (38, 41), (42, 45),
+                                               (47, 56),
+                                               (56, 59), (62,65), (68, 71), (72, 75))))
+        gp3 = VGroup(eq5[2][:5], eq5[2][-5:], *gp2[:])
 
         self.add(gp1)
         self.wait(0.1)
         self.play(Create(line1), run_time=0.8)
         self.wait(0.1)
         self.play(FadeIn(eq1))
+        self.play(LaggedStart(FadeIn(eq7, arr1), FadeIn(eq8, arr2, arr3, arr4), lag_ratio=0.3),
+                  run_time=1.5)
         self.play(LaggedStart(FadeIn(eq2), FadeIn(eq3), FadeIn(eq4), lag_ratio=0.3))
         self.wait(0.1)
         self.play(mh.rtransform(eq1[0][:], eq5[0][5:7], eq2[0][:], eq5[0][7:9], eq3[0][:], eq5[0][9:12],
                                 eq3[0][:].copy(), eq5[2][47:50], eq3[0][:].copy(), eq5[2][50:53],
                                 eq3[0][:].copy(), eq5[2][53:56],
                                 eq4[0][:], eq5[0][12:14]),
-                  mh.rtransform(eq1[2][:], eq5[2][5:26], eq2[2][:], eq5[2][26:47], eq4[2][:], eq5[2][56:77]))
+                  mh.rtransform(eq1[2][:], eq5[2][5:26], eq2[2][:], eq5[2][26:47], eq4[2][:], eq5[2][56:77]),
+                  FadeOut(eq7, eq8, arr1, arr2, arr3, arr4))
         self.play(FadeIn(eq5[0][:5], eq5[0][-5:], eq5[2][:5], eq5[2][-5:]),
                   ReplacementTransform(eq1[1], eq5[1]),
                   ReplacementTransform(eq2[1], eq5[1]),
@@ -570,9 +596,122 @@ class LinearComb(GCIStatement):
                   FadeIn(eq5[3][:5], eq5[3][-5:], rate_func=rush_into),
                   run_time=2)
         self.wait(0.1)
-        self.play(mh.stretch_replace(eq5[2], eq6[2][0].copy().set_opacity(0)), run_time=1.5)
+#        self.play(mh.stretch_replace(eq5[2], eq6[2][0].copy().set_opacity(0)), run_time=1.5)
+        yscale = eq6[2][0].height / gp2.height
+        xscale = eq6[2][0].width / gp2.width
+        target = gp3.copy().stretch(yscale, 1).stretch(xscale, 0).move_to(eq6[2][0]).set_opacity(0)
+        self.play(Transform(gp3, target),
+                  FadeIn(eq6),
+                  ReplacementTransform(eq5[1], eq6[1]),
+                  mh.stretch_replace(eq5[3], eq6[2][1].copy().set_opacity(0)),
+                  mh.stretch_replace(eq5[0], eq6[0].copy().set_opacity(0)),
+                  mh.fade_replace(eq5[1], eq6[1].copy().set_opacity(0)),
+                  run_time=2)
+        self.wait(0.1)
+
+        eq6.generate_target().next_to(gp1, DOWN, buff=1)
+        eq10 = MathTex(r'U^{-1}A', r'=', r'\left\{z\in\mathbb R^m\colon Uz\in A\right\}')
+        eq11 = MathTex(r'U^{-1}B', r'=', r'\left\{z\in\mathbb R^m\colon Uz\in B\right\}')
+        eq10.next_to(eq6.target, DOWN)
+        mh.align_sub(eq11, eq11[1], eq10[1]).next_to(eq10, DOWN, coor_mask=UP)
+        self.play(LaggedStart(MoveToTarget(eq6), FadeIn(eq10, eq11), lag_ratio=0.4), run_time=1.5)
+        gp4 = VGroup(eq10, eq11)
+        eq12 = Tex(r'convex', color=RED, font_size=45).next_to(gp4, RIGHT, buff=1.4)
+        eq13 = Tex(r'also\\ convex', color=RED, font_size=45).next_to(gp4, LEFT, buff=1.4)
+        arr5 = Arrow(eq12.get_left() + LEFT*0.1, eq10[2][-2].get_right(), color=RED, stroke_width=4, buff=0)
+        arr6 = Arrow(eq12.get_left() + LEFT*0.1, eq11[2][-2].get_right(), color=RED, stroke_width=4, buff=0)
+        arr7 = Arrow(eq13.get_right(), eq10[0][0].get_left(), color=RED, stroke_width=4, buff=0.1)
+        arr8 = Arrow(eq13.get_right(), eq11[0][0].get_left(), color=RED, stroke_width=4, buff=0.1)
+        self.play(FadeIn(arr5, arr6, eq12))
+        self.play(FadeIn(arr7, arr8, eq13))
+        self.wait(0.1)
+
+        eq14str = [r'\mathbb P(X\in A\cap B)', r'=', r'\mathbb P(Z\in U^{-1}A\cap U^{-1}B)',
+                       r'\ge', r'\mathbb P(Z\in U^{-1}A)\mathbb P(Z\in U^{-1}B)',
+                       r'=', r'\mathbb P(X\in A)\mathbb P(X\in B)']
+        eq14 = MathTex(*eq14str)
+        mh.align_sub(eq14, eq14[2:5], ORIGIN).to_edge(DOWN, buff=0.2)
+        eq14[0].align_to(eq14[2], RIGHT)
+        eq14[-1].align_to(eq14[-3], LEFT)
+        eq14[1].rotate(PI/2).move_to(eq14[0]).next_to(eq14[2], UP, coor_mask=UP)
+        eq14[-2].rotate(PI/2).move_to(eq14[-1]).next_to(eq14[-3], UP, coor_mask=UP)
+        eq14[0].next_to(eq14[1], UP, coor_mask=UP)
+        eq14[-1].next_to(eq14[-2], UP, coor_mask=UP)
+        gp5 = VGroup(eq6, eq10, eq11, eq12, eq13, arr5, arr6, arr7, arr8)
+
+        eq15 = Tex(r'applying GCI to $Z$', color=BLUE, font_size=40)
+        eq15.next_to(eq14[3], UP).move_to(VGroup(eq14[1], eq14[-2]), coor_mask=RIGHT)
+        self.play(gp5.animate.next_to(eq14, UP, coor_mask=UP),
+                  FadeIn(eq14[:3]), run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeIn(eq14[3:5], eq15))
+        self.wait(0.1)
+        self.play(FadeIn(eq14[5:]))
+        self.wait(0.1)
+        self.play(FadeOut(eq14[1:3], eq14[4:6], eq15),
+                  eq14[3].animate.shift(mh.diff(eq14[4][0], eq14[-1][0]) * UP))
+        self.wait(0.1)
+        gp6 = VGroup(eq14[0], eq14[3], eq14[-1])
+        self.play(FadeOut(gp5), gp6.animate.shift(UP), run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeOut(txt4[0][5:16], line1))
+        self.play(ReplacementTransform(gp1[1], txt2),
+                  ReplacementTransform(gp1[3][0][:5], txt5[0][:5]),
+                  ReplacementTransform(gp1[3][0][16:], txt5[0][16:]),
+                  FadeIn(txt5[0][5:16]))
+        self.wait(0.1)
+        self.play(FadeOut(gp6))
+
         self.wait()
 
+class GCIStatementXY(LinearComb):
+    def construct(self):
+        gp1, txt1, txt2 = self.statement()
+        self.add(gp1[0], txt1, gp1[2], txt2)
+
+        txt3 = Tex(r'For centrally symmetric convex $A\subseteq \mathbb R^m$, $B\subseteq\mathbb R^n$ then')
+        mh.align_sub(txt3, txt3[:27], txt1[:27])
+        txt4 = MathTex(r'\mathbb P(X\in A, Y\in B)', r'\ge', r'\mathbb P(X\in A)\mathbb P(Y\in B)')
+        mh.align_sub(txt4, txt4[1], gp1[2][6]).move_to(ORIGIN, coor_mask=RIGHT)
+        txt5 = Tex(r'for any centered jointly normal $X$ in $\mathbb R^m$ and $Y$ in $\mathbb R^n$.')
+        mh.align_sub(txt5, txt5[0][6:14], txt2[0][8:16]).align_to(txt3, LEFT)
+
+        self.play(mh.rtransform(txt1[0][:28], txt3[0][:28], txt1[0][-9:], txt3[0][-9:]),
+                  mh.rtransform(txt1[0][-7:-5].copy(), txt3[0][28:30]),
+                  mh.fade_replace(txt1[0][-5].copy(), txt3[0][30]))
+        self.wait(0.05)
+        # self.play(mh.rtransform(gp1[2][:2], txt4[0][:2], gp1[2][2], txt4[0][4],
+        #                         gp1[2][4:6], txt4[0][8:],
+        #                         gp1[2][6], txt4[1][0], gp1[2][7:9], txt4[2][:2],
+        #                         gp1[2][9:13], txt4[2][4:8], gp1[2][-2:], txt4[2][-2:]),
+        #           FadeIn(txt4[0][2:4], shift=mh.diff(gp1[2][2], txt4[0][4])),
+        #           FadeIn(txt4[0][5:8], shift=mh.diff(gp1[2][4], txt4[0][8])),
+        #           FadeOut(gp1[2][3], shift=mh.diff(gp1[2][4], txt4[0][8])),
+        #           FadeIn(txt4[2][2:4], shift=mh.diff(gp1[2][9], txt4[2][4])),
+        #           FadeIn(txt4[2][8:10], shift=mh.diff(gp1[2][-2], txt4[2][-2])))
+        # self.wait(0.05)
+        self.play(FadeOut(gp1[2]))
+        self.play(mh.rtransform(txt2[0][5:16], txt5[0][3:14], txt2[0][16:22], txt5[0][21:27],
+                                txt2[0][-3:], txt5[0][-3:]),
+                  mh.fade_replace(txt2[0][:5], txt5[0][:3]),
+                  FadeIn(txt5[0][14:21], shift=mh.diff(txt2[0][15:17], txt5[0][14:21])*RIGHT),
+                  FadeOut(txt2[0][22:-3], shift=mh.diff(txt2[0][21], txt5[0][26])*RIGHT),
+                  FadeIn(txt5[0][27:-3], target_position=txt2[0][22:-3]))
+        self.wait(0.05)
+        self.play(FadeIn(txt4[0]))
+        self.wait(0.05)
+        self.play(FadeIn(txt4[1]))
+        self.wait(0.05)
+        self.play(FadeIn(txt4[2]))
+
+        txt5_1 = txt5[0][14:27]
+        line1 = Line(txt5_1.get_corner(DL), txt5_1.get_corner(DR), color=RED, stroke_width=5)
+        self.wait(0.1)
+        self.play(Create(line1))
+        txt6 = Tex(r'$(X, Y)$ is joint normal').next_to(line1, DOWN, buff=1)
+        p0 = line1.get_bottom()
+        arr1 = Arrow(txt6[0][9].get_top()*UP + p0*RIGHT, p0, stroke_width=5, color=RED, buff=0.1)
+        self.play(FadeIn(arr1, txt6))
 
 class VectorX(Scene):
     def construct(self):
