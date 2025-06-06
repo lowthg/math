@@ -666,8 +666,10 @@ class LinearComb(GCIStatement):
 
 class GCIStatementXY(LinearComb):
     def construct(self):
-        gp1, txt1, txt2 = self.statement()
-        self.add(gp1[0], txt1, gp1[2], txt2)
+        self.statement(animate=True)
+
+    def statement(self, animate=False):
+        gp1, txt1, txt2 = LinearComb.statement(self)
 
         txt3 = Tex(r'For centrally symmetric convex $A\subseteq \mathbb R^m$, $B\subseteq\mathbb R^n$ then')
         mh.align_sub(txt3, txt3[:27], txt1[:27])
@@ -675,6 +677,11 @@ class GCIStatementXY(LinearComb):
         mh.align_sub(txt4, txt4[1], gp1[2][6]).move_to(ORIGIN, coor_mask=RIGHT)
         txt5 = Tex(r'for any centered jointly normal $X$ in $\mathbb R^m$ and $Y$ in $\mathbb R^n$.')
         mh.align_sub(txt5, txt5[0][6:14], txt2[0][8:16]).align_to(txt3, LEFT)
+
+        if not animate:
+            return VGroup(gp1[0], txt3, txt4, txt5)
+
+        self.add(gp1[0], txt1, gp1[2], txt2)
 
         self.play(mh.rtransform(txt1[0][:28], txt3[0][:28], txt1[0][-9:], txt3[0][-9:]),
                   mh.rtransform(txt1[0][-7:-5].copy(), txt3[0][28:30]),
@@ -712,6 +719,67 @@ class GCIStatementXY(LinearComb):
         p0 = line1.get_bottom()
         arr1 = Arrow(txt6[0][9].get_top()*UP + p0*RIGHT, p0, stroke_width=5, color=RED, buff=0.1)
         self.play(FadeIn(arr1, txt6))
+
+        center = txt5.get_bottom()*UP * 0.5 + DOWN * config.frame_y_radius * 0.5
+        eq1 = MathTex(r"\mathbb P(X'\in A'\cap B')", r'\ge', r"\mathbb P(X'\in A')\mathbb P(X'\in B')")
+        eq1.move_to(center)
+
+        eq2 = Tex(r'where: ', r"$X'=(X,Y)$", r"$A'=A\times\mathbb R^n$", r"$B'=\mathbb R^m\times B$")
+        eq2[2].next_to(eq2[1][2], ORIGIN, submobject_to_align=eq2[2][2]).shift(DOWN*0.5)
+        eq2[3].next_to(eq2[2][2], ORIGIN, submobject_to_align=eq2[3][2]).shift(DOWN*0.5)
+        eq2.next_to(eq1, DOWN)
+
+        eq4 = txt4.copy()
+        eq4.next_to(eq1[1], ORIGIN, submobject_to_align=eq4[1])
+        self.play(ReplacementTransform(txt4.copy(), eq4), run_time=2)
+        self.play(mh.rtransform(eq4[0][:3], eq1[0][:3], eq4[0][3:5], eq1[0][4:6],
+                                eq4[0][-2], eq1[0][-3], eq4[0][-1], eq1[0][-1]),
+                  FadeIn(eq1[0][3], shift=mh.diff(eq4[0][2], eq1[0][2])),
+                  FadeIn(eq1[0][6], shift=mh.diff(eq4[0][4], eq1[0][6])),
+                  FadeOut(eq4[0][5:8]),
+                  FadeIn(eq2),
+                  FadeIn(eq1[0][7]),
+                  FadeIn(eq1[0][-2], shift=mh.diff(eq4[0][-2], eq1[0][-3])),
+                  mh.rtransform(eq4[1], eq1[1], eq4[2][:3], eq1[2][:3],
+                                eq4[2][3:5], eq1[2][4:6], eq4[2][5:8], eq1[2][7:10],
+                                eq4[2][9:11], eq1[2][12:14], eq4[2][11], eq1[2][15]
+                                ),
+                  mh.fade_replace(eq4[2][8], eq1[2][10]),
+                  FadeIn(eq1[2][3], shift=mh.diff(eq4[2][2], eq1[2][2])),
+                  FadeIn(eq1[2][6], shift=mh.diff(eq4[2][4], eq1[2][5])),
+                  FadeIn(eq1[2][11], shift=mh.diff(eq4[2][8], eq1[2][10])),
+                  FadeIn(eq1[2][14], shift=mh.diff(eq4[2][10], eq1[2][13])),
+                  )
+        self.wait(0.1)
+        self.play(FadeOut(line1, arr1, eq1, eq2, txt6), run_time=1.5)
+        self.wait()
+
+class  GCIConditional(GCIStatementXY):
+    def construct(self):
+        gp1 = GCIStatementXY.statement(self, animate=False)
+        self.add(gp1)
+        self.wait(0.1)
+        eq1 = gp1[2].copy()
+
+        eq2 = MathTex(r'\frac{\mathbb P(X\in A, Y\in B)}{\mathbb P(Y\in B)}', r'\ge', r'\mathbb P(X\in A)')
+        eq3 = MathTex(r'\mathbb P(X\in A\vert Y\in B)', r'\ge', r'\mathbb P(X\in A)')
+
+        self.play(eq1.animate.move_to(gp1.get_bottom()*UP*0.6 + mh.pos(DOWN)*0.4),
+                  run_time=1.5)
+        mh.align_sub(eq2, eq2[1], eq1[1])
+        mh.align_sub(eq3, eq3[1], eq2[1])
+        self.play(mh.rtransform(eq1[0][:], eq2[0][:10], eq1[1], eq2[1],
+                                eq1[2][:6], eq2[2][:6], eq1[2][6:], eq2[0][11:]),
+                  FadeIn(eq2[0][10]),
+                  run_time=2)
+        self.wait(0.05)
+        self.play(mh.rtransform(eq2[0][:5], eq3[0][:5], eq2[0][-4:], eq3[0][-4:],
+                                eq2[1:], eq3[1:]),
+                  mh.rtransform(eq2[0][6:10], eq3[0][-4:]),
+                  mh.fade_replace(eq2[0][5], eq3[0][5]),
+                  FadeOut(eq2[0][10:13]),
+                  run_time=1.5)
+        self.wait()
 
 class VectorX(Scene):
     def construct(self):
