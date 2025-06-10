@@ -2097,7 +2097,13 @@ def gs(M):
 
 
 class FractionalBM(Scene):
-    def construct(self):
+    txt = r'H = {:.2f}'
+    keyvals = [0.002, (0.5, 4.), (1, 4.)]
+
+    def create(self, path, eq, ax, xvals, yvals):
+        pass
+
+    def plot_path(self):
         xlen = config.frame_x_radius * 1.8
         ylen = config.frame_y_radius * 1.8
         xmax = 1.0
@@ -2112,7 +2118,7 @@ class FractionalBM(Scene):
         diag = ax.coords_to_point(xmax, ymax) - ax.coords_to_point(0, ymin)
         edge = Rectangle(width=diag[0], height=diag[1], fill_opacity=0, stroke_opacity=1, stroke_width=2, stroke_color=YELLOW).set_z_index(10)
 
-        eq = MathTex(r'H = 0.51').next_to(ax.get_bottom(), UP, buff=0.1)
+        eq = MathTex(self.txt.format(0.51)).next_to(ax.get_bottom(), UP, buff=0.1)
         pt = eq[0][0].get_center()
 #        VGroup(ax, box).to_edge(DOWN, buff=0.05)
 
@@ -2132,7 +2138,8 @@ class FractionalBM(Scene):
 
         self.add(box, edge)
 
-        h_value = ValueTracker(0.002)
+        h_value = ValueTracker(self.keyvals[0])
+        yvals0 = [None]
 
         def f():
             h = h_value.get_value()
@@ -2140,23 +2147,131 @@ class FractionalBM(Scene):
             yvals = np.zeros(n)
             for i in range(n-1):
                 yvals[indices[i]] = yvals2[i]
+            yvals0[0] = yvals
             plot = ax.plot_line_graph(xvals, yvals, add_vertex_dots=False, stroke_width=2, line_color=BLUE).set_z_index(1)
-            eq = MathTex(r'H={:.2f}'.format(h))[0].set_z_index(15)
+            eq = MathTex(self.txt.format(h))[0].set_z_index(15)
             eq.next_to(pt, ORIGIN, submobject_to_align=eq[0])
             return VGroup(plot, eq)
 
         path = always_redraw(f)
 
-        self.add(path)
-        self.play(h_value.animate.set_value(0.5), run_time=4)
-        self.play(h_value.animate.set_value(1), run_time=4)
+        self.create(path[0], path[1], ax, xvals, yvals0[0])
+        self.remove(path, eq)
+        for h, t in self.keyvals[1:]:
+            self.add(path)
+            self.play(h_value.animate.set_value(h), run_time=t)
 
         self.wait(0.5)
 
+    def construct(self):
+        self.plot_path()
+
+
+class FractionalBM2(FractionalBM):
+    keyvals = [0.5, (0.2, 2)]
+    txt = r'{{\rm Fractional\  Brownian\ Motion}}\ ({{\rm Hurst\ Parameter}}={:.2f})'
+
+    def create(self, path: Mobject, eq: Mobject, ax: Axes, xvals: np.array, yvals: np.array):
+        p0 = ax.coords_to_point(xvals[0], yvals[0])
+        p1 = ax.coords_to_point(xvals[-1], yvals[0])
+        line = Line(p0, p1, stroke_width=2, color=GREY).set_z_index(0)
+        self.add(line)
+        self.play(Create(path, rate_func=linear, run_time=2),
+                  FadeIn(eq[10:24], rate_func=lambda t: min(t*2,1)), rate_func=linear, run_time=2)
+        self.play(FadeIn(eq[:10], eq[24:]), run_time=0.5)
+
+class FractionalBM3(FractionalBM):
+    keyvals = [0.5]
+    txt = r'{{\rm Fractional\  Brownian\ Motion}}\ ({{\rm Hurst\ Parameter}}={:.2f})'
+
+    def drawdown(self, ax, xvals, yvals):
+        j = 0
+        max_down = 0.0
+        i0 = 0
+        i1 = 0
+        down = 0.0
+        k = 0
+        for i in range(1, len(xvals)):
+            if yvals[j] - yvals[i] > down:
+                down = yvals[j] - yvals[i]
+                k = i
+            if yvals[i] >= yvals[j] or i == len(xvals) - 1:
+                if down > max_down:
+                    i0, i1, max_down = j, k, down
+                j = k = i
+                down = 0.
+        p4 = ax.coords_to_point(xvals[i0 - 40], yvals[i0])
+        p5 = ax.coords_to_point(xvals[i1 + 120], yvals[i0])
+        line3 = DashedLine(p4, p5, stroke_width=2, color=WHITE).set_z_index(100)
+        p6 = ax.coords_to_point(xvals[i1 - 80], yvals[i1])
+        p7 = ax.coords_to_point(xvals[i1 + 120], yvals[i1])
+        line4 = DashedLine(p6, p7, stroke_width=2, color=WHITE).set_z_index(100)
+        p8 = ax.coords_to_point(0.5, yvals[i0])
+        p9 = ax.coords_to_point(0.5, yvals[i1])
+        arr2 = Arrow(p8, p9, stroke_width=4, color=WHITE,
+                     max_tip_length_to_length_ratio=0.2, buff=0.05).set_z_index(100)
+        eq3 = MathTex(r'{\rm max\ drawdown}', r'=\max_{0\le s\le t\le1}(B_s-B_t)')
+        eq3[1].next_to(eq3[0], DOWN, buff=0.1).shift(RIGHT*0.9)
+        eq3.next_to(arr2[0], RIGHT, buff=0).shift(DOWN*0.2)
+        self.play(LaggedStart(FadeIn(line3, line4, arr2), FadeIn(eq3), lag_ratio=0.3), run_time=1.5)
+
+    def create(self, path: Mobject, eq: Mobject, ax: Axes, xvals: np.array, yvals: np.array):
+        self.add(path, eq[10:24])
+
+        tval = ValueTracker(0.)
+        def f():
+            t = tval.get_value()
+            yvals2 = yvals - xvals * yvals[-1] * t
+
+            p0 = ax.coords_to_point(xvals[0], yvals2[0])
+            p1 = ax.coords_to_point(xvals[-1], yvals2[0])
+            line = Line(p0, p1, stroke_width=2, color=GREY).set_z_index(0)
+            ymax = max(yvals2)
+            p2 = ax.coords_to_point(0., ymax)
+            p3 = ax.coords_to_point(1, ymax)
+            line2 = DashedLine(p2, p3, stroke_width=2, color=WHITE).set_z_index(100)
+            p4 = ax.coords_to_point(0.8, 0)
+            p5 = ax.coords_to_point(0.8, ymax)
+            arr1 = Arrow(p4, p5, stroke_width=4, color=WHITE, buff=0.05,
+                         max_tip_length_to_length_ratio=0.08).set_z_index(100)
+            ymin = min(yvals2)
+            p5 = ax.coords_to_point(0.3, ymin)
+            p6 = ax.coords_to_point(0.6, ymin)
+            p7 = ax.coords_to_point(0.5, ymin)
+            p8 = ax.coords_to_point(0.5, ymax)
+            line3 = DashedLine(p5, p6, stroke_width=2, color=WHITE).set_z_index(100)
+            arr2 = DoubleArrow(p7, p8, stroke_width=4, color=WHITE, buff=0.05,
+                               max_tip_length_to_length_ratio=0.065).set_z_index(100)
+
+            plot = ax.plot_line_graph(xvals, yvals2, add_vertex_dots=False, stroke_width=2, line_color=BLUE).set_z_index(1)
+
+            return VGroup(line, line2, arr1, line3, arr2, plot)
+
+        gp = f()
+
+        self.add(gp[0])
+        self.wait(0.1)
+        eq1 = MathTex(r'\max_{0\le t\le 1}\lvert B_t\rvert').next_to(gp[2][0], RIGHT, buff=0).shift(DOWN*0.6)
+        self.play(LaggedStart(FadeIn(gp[1], gp[2]), FadeIn(eq1), lag_ratio=0.3), run_time=1.5)
+        self.wait()
+
+        eq2 = MathTex(r'\max_{0\le s\le t\le1}\lvert B_s-B_t\rvert').set_z_index(100)
+        eq2.next_to(gp[4][0], LEFT, buff=0)
+        self.play(LaggedStart(FadeIn(gp[3], gp[4]), FadeIn(eq2), lag_ratio=0.3), run_time=1.5)
+        self.wait()
+        gp1 = always_redraw(f)
+        self.remove(*gp[:], path)
+        self.add(gp1)
+        self.play(tval.animate.set_value(1.), FadeOut(eq1, eq2, eq[10:24], rate_func=rush_from), run_time=2.5)
+
+        # self.drawdown(ax, xvals, yvals)
+
+
+        self.wait()
 
 
 
 
 if __name__ == "__main__":
     with tempconfig({"quality": "low_quality", "preview": True}):
-        SmoothTrading3().render()
+        Triangle1().render()
