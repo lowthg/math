@@ -330,6 +330,7 @@ class Intersect3DEllipsoids(Intersect3D):
 class Intersect3DEllipsoidsBoundary(Intersect3DEllipsoids):
     intersect = {'thickness': 0.05, 'shift': 0.04, 'color': YELLOW,
                  'resolution': 16, 'fill_opacity': 1, 'stroke_opacity': 1}
+    rtime = 1
 
 
 class Intersect3DEllipsoid(Intersect3D):
@@ -368,6 +369,60 @@ class Intersect3DGeneral(Intersect3D):
             v[2] *= 1.1
             v[1] *= 1
             v[:] = rotate_vector(v, 50*DEGREES, RIGHT)
+
+class Necessary(Intersect2D):
+    show_eqs=0
+    show_o=True
+
+    def construct(self):
+        theta = 30 * DEGREES
+        vectors = [
+            unitVec2D(theta) / 4,
+            unitVec2D(theta + PI / 2)
+        ]
+        vectors2 = [
+            unitVec2D(15 * DEGREES) / 1.5,
+            unitVec2D(135 * DEGREES) / 2.4
+        ]
+        scale = 1.0
+        kwargs = {'stroke_opacity': 0, 'fill_opacity': 0.7}
+
+        g1 = 2
+        g2 = 4
+
+        u = ValueTracker(0.0)
+        v = ValueTracker(0.0)
+        dot = Dot(radius=0.2, color=WHITE, fill_opacity=0.6).set_z_index(5)
+
+        def f(t):
+            x = unitVec2D(t)
+            p = u.get_value()
+            shift = LEFT * v.get_value()*2.5
+            return x * convexPolytopePoint(x, vectors, g1) * scale * (1-p+p*math.cos(t-theta)**6) + shift
+
+        def g(t):
+            x = unitVec2D(t)
+            p = u.get_value()
+            shift = RIGHT * v.get_value() * 2.5
+            return x * convexPolytopePoint(x, vectors2, g2) * scale * (1-p+p*math.sin(t-theta)**6) + shift
+
+        def h():
+            setA = ParametricFunction(f, (0, 2 * PI), fill_color=red, **kwargs)
+            setB = ParametricFunction(g, (0, 2 * PI), fill_color=blue, **kwargs)
+            return VGroup(setA, setB, dot)
+
+        sets = always_redraw(h)
+        self.add(sets)
+        self.wait(0.1)
+        self.play(u.animate.set_value(1.), run_time=2.5)
+        self.wait(0.1)
+        self.play(u.animate.set_value(0.), run_time=1)
+        self.wait(0.1)
+        self.play(v.animate.set_value(1.), run_time=2.5)
+        self.wait(0.1)
+        self.play(v.animate.set_value(0.), run_time=1)
+        self.wait()
+
 
 
 class GCIStatement(Scene):
@@ -1709,11 +1764,13 @@ class MGF(Scene):
         self.play(FadeIn(eq8[1:]), run_time=1.5)
         self.play(FadeIn(eq9), run_time=1.5)
         self.wait(0.1)
-        self.play(ReplacementTransform(eq8[2][:3] + eq8[2][4:11] + eq8[2][3],
-                                       eq10[0][4:7] + eq10[1][4:11] + eq10[0][-1]),
+        self.play(ReplacementTransform(eq8[2][:3] + eq8[2][4:7] + eq8[2][8:10] + eq8[2][3],
+                                       eq10[0][4:7] + eq10[1][4:7] + eq10[1][8:10] + eq10[0][-1]),
                   FadeIn(eq10[0][:3], eq10[0][7:-1], eq10[1][:3], eq10[1][11:]),
                   FadeIn(eq10[0][3], target_position=eq8[2][0].get_left()),
                   FadeIn(eq10[1][3], target_position=eq8[2][5].get_left()),
+                  mh.stretch_replace(eq8[2][7], eq10[1][7]),
+                  mh.stretch_replace(eq8[2][10], eq10[1][10]),
                   run_time=1.5)
         self.wait(0.1)
         self.play(ReplacementTransform(eq10[0], eq11[0]),
@@ -3425,6 +3482,135 @@ class ZGZ(Scene):
     def construct(self):
         eq1 = MathTex(r'Z_i\ge0', font_size=80)
         self.add(eq1)
+
+
+class AvgB(Scene):
+    def construct(self):
+        eq = MathTex(r'\int_0^1\lvert B_t\rvert\,dt')
+        self.add(eq)
+
+class AvgBAbs(Scene):
+    def construct(self):
+        eq = MathTex(r'\Big\lvert\int_0^1 B_t\,dt\Big\rvert')
+        self.add(eq)
+
+
+class AvgRMS(Scene):
+    def construct(self):
+        eq = MathTex(r'\sqrt{\int_0^1 B^2_t\,dt}')
+        self.add(eq)
+
+
+class Measure(Scene):
+    def __init__(self, *args, **kwargs):
+        if config.transparent:
+            config.background_color = WHITE
+        Scene.__init__(self, *args, **kwargs)
+
+    def construct(self):
+        fs = 50
+        MathTex.set_default(font_size=fs)
+        eq1 = MathTex(r'{\rm Heights:\ }', r'X_1, X_2, X_3,\ldots,X_n', font_size=fs)
+        eq4 = MathTex(r'{\rm Weights:\ }', r'Y_1, Y_2, Y_3,\ldots,Y_n', font_size=fs)
+
+        eq2 = MathTex(r'\hat\mu_X = (X_1+X_2+\cdots+X_n)/n', font_size=fs)
+        eq3 = MathTex(r'I_X=[\hat\mu_X-2.58\sigma_X, \hat\mu_X+2.58\sigma_X]', font_size=fs)
+        eq5 = MathTex(r'\mathbb P(\mu_X\in I_X)=0.99')
+        eq6 = MathTex(r'I_Y=[\hat\mu_Y-2.58\sigma_Y, \hat\mu_Y+2.58\sigma_Y]', font_size=fs)
+
+        eq2.next_to(eq1, DOWN).align_to(eq1, LEFT)
+        eq3.next_to(eq2, DOWN).align_to(eq2, LEFT)
+        VGroup(eq1, eq2, eq3, eq4).to_edge(DL, buff=0.6).next_to(mh.pos((-0.83, -0.2)), DR, buff=0)
+        eq5.next_to(eq3, DOWN).align_to(eq3, LEFT)
+        mh.align_sub(eq4, eq4[0][-1], eq1[0][-1])
+        eq4.move_to(eq2, coor_mask=UP)
+        eq6.next_to(eq3, DOWN).align_to(eq3, LEFT)
+
+        eq1_1 = eq1[1][:2].copy().to_edge(DR, buff=0.8).move_to(mh.pos((0.82, -0.2)))
+        eq1_2 = eq1[1][3:5].copy().to_edge(DR, buff=0.8).move_to(mh.pos((0.82, -0.2)))
+        eq1_3 = eq1[1][6:8].copy().to_edge(DR, buff=0.8).move_to(mh.pos((0.82, -0.2)))
+        eq1_1_1 = eq1_1.copy()
+        eq1_2_1 = eq1_2.copy()
+        eq1_3_1 = eq1_3.copy()
+
+        self.add(eq1[0])
+        self.wait(0.1)
+        self.play(FadeIn(eq1_1), run_time=0.7)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq1_1, eq1[1][:2]),
+                  FadeIn(eq1[1][2], rate_func=rush_into), run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeIn(eq1_2), run_time=0.7)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq1_2, eq1[1][3:5]),
+                  FadeIn(eq1[1][5], rate_func=rush_into), run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeIn(eq1_3), run_time=0.7)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq1_3, eq1[1][6:8]),
+                  FadeIn(eq1[1][8], rate_func=rush_into), run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeIn(eq1[1][9:]))
+        self.wait(0.1)
+        self.play(FadeIn(eq2))
+        self.wait(0.1)
+        self.play(FadeIn(eq3))
+        self.wait(0.1)
+        self.play(FadeIn(eq5))
+
+
+        eq4_1 = eq4[1][:2].copy().to_edge(DR, buff=0.8).move_to(mh.pos((0.80, -0.9)))
+        eq4_2 = eq4[1][3:5].copy().to_edge(DR, buff=0.8).move_to(mh.pos((0.80, -0.9)))
+        eq4_3 = eq4[1][6:8].copy().to_edge(DR, buff=0.8).move_to(mh.pos((0.80, -0.9)))
+        self.wait(0.1)
+        self.play(FadeIn(eq4[0]), FadeOut(eq2, eq1[1], eq3, eq5))
+        self.wait(0.1)
+        self.play(FadeIn(eq1_1_1, eq4_1), run_time=0.7)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq4_1, eq4[1][:2]),
+                  ReplacementTransform(eq1_1_1, eq1[1][:2]),
+                  FadeIn(eq1[1][2], eq4[1][2], rate_func=rush_into), run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeIn(eq1_2_1, eq4_2), run_time=0.7)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq4_2, eq4[1][3:5]),
+                  ReplacementTransform(eq1_2_1, eq1[1][3:5]),
+                  FadeIn(eq1[1][5], eq4[1][5], rate_func=rush_into), run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeIn(eq1_3_1, eq4_3), run_time=0.7)
+        self.wait(0.1)
+        self.play(ReplacementTransform(eq4_3, eq4[1][6:8]),
+                  ReplacementTransform(eq1_3_1, eq1[1][6:8]),
+                  FadeIn(eq1[1][8], eq4[1][8], rate_func=rush_into), run_time=1.5)
+        self.wait(0.1)
+        self.play(FadeIn(eq4[1][9:], eq1[1][9:]))
+        self.play(FadeIn(eq6, eq3))
+        self.wait(0.1)
+        MathTex.set_default(font_size=DEFAULT_FONT_SIZE*1.2)
+        eq7 = MathTex(r'\mathbb P(\mu_X\in I_X, \mu_Y\in Y)', r'\ge',
+                      r'\mathbb P(\mu_X\in I_X)\mathbb P(\mu_Y\in Y)')
+        eq7.move_to(VGroup(eq6, eq3)).align_to(eq1, LEFT)
+        eq8 = MathTex(r'\ge', r'0.9801')
+        mh.align_sub(eq8, eq8[0], eq7[1])
+        self.play(FadeOut(eq3, eq6), FadeIn(eq7[0]))
+        self.wait(0.1)
+        self.play(FadeIn(eq7[1:]))
+        self.wait(0.1)
+        self.play(FadeOut(eq7[2]), FadeIn(eq8[1]))
+
+        self.wait()
+
+class XNorm(Measure):
+    def construct(self):
+        eq = MathTex(r'X_i\sim N(\mu_X, \sigma^2_X)')
+        self.add(eq)
+
+class XX2(Scene):
+    def construct(self):
+        eq=MathTex(r'X\to X^2', font_size=100, stroke_width=5)
+        self.add(eq)
+
+
 if __name__ == "__main__":
     with tempconfig({"quality": "high_quality", "preview": True, 'fps': 15}):
         DensityZ().render()
