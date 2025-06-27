@@ -4,6 +4,7 @@ import math
 import sys
 import scipy as sp
 from networkx.classes import edges
+from sorcery import switch
 
 sys.path.append('../../')
 import manimhelper as mh
@@ -39,6 +40,10 @@ class Pdefinition(Scene):
         mh.align_sub(eq11, eq11[1], eq9[1]).move_to(ORIGIN, coor_mask=RIGHT)
         eq12 = MathTex(r'{\rm probability', r'=', r'\langle\pi_V\Psi\vert\pi_V\Psi\rangle')
         mh.align_sub(eq12, eq12[1], eq11[1])
+        eq13 = MathTex(r'{\rm probability}', r'=', r'\langle\Psi\vert\pi_V^*\pi_V\vert\Psi\rangle')
+        mh.align_sub(eq13, eq13[1], eq12[1])
+        eq14 = MathTex(r'{\rm probability}', r'=', r'P(\pi_V)')
+        mh.align_sub(eq14, eq14[1], eq13[1])
 
         self.add(eq1)
         self.wait(0.1)
@@ -109,5 +114,29 @@ class Pdefinition(Scene):
                   FadeIn(eq12[2][-1], shift=shift),
                   FadeOut(eq11[2][0], eq11[2][-2:]),
                   run_time=1)
+        self.wait(0.1)
+        shift=mh.diff(eq12[2][1], eq13[2][3])
+        self.play(mh.rtransform(eq12[:2], eq13[:2], eq12[2][0], eq13[2][0],
+                                eq12[2][1], eq13[2][3], eq12[2][3:5], eq13[2][1:3],
+                                eq12[2][2], eq13[2][5], eq12[2][4].copy(), eq13[2][8],
+                                eq12[2][5:7], eq13[2][6:8], eq12[2][-2:], eq13[2][-2:]),
+                  FadeIn(eq13[2][4], shift=shift),
+                  run_time=1)
+        self.wait(0.1)
+        eq13_1 = eq13[2][6:8].copy().move_to(eq13[2][2:9], coor_mask=RIGHT)
+        shift=mh.diff(eq13[2][3], eq13_1[0], )
+        self.play(mh.rtransform(eq13[2][6:8], eq13_1),
+                  mh.rtransform(eq13[2][3], eq13_1[0], eq13[2][5], eq13_1[1]),
+                  FadeOut(eq13[2][4], shift=shift),
+                  run_time=1)
+        self.wait(0.1)
+        shift = mh.diff(eq13[2][-3], eq14[2][-1], coor_mask=RIGHT)
+        shift2 = mh.diff(eq13[2][2], eq14[2][1], coor_mask=RIGHT)
+        self.play(mh.rtransform(eq13[:2], eq14[:2], eq13_1, eq14[2][2:4]),
+                  FadeOut(eq13[2][:3], shift=shift2),
+                  FadeOut(eq13[2][-3:], shift=shift),
+                  FadeIn(eq14[2][:2], shift=shift2),
+                  FadeIn(eq14[2][-1], shift=shift),
+                  run_time=1.2)
         self.wait()
 
