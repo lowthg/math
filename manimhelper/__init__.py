@@ -15,13 +15,13 @@ def align_sub(source, subobject, target, direction=ORIGIN, **kwargs) -> Mobject:
     """
     return source.next_to(target, direction, submobject_to_align=subobject, **kwargs)
 
-def diff(source: Mobject, target: Mobject):
+def diff(source: Mobject, target: Mobject, coor_mask=UR):
     """
     get difference of positions from source to target
     """
-    return target.get_center() - source.get_center()
+    return (target.get_center() - source.get_center()) * coor_mask
 
-def fade_replace(obj1, obj2, **kwargs):
+def fade_replace(obj1: Mobject, obj2: Mobject, coor_mask=np.array([1, 1, 1]), **kwargs):
     """
     Fade out obj1 into obj2
     For when the objects differ so that ReplacementTransform doesn't work
