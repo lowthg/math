@@ -11,31 +11,63 @@ import manimhelper as mh
 
 
 class Pdefinition(Scene):
+    box_op = 0.7
+    def __init__(self, *args, **kwargs):
+        if not config.transparent:
+            config.background_color = GREY
+        Scene.__init__(self, *args, **kwargs)
+
     def construct(self):
-        eq1 = MathTex(r'{\rm\ expected\ value\ of\ }A', r'=', r'\langle\Psi\vert A\vert\Psi\rangle')
-        eq1.to_edge(UR)
+        self.create_eqs(True)
 
-        eq15 = Tex(r'\underline{Event: projection $\pi$}', color=BLUE).set_opacity(1)
-        eq15.next_to(eq1, DOWN).align_to(eq1, RIGHT)
-        eq15[0][-1].set_opacity(0.9).next_to(eq15[0][0], DOWN, buff=0.04, coor_mask=UP).set_color(WHITE)
-        eq16 = MathTex(r'{\rm probability}', r'=', r'P(\pi)')
-        eq16.next_to(eq15, DOWN)
-        eq23 = MathTex(r"P'(A)", r"=", r"P(\pi A\pi)/P(\pi)")
-        eq23.next_to(eq16, DOWN)
-        eq30 = Tex(r'\underline{unitary transform: $U$}', color=BLUE).set_opacity(1)
+    def create_eqs(self, anim=False)->VGroup:
+        # eq1 = MathTex(r'{\rm\ expected\ value\ of\ }A', r'=', r'\langle\Psi\vert A\vert\Psi\rangle')
+        # eq1.to_edge(UR)
+
+        fs = DEFAULT_FONT_SIZE * 0.9
+        eq3 = MathTex(r'P(A)', r'=', r'\langle\Psi\vert A\vert\Psi\rangle', font_size=fs)
+        eq3.to_edge(UR)
+
+        eq15 = Tex(r'\underline{Event: projection $\pi$}', color=BLUE, font_size=fs).set_z_index(1)
+        eq15.next_to(eq3, DOWN).align_to(eq3, RIGHT)
+        eq3.move_to(eq15, coor_mask=RIGHT)
+        box5 = SurroundingRectangle(eq3, fill_color=BLACK, stroke_opacity=0, fill_opacity=self.box_op, corner_radius=0.15)
+
+        eq15[0][-1].set_z_index(0.9).next_to(eq15[0][0], DOWN, buff=0.04, coor_mask=UP).set_color(WHITE)
+        eq16 = MathTex(r'{\rm probability}', r'=', r'P(\pi)', font_size=fs)
+        eq16.next_to(eq15, DOWN, buff=0.15)
+        box6 = SurroundingRectangle(VGroup(eq3, eq15, eq16), fill_color=BLACK, stroke_opacity=0, fill_opacity=self.box_op, corner_radius=0.15)
+
+        eq23 = MathTex(r"P'(A)", r"=", r"P(\pi A\pi)/P(\pi)", font_size=fs)
+        eq23.next_to(eq16, DOWN, buff=0.15)
+
+        box7 = SurroundingRectangle(VGroup(eq3, eq15, eq16, eq23), fill_color=BLACK, stroke_opacity=0, fill_opacity=self.box_op, corner_radius=0.15)
+
+        eq30 = Tex(r'\underline{unitary transform: $U$}', color=BLUE, font_size=fs).set_z_index(1)
         eq30.next_to(eq23, DOWN)
-        eq30[0][-1].set_opacity(0.9).next_to(eq30[0][0], DOWN, buff=0.04, coor_mask=UP).set_color(WHITE)
-        eq31 = MathTex(r"P'(A)", r'=', r"P(U^*AU)")
-        eq31.next_to(eq30, DOWN)
+        eq30[0][-1].set_z_index(0.9).next_to(eq30[0][0], DOWN, buff=0.04, coor_mask=UP).set_color(WHITE)
+        eq31 = MathTex(r"P'(A)", r'=', r"P(U^*AU)", font_size=fs)
+        eq31.next_to(eq30, DOWN, buff=0.15)
 
-        eq1_1 = eq1.copy()
+        gp1 = VGroup(eq3, eq15, eq16, eq23, eq30, eq31)
+        box8 = SurroundingRectangle(gp1, fill_color=BLACK, stroke_opacity=0, fill_opacity=self.box_op, corner_radius=0.15)
+        gp2 = VGroup(*gp1[:], box5, box6, box7, box8)
+        gp2.to_edge(UR, buff=0.1)
+
+        if not anim:
+            return VGroup(*gp1[:], box8)
+
+        MathTex.set_default(font_size=DEFAULT_FONT_SIZE * 1.1)
+
+
+        eq1_1 = MathTex(r'{\rm\ expected\ value\ of\ }A', r'=', r'\langle\Psi\vert A\vert\Psi\rangle')
         eq2 = MathTex(r'P(A)', r'=', r'\langle\Psi\vert A\vert\Psi\rangle')
         eq2.move_to(ORIGIN).to_edge(DOWN, buff=1)
-        mh.align_sub(eq1_1, eq1_1[1], eq2[1])
-        eq3 = eq2.copy()
-        mh.align_sub(eq3, eq3[1], eq1[1])
+        mh.align_sub(eq1_1, eq1_1[1], eq2[1]).move_to(ORIGIN, coor_mask=RIGHT)
+        # mh.align_sub(eq3, eq3[1], eq1[1])
         eq4 = MathTex(r'{\rm probability\ amplitude}', r'=', r'\langle\Phi\vert\Psi\rangle')
         mh.align_sub(eq4, eq4[1], eq2[1], coor_mask=UP)
+
         eq5 = MathTex(r'{\rm probability}', r'=', r'\lvert\langle\Phi\vert\Psi\rangle\rvert^2')
         mh.align_sub(eq5, eq5[1], eq4[1], coor_mask=UP)
         eq6 = MathTex(r'{\rm probability}', r'=', r'\overline{\langle\Phi\vert\Psi\rangle}\,\langle\Phi\vert\Psi\rangle')
@@ -47,6 +79,9 @@ class Pdefinition(Scene):
         eq9 = MathTex(r'{\rm probability}', r'=', r'P(\pi_\Phi)')
         mh.align_sub(eq9, eq9[1], eq7[1])
 
+        box1 = SurroundingRectangle(VGroup(eq1_1, eq2, eq4, eq6), fill_color=BLACK, stroke_opacity=0, fill_opacity=self.box_op, corner_radius=0.15)
+
+
         eq10 = MathTex(r'\pi_V', r'=', r'{\rm orthogonal\ projection\ onto\ }V')
         mh.align_sub(eq10, eq10[1], eq8[1]).move_to(ORIGIN, coor_mask=RIGHT)
         eq11 = MathTex(r'{\rm probability', r'=', r'\lVert\pi_V\Psi\rVert^2')
@@ -57,6 +92,8 @@ class Pdefinition(Scene):
         mh.align_sub(eq13, eq13[1], eq12[1])
         eq14 = MathTex(r'{\rm probability}', r'=', r'P(\pi_V)')
         mh.align_sub(eq14, eq14[1], eq13[1])
+
+        box2 = SurroundingRectangle(VGroup(eq8, eq10, eq11), fill_color=BLACK, stroke_opacity=0, fill_opacity=self.box_op, corner_radius=0.15)
 
         eq17 = MathTex(r'\Psi^\prime', r'=', r'\pi_V\Psi / \lVert\pi_V\Psi\rVert')
         mh.align_sub(eq17, eq17[1], eq14[1]).move_to(ORIGIN, coor_mask=RIGHT)
@@ -70,6 +107,8 @@ class Pdefinition(Scene):
         mh.align_sub(eq21, eq21[1], eq20[1]).move_to(ORIGIN, coor_mask=RIGHT)
         eq22 = MathTex(r'P^\prime(A)', r'=', r"P(\pi_V A\pi_V)/ P(\pi_V)")
         mh.align_sub(eq22, eq22[1], eq21[1])#.move_to(ORIGIN, coor_mask=RIGHT)
+
+        box3 = SurroundingRectangle(VGroup(eq17, eq18, eq19, eq20, eq21, eq22, eq8), fill_color=BLACK, stroke_opacity=0, fill_opacity=self.box_op, corner_radius=0.15)
 
         eq24 = MathTex(r"\Psi'", r'=', r'U\Psi')
         eq25 = Tex(r'unitary transform: $U$', r'=')
@@ -85,20 +124,29 @@ class Pdefinition(Scene):
         eq29 = MathTex(r"P'(A)", r'=', r"P(U^*AU)")
         mh.align_sub(eq29, eq29[1], eq28[1])
 
-        self.add(eq1)
-        self.wait(0.1)
-        self.play(mh.rtransform(eq1.copy(), eq1_1), run_time=1.5)
+        for eq in (eq16, eq23, eq31, eq1_1, eq2, eq3, eq4, eq5, eq6, eq7, eq8, eq9, eq10, eq11, eq12, eq13, eq14,
+                   eq17, eq18, eq19, eq20, eq21, eq22, eq24, eq25, eq26, eq27, eq28, eq29):
+            eq.set_z_index(1)
+
+        box4 = SurroundingRectangle(VGroup(eq24, eq25[0], eq26, eq28), fill_color=BLACK, stroke_opacity=0, fill_opacity=self.box_op, corner_radius=0.15)
+
+        # self.add(eq1, box4)
+        # self.wait(0.1)
+        # self.play(mh.rtransform(eq1.copy(), eq1_1),
+        #           FadeIn(box1), run_time=1.5)
+        self.add(eq1_1, box1)
         self.wait(0.1)
         shift = mh.diff(eq1_1[0][-1], eq2[0][-2], RIGHT)
         self.play(mh.rtransform(eq1_1[1:], eq2[1:], eq1_1[0][-1], eq2[0][-2]),
-                  FadeOut(eq1_1[0][:-1], shift=shift),
+                  FadeOut(eq1_1[0][:-1]),
                   FadeIn(eq2[0][:-2], eq2[0][-1], shift=shift),
                   run_time=1.5)
         self.wait(0.1)
-        shift = mh.diff(eq1[0][-1], eq3[0][-2], RIGHT)
+        # shift = mh.diff(eq1[0][-1], eq3[0][-2], RIGHT)
         self.play(mh.rtransform(eq2.copy(), eq3),
-                  mh.rtransform(eq1[1:], eq3[1:], eq1[0][-1], eq3[0][-2]),
-                  FadeOut(eq1[0][:-1], shift=shift),
+                  # mh.rtransform(eq1[1:], eq3[1:], eq1[0][-1], eq3[0][-2]),
+                  # FadeOut(eq1[0][:-1]),
+                  FadeIn(box5, shift=mh.diff(eq2, eq3)),
                   run_time=1.5)
         self.wait(0.1)
         self.play(FadeOut(eq2), FadeIn(eq4), run_time=1.5)
@@ -127,7 +175,7 @@ class Pdefinition(Scene):
                   FadeOut(eq6[2][0]),
                   run_time=1)
         self.wait(0.1)
-        self.play(mh.rtransform(eq7[2][2:8].copy(), eq8[2][:]),
+        self.play(ReplacementTransform(box1, box2, rate_func=rush_from), mh.rtransform(eq7[2][2:8].copy(), eq8[2][:]),
                   FadeIn(eq8[:2]),
                   run_time=1)
         self.wait(0.1)
@@ -183,11 +231,12 @@ class Pdefinition(Scene):
         self.play(FadeIn(eq15),
                   mh.rtransform(eq14[:2], eq16[:2], eq14[2][:3], eq16[2][:3], eq14[2][-1], eq16[2][-1]),
                   FadeOut(eq14[2][3], shift=shift),
-                  FadeOut(eq10),
+                  FadeOut(eq10, box2),
+                  ReplacementTransform(box5, box6, rate_func=rush_from),
                   run_time=2)
 
         self.wait(0.1)
-        self.play(FadeIn(eq17[:2], eq17[2][:3], rate_func=linear), run_time=0.8)
+        self.play(FadeIn(box3, eq17[:2], eq17[2][:3], rate_func=linear), run_time=0.8)
         self.wait(0.1)
         self.play(FadeIn(eq17[2][3:], rate_func=linear), run_time=0.8)
         self.wait(0.1)
@@ -249,10 +298,12 @@ class Pdefinition(Scene):
                   FadeOut(eq22[2][6], shift=mh.diff(eq22[2][5], eq23[2][4])),
                   FadeOut(eq22[2][12], shift=mh.diff(eq22[2][11], eq23[2][9])),
                   FadeOut(eq17),
+                  FadeOut(box3),
+                  ReplacementTransform(box6, box7, rate_func=rush_from),
                   run_time=2)
         self.wait(0.5)
 
-        self.play(FadeIn(eq24, eq25[0]), run_time=1.2)
+        self.play(FadeIn(eq24, eq25[0], box4), run_time=1.2)
         self.wait(0.1)
         self.play(FadeOut(eq25[0]), FadeIn(eq26), run_time=1.5)
         self.wait(0.1)
@@ -281,7 +332,9 @@ class Pdefinition(Scene):
                   FadeIn(eq29[2][6], shift=shift2),
                   run_time=1.2)
         self.wait(0.1)
-        self.play(FadeIn(eq30),mh.rtransform(eq29, eq31), FadeOut(eq24), run_time=2)
+        self.play(FadeIn(eq30),mh.rtransform(eq29, eq31), FadeOut(eq24, box4),
+                  ReplacementTransform(box7, box8, rate_func=rush_from), run_time=2)
 
         self.wait()
+        return VGroup()
 
