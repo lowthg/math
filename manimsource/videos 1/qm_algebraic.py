@@ -338,3 +338,99 @@ class Pdefinition(Scene):
         self.wait()
         return VGroup()
 
+class Projection(Pdefinition):
+    def construct(self):
+        Tex.set_default(font_size=DEFAULT_FONT_SIZE*0.9)
+        eq1 = Tex(r'\underline{orthogonal projections}', color=BLUE).set_z_index(1)
+        eq1[0][-1].next_to(eq1[0][0], DOWN, buff=0.04, coor_mask=UP).set_z_index(0.9).set_color(WHITE)
+        eq2 = Tex(r'self-adjoint: $\pi^*=\pi$').set_z_index(1)
+        eq2.next_to(eq1, DOWN, buff=0.2)
+        eq3 = Tex(r'idempotent: $\pi^2=\pi$').set_z_index(1)
+        eq3.next_to(eq2, DOWN, buff=0.2)
+
+        gp1 = VGroup(eq1, eq2, eq3)
+
+        box1 = SurroundingRectangle(gp1, fill_color=BLACK, stroke_opacity=0, fill_opacity=self.box_op, corner_radius=0.15)
+        VGroup(*gp1[:], box1).to_edge(UL, buff=0.1)
+
+        eq4 = Tex(r'equivalently: $\pi^*\pi=\pi$').set_z_index(1)
+        eq4.next_to(eq3, DOWN, buff=0.2)
+        box2 = SurroundingRectangle(VGroup(gp1, eq4), fill_color=BLACK, stroke_opacity=0, fill_opacity=self.box_op, corner_radius=0.15)
+
+        self.add(eq1, eq2, eq3, box1)
+        self.wait(0.5)
+        self.play(ReplacementTransform(box1, box2, rate_func=rush_from), FadeIn(eq4), run_time=1)
+
+
+class Unitary(Pdefinition):
+    def construct(self):
+        Tex.set_default(font_size=DEFAULT_FONT_SIZE*1.1)
+        MathTex.set_default(font_size=DEFAULT_FONT_SIZE*1.1)
+        eq1 = Tex(r'\underline{unitary transform}', color=BLUE).set_z_index(1)
+        eq1[0][-1].next_to(eq1[0][0], DOWN, buff=0.04, coor_mask=UP).set_z_index(0.9).set_color(WHITE)
+        eq2 = MathTex(r"\Psi'", r'=', r'U\Psi').set_z_index(1)
+        eq2.next_to(eq1, DOWN, buff=0.2)
+        eq3 = MathTex(r"U^*U", r'=', r'UU^*', r'=', r'I').set_z_index(1)
+        eq3.next_to(eq2, DOWN, buff=0.2)
+        eq4 = MathTex(r"\lVert \Psi'\rVert^2", r"=", r"\langle\Psi'\vert\Psi'\rangle")
+        eq4.next_to(eq3, DOWN, buff=0.2)
+        eq5 = MathTex(r"\lVert \Psi'\rVert^2", r"=", r"\langle U\Psi\vert U\Psi\rangle")
+        mh.align_sub(eq5, eq5[1], eq4[1], coor_mask=UP)
+        eq6 = MathTex(r"\lVert \Psi'\rVert^2", r"=", r"\langle \Psi\vert U^*U\vert\Psi\rangle")
+        mh.align_sub(eq6, eq6[1], eq4[1], coor_mask=UP)
+        eq7 = MathTex(r"\lVert \Psi'\rVert^2", r"=", r"\langle \Psi\vert\Psi\rangle")
+        mh.align_sub(eq7, eq7[1], eq4[1], coor_mask=UP)
+        eq8 = MathTex(r"\lVert \Psi'\rVert^2", r"=", r"\lVert \Psi\rVert^2")
+        mh.align_sub(eq8, eq8[1], eq4[1], coor_mask=UP)
+
+        gp1 = VGroup(eq1, eq2, eq3, eq4, eq5, eq6, eq7, eq8).set_z_index(1)
+
+        box1 = SurroundingRectangle(gp1, fill_color=BLACK, stroke_opacity=0, fill_opacity=self.box_op, corner_radius=0.15)
+        VGroup(box1, gp1).to_edge(DOWN, buff=0.2)
+
+        self.add(eq1, eq2, box1)
+        self.wait(0.1)
+        self.play(FadeIn(eq3))
+        self.wait(0.1)
+        self.play(FadeIn(eq4))
+        self.wait(0.1)
+        self.play(mh.rtransform(eq4[:2], eq5[:2], eq4[2][0], eq5[2][0],
+                                eq4[2][1], eq5[2][2], eq4[2][3], eq5[2][3],
+                                eq4[2][4], eq5[2][5], eq4[2][6], eq5[2][6]),
+                  FadeOut(eq4[2][2], shift=mh.diff(eq4[2][1], eq5[2][2])),
+                  FadeOut(eq4[2][5], shift=mh.diff(eq4[2][4], eq5[2][5])),
+                  ReplacementTransform(eq2[2][:].copy(), eq5[2][1:3]),
+                  ReplacementTransform(eq2[2][:].copy(), eq5[2][4:6]),
+                  run_time=1.4)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq5[:2], eq6[:2], eq5[2][0], eq6[2][0],
+                                eq5[2][1], eq6[2][3], eq5[2][2], eq6[2][1],
+                                eq5[2][3].copy(), eq6[2][2], eq5[2][3], eq6[2][6],
+                                eq5[2][4], eq6[2][5], eq5[2][5], eq6[2][7],
+                                eq5[2][6], eq6[2][8]),
+                  FadeIn(eq6[2][4], shift=mh.diff(eq5[2][1], eq6[2][3], coor_mask=RIGHT)),
+                  run_time=1.6)
+        self.wait(0.1)
+        eq6_1 = mh.align_sub(eq3.copy(), eq3[3], eq6[1])[4].move_to(eq6[2][3:6])
+        self.play(ReplacementTransform(eq3[4].copy(), eq6_1),
+                  FadeOut(eq6[2][3:6]),
+                  run_time=1.2)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq6[:2], eq7[:2], eq6[2][:3], eq7[2][:3],
+                                eq6[2][7:9], eq7[2][3:5]),
+                  mh.rtransform(eq6[2][6], eq7[2][2]),
+                  FadeOut(eq6_1, shift=mh.diff(eq6_1, eq7[2][2], coor_mask=RIGHT)),
+                  run_time=1.4)
+        self.wait(0.1)
+        shift1 = mh.diff(eq7[2][0], eq8[2][0], coor_mask=RIGHT)
+        shift2 = mh.diff(eq7[2][4], eq8[2][2], coor_mask=RIGHT)
+        self.play(mh.rtransform(eq7[:2], eq8[:2], eq7[2][1], eq8[2][1]),
+                  mh.rtransform(eq7[2][3], eq8[2][1]),
+                  FadeOut(eq7[2][0], shift=shift1),
+                  FadeIn(eq8[2][0], shift=shift1),
+                  FadeOut(eq7[2][4], shift=shift2),
+                  FadeIn(eq8[2][2:], shift=shift2),
+                  FadeOut(eq7[2][2], shift=mh.diff(eq7[2][2], eq8[2][1], coor_mask=RIGHT)),
+                  run_time=1.4)
+        self.wait()
+
