@@ -434,3 +434,108 @@ class Unitary(Pdefinition):
                   run_time=1.4)
         self.wait()
 
+class Hamiltonian(Pdefinition):
+    def construct(self):
+        Tex.set_default(font_size=DEFAULT_FONT_SIZE*1.1)
+        MathTex.set_default(font_size=DEFAULT_FONT_SIZE*1.1)
+
+        eq1 = MathTex(r'i\hbar\frac{d}{dt}\Psi = H\Psi')
+        eq2 = MathTex(r'\Psi_t', r'=', r'e^{-\frac{iHt}{\hbar} }\Psi_0')
+        eq2.next_to(eq1, DOWN)
+        eq3 = MathTex(r'P_t(A)', r'=', r'P_0\left(e^{\frac{iHt}{\hbar} }Ae^{-\frac{iHt}{\hbar} }\right)')
+        mh.align_sub(eq3, eq3[1], eq2[1], coor_mask=UP)
+        eq4 = MathTex(r'\frac{d}{dt}P_t(A)', r'=',
+                      r'P_0\left(\frac{d}{dt} \left(e^{\frac{iHt}{\hbar} } Ae^{-\frac{iHt}{\hbar} }\right)\right)')
+        mh.align_sub(eq4, eq4[1], eq3[1])
+        eq5 = MathTex(r'\frac{d}{dt}P_t(A)', r'=',
+                      r'P_0\left(\frac{de^{\frac{iHt}{\hbar} } }{dt} Ae^{-\frac{iHt}{\hbar} } + e^{\frac{iHt}{\hbar} } A\frac{de^{-\frac{iHt}{\hbar} } }{dt}\right)')
+        for eq in (eq1, eq2, eq3, eq4, eq5):
+            eq.set_z_index(1)
+        box1 = SurroundingRectangle(VGroup(eq1, eq2, eq3), fill_color=BLACK, stroke_opacity=0, fill_opacity=self.box_op, corner_radius=0.15)
+        VGroup(eq1, eq2, eq3, eq4, eq5, box1).to_edge(DOWN, buff=0.15)
+
+        eq4.move_to(box1, coor_mask=UP)
+        mh.align_sub(eq5, eq5[1], eq4[1], coor_mask=UP)
+        eq6 = MathTex(r'\frac{d}{dt}P_t(A)', r'=',
+                      r'P_0\left(e^{\frac{iHt}{\hbar}{\frac{iH}{\hbar} } } Ae^{-\frac{iHt}{\hbar} } + e^{\frac{iHt}{\hbar} } A^{\frac{-iH}{\hbar} }e^{-\frac{iHt}{\hbar} }\right)')
+        eq6[2][9:13].move_to(eq6[1], coor_mask=UP)
+        eq6[2][29:34].move_to(eq6[1], coor_mask=UP)
+        mh.align_sub(eq6, eq6[1], eq5[1])
+        eq7 = MathTex(r'i\hbar\frac{d}{dt}P_t(A)', r'=', r'\frac{i}{\hbar}',
+                      r'P_0\left(e^{\frac{iHt}{\hbar} }(HA-AH)e^{-\frac{iHt}{\hbar} }\right)')
+        mh.align_sub(eq7, eq7[1], eq6[1], coor_mask=UP)
+
+        box2_1 = SurroundingRectangle(eq6)
+        box2 = RoundedRectangle(height=box1.height, width=box2_1.width, fill_color=BLACK, stroke_opacity=0,
+                         fill_opacity=self.box_op, corner_radius=0.15).move_to(box1, coor_mask=UP).move_to()
+
+
+        eq1_1 = eq1.copy().move_to(box1, coor_mask=UP)
+        self.add(box1, eq1_1)
+        self.wait(0.1)
+        self.play(LaggedStart(ReplacementTransform(eq1_1, eq1), FadeIn(eq2), lag_ratio=0.3),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq2[1], eq3[1], eq2[0][1], eq3[0][1], eq2[2][:7], eq3[2][10:17],
+                                eq2[2][0].copy(), eq3[2][3], eq2[2][2:7].copy(), eq3[2][4:9]),
+                  mh.fade_replace(eq2[0][0], eq3[0][0], coor_mask=RIGHT),
+                  FadeIn(eq3[0][2:], shift=mh.diff(eq2[0][1], eq3[0][1], coor_mask=RIGHT)),
+                  FadeOut(eq2[2][7:9]),
+                  FadeIn(eq3[2][9]),
+                  FadeIn(eq3[2][:3], shift=mh.diff(eq2[1], eq3[1])),
+                  FadeIn(eq3[2][-1], shift=(eq3[2][:-1].get_right() - eq2[2].get_right()) * RIGHT),
+                  run_time=1.4)
+        self.wait(0.1)
+        self.play(
+            mh.rtransform(eq3[0][:], eq4[0][4:], eq3[1], eq4[1], eq3[2][:2], eq4[2][:2], eq3[2][-1], eq4[2][-1],
+                          eq3[2][3:-1], eq4[2][8:-2]),
+            mh.stretch_replace(eq3[2][2], eq4[2][2]),
+            FadeIn(eq4[0][:4], shift=mh.diff(eq3[0][0], eq4[0][4])),
+            FadeIn(eq4[2][3:8], shift=mh.diff(eq3[2][2], eq4[2][8])),
+            FadeIn(eq4[2][-2], shift=mh.diff(eq3[2][-1], eq4[2][-2])),
+            FadeOut(eq1),
+            run_time=1.5
+        )
+        self.wait(0.1)
+        self.play(mh.rtransform(eq4[:2], eq5[:2], eq4[2][:2], eq5[2][:2],
+                               eq4[2][3], eq5[2][3], eq4[2][4:7], eq5[2][10:13],
+                               eq4[2][8:14], eq5[2][4:10],
+                               eq4[2][14:22], eq5[2][13:21]),
+                  mh.stretch_replace(eq4[2][-2], eq5[2][-1]),
+                  mh.stretch_replace(eq4[2][7], eq5[2][2]),
+                  mh.stretch_replace(eq4[2][2], eq5[2][2]),
+                  mh.stretch_replace(eq4[2][-1], eq5[2][-1]),
+                  mh.rtransform(eq4[2][8:15].copy(), eq5[2][22:29], eq4[2][15:22].copy(), eq5[2][30:37],
+                               eq4[2][3].copy(), eq5[2][29], eq4[2][4:7].copy(), eq5[2][37:40]),
+                  FadeIn(eq5[2][21], target_position=eq4[2][14]),
+                  run_time=2)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq5[:2], eq6[:2], eq5[2][:2], eq6[2][:2],
+                                eq5[2][4:10], eq6[2][3:9], eq5[2][6].copy(), eq6[2][10],
+                                eq5[2][8:10].copy(), eq6[2][11:13], eq5[2][13:29], eq6[2][13:29],
+                                eq5[2][30:37], eq6[2][34:41], eq5[2][31].copy(), eq6[2][29],
+                                eq5[2][33].copy(), eq6[2][31],
+                                eq5[2][35:37].copy(), eq6[2][32:34]),
+                  mh.stretch_replace(eq5[2][32].copy(), eq6[2][30]),
+                  mh.stretch_replace(eq5[2][2], eq6[2][2]),
+                  mh.stretch_replace(eq5[2][5].copy(), eq6[2][9]),
+                  mh.stretch_replace(eq5[2][-1], eq6[2][-1]),
+                  FadeOut(eq5[2][3], eq5[2][10:13], eq5[2][29], eq5[2][37:40]),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq6[0][:], eq7[0][2:], eq6[1], eq7[1],
+                             eq6[2][:9], eq7[3][:9], eq6[2][-8:], eq7[3][-8:],
+                                eq6[2][10], eq7[3][10], eq6[2][13], eq7[3][11],
+                                eq6[2][28], eq7[3][13], eq6[2][31], eq7[3][14],
+                                eq6[2][29], eq7[3][12],
+                                eq6[2][11:13], eq7[2][1:]
+                                ),
+                  mh.rtransform(eq6[2][14:21], eq7[3][-8:-1], eq6[2][22:28], eq7[3][3:9],
+                                eq6[2][32:34], eq7[2][1:]),
+                  mh.stretch_replace(eq6[2][2].copy(), eq7[3][9]),
+                  mh.stretch_replace(eq6[2][-1].copy(), eq7[3][-9]),
+                  mh.stretch_replace(eq6[2][9], eq7[2][0]),
+                  mh.fade_replace(eq6[2][21], eq7[3][12]),
+                  mh.fade_replace(eq6[2][30], eq7[2][0]),
+                  run_time=2)
+        self.wait()
