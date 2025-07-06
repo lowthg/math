@@ -10,6 +10,81 @@ sys.path.append('../../')
 import manimhelper as mh
 
 
+class Hilbert(Scene):
+    def construct(self):
+        fs1 = 120
+        eq1 = MathTex(r'\mathcal H', font_size=200)[0]
+        eq2 = MathTex(r'\Psi\in\mathcal H', font_size=fs1)[0]
+        mh.align_sub(eq2, eq2[-1], eq1[-1], coor_mask = UP).shift(UP*0.2)
+        eq3 = MathTex(r'\Phi,\Psi\in\mathcal H', font_size=fs1)[0]
+        mh.align_sub(eq3, eq3[-1], eq2[-1], coor_mask = UP)
+        eq4 = MathTex(r'\Phi + \Psi\in\mathcal H', font_size=fs1)[0]
+        eq4.next_to(eq3, DOWN, buff=0.35)
+        eq5 = MathTex(r'a,b\in\mathbb C', font_size=fs1)[0]
+        mh.align_sub(eq5, eq5[-2], eq3[-2]).next_to(eq3, RIGHT, coor_mask=RIGHT, buff=1)
+        eq3_1 = eq3.copy()
+        VGroup(eq3_1, eq5).move_to(ORIGIN, coor_mask=RIGHT)
+        eq6 = MathTex(r'a\Phi + b\Psi\in\mathcal H', font_size=fs1)[0]
+        mh.align_sub(eq6, eq6[-2], eq4[-2], coor_mask=UP)
+        eq7 = MathTex(r'\langle\Phi\vert\Psi\rangle\in\mathbb C', font_size=fs1)[0]
+        mh.align_sub(eq7, eq7[-2], eq6[-2], coor_mask=UP)
+        eq8 = MathTex(r'\Phi, \Psi_1, \Psi_2\in\mathcal H', font_size=fs1)[0]
+        mh.align_sub(eq8, eq8[-2], eq3[-2], coor_mask=UP)
+        eq9 = MathTex(r'\langle\Phi\vert a\Psi_1+b\Psi_2\rangle', font_size=fs1)[0]
+        mh.align_sub(eq9, eq9[1], eq7[1], coor_mask=UP)
+
+
+        self.wait(0.2)
+        self.play(FadeIn(eq1, rate_func=linear))
+        self.wait(0.1)
+        self.play(mh.rtransform(eq1[-1], eq2[-1]),
+                  FadeIn(eq2[:2], shift=(eq2[-1].get_left()-eq1[-1].get_left()) * RIGHT),
+                  run_time=1.2)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq2[:], eq3[2:]),
+                  FadeIn(eq3[:2], shift=mh.diff(eq2[0], eq3[2])),
+                  run_time=0.8)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq3[0].copy(), eq4[0], eq3[2:].copy(), eq4[2:]),
+                  FadeIn(eq4[1], target_position=eq3[:3]),
+                  run_time=1.5)
+        self.wait(0.1)
+        eq3_2 = eq3.copy()
+        self.play(LaggedStart(ReplacementTransform(eq3, eq3_1),
+                              AnimationGroup(FadeIn(eq5),
+                  mh.rtransform(eq4[:2], eq6[1:3], eq4[2:], eq6[4:]),
+                  FadeIn(eq6[0], target_position=eq5[0]),
+                  FadeIn(eq6[3], target_position=eq5[2])),
+                              lag_ratio=0.3),
+                  run_time=2)
+        eq3 = eq3_2
+        self.wait(0.1)
+        self.play(FadeOut(eq6, rate_func=linear),
+                  ReplacementTransform(eq3_1, eq3),
+                  FadeOut(eq5),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq3[0].copy(), eq7[1], eq3[2].copy(), eq7[3], eq3[-2].copy(), eq7[-2]),
+                  FadeIn(eq7[0], shift=mh.diff(eq3[0], eq7[1])),
+                  FadeIn(eq7[4], shift=mh.diff(eq3[2], eq7[3])),
+                  FadeIn(eq7[2], target_position=eq3[:3]),
+                  FadeIn(eq7[-1], target_position=eq3[-1]),
+                  run_time=1.5)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq3[:2], eq8[:2], eq3[3:], eq8[7:], eq3[2], eq8[2],
+                                eq3[2].copy(), eq8[5],
+                                eq7[:3], eq9[:3], eq7[3], eq9[4],
+                                eq7[3].copy(), eq9[8], eq7[4], eq9[10]),
+                  FadeIn(eq8[3:5], shift=mh.diff(eq3[2], eq8[2])),
+                  FadeIn(eq8[6], shift=mh.diff(eq3[2], eq8[5])),
+                  FadeIn(eq9[3], eq9[5], shift=mh.diff(eq7[3], eq9[4])),
+                  FadeIn(eq9[7], eq9[9], shift=mh.diff(eq7[3], eq9[8])),
+                  FadeIn(eq9[6], target_position=eq7[3]),
+                  FadeOut(eq7[-2:]),
+                  run_time=1)
+
+        self.wait()
+
 class Pdefinition(Scene):
     box_op = 0.7
     def __init__(self, *args, **kwargs):
@@ -361,7 +436,6 @@ class Projection(Pdefinition):
         self.wait(0.5)
         self.play(ReplacementTransform(box1, box2, rate_func=rush_from), FadeIn(eq4), run_time=1)
 
-
 class Unitary(Pdefinition):
     def construct(self):
         Tex.set_default(font_size=DEFAULT_FONT_SIZE*1.1)
@@ -461,13 +535,27 @@ class Hamiltonian(Pdefinition):
         eq6[2][9:13].move_to(eq6[1], coor_mask=UP)
         eq6[2][29:34].move_to(eq6[1], coor_mask=UP)
         mh.align_sub(eq6, eq6[1], eq5[1])
-        eq7 = MathTex(r'i\hbar\frac{d}{dt}P_t(A)', r'=', r'\frac{i}{\hbar}',
+        eq7 = MathTex(r'\frac{d}{dt}P_t(A)', r'=', r'\frac{i}{\hbar}',
                       r'P_0\left(e^{\frac{iHt}{\hbar} }(HA-AH)e^{-\frac{iHt}{\hbar} }\right)')
         mh.align_sub(eq7, eq7[1], eq6[1], coor_mask=UP)
+        eq8 = MathTex(r'\frac{d}{dt}P_t(A)', r'=', r'\frac{i}{\hbar}',
+                      r'P_t\left(HA-AH\right)')
+        mh.align_sub(eq8, eq8[1], eq7[1], coor_mask=UP)
+        eq9 = MathTex(r'\frac{d}{dt}P_t(A)', r'=', r'\frac{-i}{\hbar}',
+                      r'P_t\left(AH-HA\right)')
+        mh.align_sub(eq9, eq9[1], eq8[1])
+        eq10 = MathTex(r'i\hbar\frac{d}{dt}P_t(A)', r'=', r'P_t\left(AH-HA\right)')
+        mh.align_sub(eq10, eq10[1], eq9[1], coor_mask=UP)
 
-        box2_1 = SurroundingRectangle(eq6)
+        box2_1 = SurroundingRectangle(eq4)
         box2 = RoundedRectangle(height=box1.height, width=box2_1.width, fill_color=BLACK, stroke_opacity=0,
-                         fill_opacity=self.box_op, corner_radius=0.15).move_to(box1, coor_mask=UP).move_to()
+                         fill_opacity=self.box_op, corner_radius=0.15).move_to(box1).move_to(box2_1, coor_mask=RIGHT)
+        box3_1 = SurroundingRectangle(eq5)
+        box3 = RoundedRectangle(height=box1.height, width=box3_1.width, fill_color=BLACK, stroke_opacity=0,
+                         fill_opacity=self.box_op, corner_radius=0.15).move_to(box1).move_to(box3_1, coor_mask=RIGHT)
+        box4_1 = SurroundingRectangle(eq6)
+        box4 = RoundedRectangle(height=box1.height, width=box4_1.width, fill_color=BLACK, stroke_opacity=0,
+                         fill_opacity=self.box_op, corner_radius=0.15).move_to(box1).move_to(box4_1, coor_mask=RIGHT)
 
 
         eq1_1 = eq1.copy().move_to(box1, coor_mask=UP)
@@ -494,6 +582,7 @@ class Hamiltonian(Pdefinition):
             FadeIn(eq4[2][3:8], shift=mh.diff(eq3[2][2], eq4[2][8])),
             FadeIn(eq4[2][-2], shift=mh.diff(eq3[2][-1], eq4[2][-2])),
             FadeOut(eq1),
+            ReplacementTransform(box1, box2, rate_func=rush_from),
             run_time=1.5
         )
         self.wait(0.1)
@@ -508,6 +597,7 @@ class Hamiltonian(Pdefinition):
                   mh.rtransform(eq4[2][8:15].copy(), eq5[2][22:29], eq4[2][15:22].copy(), eq5[2][30:37],
                                eq4[2][3].copy(), eq5[2][29], eq4[2][4:7].copy(), eq5[2][37:40]),
                   FadeIn(eq5[2][21], target_position=eq4[2][14]),
+                  ReplacementTransform(box2, box3),
                   run_time=2)
         self.wait(0.1)
         self.play(mh.rtransform(eq5[:2], eq6[:2], eq5[2][:2], eq6[2][:2],
@@ -521,9 +611,10 @@ class Hamiltonian(Pdefinition):
                   mh.stretch_replace(eq5[2][5].copy(), eq6[2][9]),
                   mh.stretch_replace(eq5[2][-1], eq6[2][-1]),
                   FadeOut(eq5[2][3], eq5[2][10:13], eq5[2][29], eq5[2][37:40]),
+                  ReplacementTransform(box3, box4),
                   run_time=1.5)
         self.wait(0.1)
-        self.play(mh.rtransform(eq6[0][:], eq7[0][2:], eq6[1], eq7[1],
+        self.play(mh.rtransform(eq6[0][:], eq7[0][:], eq6[1], eq7[1],
                              eq6[2][:9], eq7[3][:9], eq6[2][-8:], eq7[3][-8:],
                                 eq6[2][10], eq7[3][10], eq6[2][13], eq7[3][11],
                                 eq6[2][28], eq7[3][13], eq6[2][31], eq7[3][14],
@@ -538,4 +629,27 @@ class Hamiltonian(Pdefinition):
                   mh.fade_replace(eq6[2][21], eq7[3][12]),
                   mh.fade_replace(eq6[2][30], eq7[2][0]),
                   run_time=2)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq7[:3], eq8[:3], eq7[3][0], eq8[3][0],
+                                eq7[3][10:15], eq8[3][3:8]),
+                  mh.fade_replace(eq7[3][1], eq8[3][1]),
+                  mh.stretch_replace(eq7[3][2], eq8[3][2]),
+                  mh.stretch_replace(eq7[3][9], eq8[3][2]),
+                  mh.stretch_replace(eq7[3][15], eq8[3][8]),
+                  mh.stretch_replace(eq7[3][-1], eq8[3][-1]),
+                  FadeOut(eq7[3][3:9], shift=mh.diff(eq7[3][9], eq8[3][2])),
+                  FadeOut(eq7[3][16:23], shift=mh.diff(eq7[3][15], eq8[3][8])),
+                  run_time=1.7)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq8[:2], eq9[:2], eq8[2][:], eq9[2][1:],
+                                eq8[3][:3], eq9[3][:3], eq8[3][3:5], eq9[3][6:8],
+                                eq8[3][5], eq9[3][5], eq8[3][6:8], eq9[3][3:5],
+                                eq8[3][-1], eq9[3][-1]),
+                  FadeIn(eq9[2][0], shift=mh.diff(eq8[2][0], eq9[2][1])))
+        self.wait(0.1)
+        self.play(mh.rtransform(eq9[0][:], eq10[0][2:], eq9[1], eq10[1], eq9[3], eq10[2], eq9[2][3], eq10[0][1]),
+                  mh.stretch_replace(eq9[2][1], eq10[0][0]),
+                  FadeOut(eq9[2][0], shift=mh.diff(eq9[2][1], eq10[0][0])),
+                  FadeOut(eq9[2][2], shift=mh.diff(eq9[2][1], eq10[0][0], coor_mask=RIGHT)),
+                  run_time=1.7)
         self.wait()
