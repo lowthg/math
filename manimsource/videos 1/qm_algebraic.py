@@ -13,6 +13,8 @@ import manimhelper as mh
 class Hilbert(Scene):
     def construct(self):
         fs1 = 120
+        fs2 = 80
+        fs3 = 60
         eq1 = MathTex(r'\mathcal H', font_size=200)[0]
         eq2 = MathTex(r'\Psi\in\mathcal H', font_size=fs1)[0]
         mh.align_sub(eq2, eq2[-1], eq1[-1], coor_mask = UP).shift(UP*0.2)
@@ -27,12 +29,52 @@ class Hilbert(Scene):
         eq6 = MathTex(r'a\Phi + b\Psi\in\mathcal H', font_size=fs1)[0]
         mh.align_sub(eq6, eq6[-2], eq4[-2], coor_mask=UP)
         eq7 = MathTex(r'\langle\Phi\vert\Psi\rangle\in\mathbb C', font_size=fs1)[0]
-        mh.align_sub(eq7, eq7[-2], eq6[-2], coor_mask=UP)
-        eq8 = MathTex(r'\Phi, \Psi_1, \Psi_2\in\mathcal H', font_size=fs1)[0]
-        mh.align_sub(eq8, eq8[-2], eq3[-2], coor_mask=UP)
-        eq9 = MathTex(r'\langle\Phi\vert a\Psi_1+b\Psi_2\rangle', font_size=fs1)[0]
-        mh.align_sub(eq9, eq9[1], eq7[1], coor_mask=UP)
+        mh.align_sub(eq7, eq7[-2], eq3[-2], coor_mask=UP)
+        eq10 = MathTex(r'\langle\Phi\vert a\Psi_1+b\Psi_2\rangle', r'=',
+                       r'a\langle\Phi\vert\Psi_1\rangle + b\langle\Phi\vert\Psi_2\rangle',
+                       font_size=fs2).set_z_index(1)
+        eq11 = Tex(r'\underline{Linear}', font_size=fs3, color=BLUE).next_to(eq10, UP, buff=0.35)
+        eq11[0][-1].set_z_index(0.9).next_to(eq11[0][0], DOWN, buff=0.04, coor_mask=UP).set_color(WHITE)
+        eq11.next_to(eq10[0], UP).align_to(eq10, LEFT)
 
+        eq12 = MathTex(r'\langle\Psi\vert\Phi\rangle', r'=', r'\overline{\langle\Phi\vert\Psi\rangle}', font_size=fs2)
+        mh.align_sub(eq12, eq12[1], eq10[1])
+        eq13 = Tex(r'\underline{Conjugate symmetry}', font_size=fs3, color=BLUE).next_to(eq10, UP, buff=0.35)
+        eq13[0][-1].set_z_index(0.9).next_to(eq13[0][1], DOWN, buff=0.04, coor_mask=UP).set_color(WHITE)
+        eq13.align_to(eq11, LEFT).move_to(eq12, coor_mask=UP)
+        eq12.next_to(eq13, RIGHT, coor_mask=RIGHT, buff=0.35)
+
+        eq14 = MathTex(r'\langle a\Phi_1+b\Phi_2\vert\Psi\rangle', r'=',
+                       r'\overline{\langle \Psi\vert a\Phi_1+b\Phi_2\rangle}', font_size=fs2)
+        eq15 = Tex(r'\underline{Conjugate linear}', font_size=fs3, color=BLUE).next_to(eq14, UP, buff=0.35)
+        eq15[0][-1].set_z_index(0.9).next_to(eq15[0][1], DOWN, buff=0.04, coor_mask=UP).set_color(WHITE)
+        eq14.align_to(eq10, LEFT)
+        eq15.next_to(eq14[0], UP).align_to(eq10, LEFT)
+        VGroup(eq14, eq15).next_to(eq13, DOWN, buff=0.5, coor_mask=UP)
+        eq16 = MathTex(r'\langle a\Phi_1+b\Phi_2\vert\Psi\rangle', r'=',
+                       r'\overline{a\langle \Psi\vert\Phi_1\rangle+b\langle \Psi\vert\Phi_2\rangle}', font_size=fs2)
+        mh.align_sub(eq16, eq16[1], eq14[1])
+        eq17 = MathTex(r'\langle a\Phi_1+b\Phi_2\vert\Psi\rangle', r'=',
+                       r'\overline{a}\langle\Phi_1\vert\Psi\rangle+\overline{b}\langle\Phi_2\vert\Psi\rangle}', font_size=fs2)
+        mh.align_sub(eq17, eq17[1], eq16[1])
+        eq18 = Tex(r'(conjugate symmetry)')
+        eq18[0][1:-1].set_color(RED)
+        eq18.next_to(eq14[2], DOWN)
+        eq19 = Tex(r'(linearity)')
+        eq19[0][1:-1].set_color(RED)
+        eq19.next_to(eq14[2], DOWN)
+        mh.align_sub(eq19, eq19[0][0], eq18[0][0], coor_mask=UP)
+
+        eq20 = MathTex(r'\langle\Psi\vert\Psi\rangle', r'>', r'0', r'\ \ \ {\rm if\ }\Psi\not=0', font_size=fs2)
+        eq20.next_to(eq14, DOWN, buff=0.35)
+        #mh.align_sub(eq12, eq12[1], eq10[1])
+        eq21 = Tex(r'\underline{Positive}', font_size=fs3, color=BLUE)
+        eq21[0][-1].set_z_index(0.9).next_to(eq21[0][1], DOWN, buff=0.04, coor_mask=UP).set_color(WHITE)
+        eq21.align_to(eq11, LEFT).move_to(eq20, coor_mask=UP)
+        eq20.next_to(eq21, RIGHT, coor_mask=RIGHT, buff=0.35)
+
+        # eq10.shift(UP)
+        # mh.align_sub(eq10, eq10[0][1], eq3[1], coor_mask=UP)
 
         self.wait(0.2)
         self.play(FadeIn(eq1, rate_func=linear))
@@ -69,19 +111,95 @@ class Hilbert(Scene):
                   FadeIn(eq7[4], shift=mh.diff(eq3[2], eq7[3])),
                   FadeIn(eq7[2], target_position=eq3[:3]),
                   FadeIn(eq7[-1], target_position=eq3[-1]),
+                  eq3.animate.shift(UP*2),
                   run_time=1.5)
         self.wait(0.1)
-        self.play(mh.rtransform(eq3[:2], eq8[:2], eq3[3:], eq8[7:], eq3[2], eq8[2],
-                                eq3[2].copy(), eq8[5],
-                                eq7[:3], eq9[:3], eq7[3], eq9[4],
+        eq9 = eq10[0]
+        # self.play(mh.rtransform(eq3[:2], eq8[:2], eq3[3:], eq8[7:], eq3[2], eq8[2],
+        #                         eq3[2].copy(), eq8[5],
+        #                         eq7[:3], eq9[:3], eq7[3], eq9[4],
+        #                         eq7[3].copy(), eq9[8], eq7[4], eq9[10]),
+        #           FadeIn(eq8[3:5], shift=mh.diff(eq3[2], eq8[2])),
+        #           FadeIn(eq8[6], shift=mh.diff(eq3[2], eq8[5])),
+        #           FadeIn(eq9[3], eq9[5], shift=mh.diff(eq7[3], eq9[4])),
+        #           FadeIn(eq9[7], eq9[9], shift=mh.diff(eq7[3], eq9[8])),
+        #           FadeIn(eq9[6], target_position=eq7[3]),
+        #           FadeOut(eq7[-2:]),
+        #           run_time=1)
+        self.play(mh.rtransform(eq7[:3], eq9[:3], eq7[3], eq9[4],
                                 eq7[3].copy(), eq9[8], eq7[4], eq9[10]),
-                  FadeIn(eq8[3:5], shift=mh.diff(eq3[2], eq8[2])),
-                  FadeIn(eq8[6], shift=mh.diff(eq3[2], eq8[5])),
                   FadeIn(eq9[3], eq9[5], shift=mh.diff(eq7[3], eq9[4])),
                   FadeIn(eq9[7], eq9[9], shift=mh.diff(eq7[3], eq9[8])),
                   FadeIn(eq9[6], target_position=eq7[3]),
                   FadeOut(eq7[-2:]),
+                  FadeOut(eq3),
+                  FadeIn(eq11),
+                  run_time=2)
+        self.wait(0.1)
+        #self.play(mh.rtransform(eq9, eq10[0]))
+        eq9_1 = eq10[0].copy()
+        self.play(mh.rtransform(eq9_1[:3], eq10[2][1:4], eq9_1[:3].copy(), eq10[2][9:12],
+                                eq9_1[3], eq10[2][0], eq9_1[4:6], eq10[2][4:6],
+                                eq9_1[7], eq10[2][8], eq9_1[8:11], eq10[2][12:15],
+                                eq9_1[10].copy(), eq10[2][6], eq9_1[6], eq10[2][7]),
+                  FadeIn(eq10[1]),
+                  run_time=1.8)
+
+        self.wait(0.1)
+        self.play(VGroup(eq10, eq11).animate.next_to(eq12, UP, buff=0.35, coor_mask=UP),
+                  FadeIn(eq12[0], eq13),
+                  run_time=1.5)
+        self.wait(0.1)
+        eq12_1 = eq12[0].copy()
+        self.play(mh.rtransform(eq12_1[0], eq12[2][1], eq12_1[1], eq12[2][4], eq12_1[2], eq12[2][3],
+                                eq12_1[3], eq12[2][2], eq12_1[4], eq12[2][5]),
+                  FadeIn(eq12[1], eq12[2][0], shift=mh.diff(eq12_1[0], eq12[2][1])),
+                  run_time=1.6)
+        self.wait(0.1)
+        self.play(FadeIn(eq14[0], eq15),
                   run_time=1)
+        self.wait(0.1)
+        eq14_1 = eq14[0].copy()
+        self.play(mh.rtransform(eq14_1[0], eq14[2][1], eq14_1[1:8], eq14[2][4:11],
+                                eq14_1[8], eq14[2][3], eq14_1[9], eq14[2][2],
+                                eq14_1[10], eq14[2][11]),
+                  FadeIn(eq14[1], eq14[2][0], shift=mh.diff(eq14_1[0], eq14[2][1])),
+                  FadeIn(eq18),
+                  run_time=1.8)
+        self.play(mh.rtransform(eq14[:2], eq16[:2], eq14[2][0], eq16[2][0],
+                                eq14[2][1:4], eq16[2][2:5], eq14[2][4], eq16[2][1],
+                                eq14[2][5:7], eq16[2][5:7], eq14[2][7:9], eq16[2][8:10],
+                                eq14[2][9:12], eq16[2][13:16],
+                                eq14[2][11].copy(), eq16[2][7], eq14[2][1:4].copy(), eq16[2][10:13]),
+                  FadeOut(eq18, rate_func=rush_from),
+                  FadeIn(eq19, rate_func=rush_from),
+                  run_time=2)
+        self.play(mh.rtransform(eq16[:2], eq17[:2], eq16[2][1:3], eq17[2][1:3],
+                                eq16[2][3], eq17[2][6], eq16[2][4], eq17[2][5],
+                                eq16[2][5:7], eq17[2][3:5], eq16[2][7:9], eq17[2][7:9],
+                                eq16[2][9:11], eq17[2][10:12], eq16[2][11], eq17[2][15],
+                                eq16[2][12], eq17[2][14], eq16[2][13:15], eq17[2][12:14],
+                                eq16[2][15], eq17[2][16]),
+                  FadeOut(eq16[2][0]),
+                  mh.rtransform(eq17[2][0].copy().move_to(eq16[2][0], coor_mask=UP), eq17[2][0],
+                                eq17[2][9].copy().move_to(eq16[2][0], coor_mask=UP), eq17[2][9]),
+                  FadeIn(eq18, rate_func=rush_from),
+                  FadeOut(eq19, rate_func=rush_from),
+                  run_time=1.8)
+        self.play(FadeOut(eq18), run_time=0.6)
+        self.wait(0.1)
+        self.play(FadeIn(eq20, eq21))
+        self.wait(0.1)
+        eq22 = MathTex(r'\lVert\Psi\rVert', r'=', r'\sqrt{\langle\Psi\vert\Psi\rangle}', font_size=fs2)
+        eq22.to_edge(DOWN, buff=0.35).align_to(eq20, LEFT)
+        eq23 = Tex(r'\underline{Norm}', font_size=fs3, color=BLUE)
+        eq23[0][-1].set_z_index(0.9).next_to(eq23[0][1], DOWN, buff=0.04, coor_mask=UP).set_color(WHITE)
+        eq23.align_to(eq11, LEFT).move_to(eq22, coor_mask=UP)
+        # eq20.next_to(eq21, RIGHT, coor_mask=RIGHT, buff=0.35)
+
+
+        self.play(VGroup(eq10, eq11, eq12, eq13, eq15, eq17, eq20, eq21).animate.to_edge(UP, buff=0.35),
+                  FadeIn(eq22, eq23))
 
         self.wait()
 
