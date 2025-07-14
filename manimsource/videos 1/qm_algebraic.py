@@ -926,8 +926,28 @@ class AliceState(Scene):
         eq6 = MathTex(r'P_B(M)', r'=', r'\frac1{2\sqrt2}\left(\left(\langle{\rm up}\vert + \langle{\rm down}\vert\right) M\left(\vert{\rm up}\rangle + \vert{\rm down}\rangle\right)',
                                        r'+\left(\langle{\rm up}\vert - \langle{\rm down}\vert\right) M\left(\vert{\rm up}\rangle - \vert{\rm down}\rangle\right)\right)')
         mh.align_sub(eq6, eq6[1], eq5[1])
+        mh.align_sub(eq6, eq6[2][8], eq1[2][6], coor_mask=RIGHT)
         mh.align_sub(eq6[3], eq6[3][0], eq5[3][0])
-        #eq6[2][6](eq5[2][6].copy().move_to(eq5[2][6], coor_mask=RIGHT))
+        mh.align_sub(eq6[3], eq6[3][2], eq6[2][8], coor_mask=RIGHT)
+        eq6[2].submobjects[6] = eq5[2][5].copy().move_to(eq6[2][6], coor_mask=RIGHT)
+        eq6[3].submobjects[-1] = eq5[3][-1].copy().move_to(eq6[3][-1], coor_mask=RIGHT)
+
+        eq7 = MathTex(r'P_B(M)', r'=', r'\frac1{2\sqrt2}\left(\langle{\rm up}\vert M\vert{\rm up}\rangle+\langle{\rm down}\vert M\vert{\rm down}\rangle',
+                      r'+ \langle{\rm up}\vert M\vert{\rm down}\rangle + \langle{\rm down}\vert M\vert{\rm up}\rangle',
+                      r'+ \langle{\rm up}\vert M\vert{\rm up}\rangle+\langle{\rm down}\vert M\vert{\rm down}\rangle',
+                      r'- \langle{\rm up}\vert M\vert{\rm down}\rangle - \langle{\rm down}\vert M\vert{\rm up}\rangle\right)')
+        mh.align_sub(eq7, eq7[1], eq6[1])
+        mh.align_sub(eq7, eq7[2][7], eq1[2][6], coor_mask=RIGHT)
+        eq7[2].submobjects[6] = eq5[2][5].copy().move_to(eq7[2][6], coor_mask=RIGHT)
+        eq7[3].next_to(eq7[2][7:], DOWN, buff=0.25).to_edge(RIGHT)
+        mh.align_sub(eq7[4], eq7[4][1], eq7[2][7]).next_to(eq7[3], DOWN, buff=0.35, coor_mask=UP)
+        mh.align_sub(eq7[5], eq7[5][1], eq7[3][1]).next_to(eq7[4], DOWN, buff=0.25, coor_mask=UP)
+        eq7[5].submobjects[-1] = eq5[3][-1].copy().move_to(eq7[5][-1])
+
+        eq8 = MathTex(r'P_B(M)', r'=', r'\frac1{\sqrt2}\left(\langle{\rm up}\vert M\vert{\rm up}\rangle +'
+                                       r'\langle{\rm down}\vert M\vert{\rm down}\rangle\right)')
+        mh.align_sub(eq8, eq8[1], eq1[1])
+        mh.align_sub(eq8, eq8[1], eq7[1], coor_mask=UP)
 
         self.add(eq1)
         self.wait(0.1)
@@ -986,6 +1006,66 @@ class AliceState(Scene):
                                 eq5[2][5], eq6[2][6], eq5[2][9:], eq6[2][7:]),
                   mh.rtransform(eq5[2][6:8], eq6[2][:2], eq5[2][8], eq6[2][2]),
                   mh.rtransform(eq5[3][0], eq6[3][0], eq5[3][1:3], eq6[2][:2],
-                                eq5[3][3], eq6[2][4], eq5[3][4:], eq6[3][1:]),
+                                eq5[3][3], eq6[2][5], eq5[3][4:], eq6[3][1:]),
                   run_time=1.4)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq6[:2], eq7[:2], eq6[2][:7], eq7[2][:7],
+                                eq6[2][8:12], eq7[2][7:11], eq6[2][20], eq7[2][11],
+                                eq6[2][22:26], eq7[2][12:16], eq6[2][12:19], eq7[2][16:23],
+                                eq6[2][20].copy(), eq7[2][23], eq6[2][27:33], eq7[2][24:30],
+                                eq6[2][26], eq7[3][0], eq6[2][8:12].copy(), eq7[3][1:5],
+                                eq6[2][20].copy(), eq7[3][5], eq6[2][27:33].copy(), eq7[3][6:12],
+                                eq6[2][12:19].copy(), eq7[3][12:19], eq6[2][20].copy(), eq7[3][19],
+                                eq6[2][22:26].copy(), eq7[3][20:24]
+                                ),
+                  FadeOut(eq6[2][7], shift=mh.diff(eq6[2][8], eq7[2][7])),
+                  FadeOut(eq6[2][19], shift=mh.diff(eq6[2][18], eq7[2][22])),
+                  FadeOut(eq6[2][33], shift=mh.diff(eq6[2][32], eq7[2][29])),
+                  FadeOut(eq6[2][21], shift=mh.diff(eq6[2][22], eq7[3][20])),
+                  eq6[3].animate.shift(mh.diff(eq6[3][0], eq7[4][0], coor_mask=UP)),
+                  run_time=1.6)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq6[3][0], eq7[4][0],
+                                eq6[3][2:6], eq7[4][1:5], eq6[3][14], eq7[4][5],
+                                eq6[3][16:20], eq7[4][6:10], eq6[3][7:13], eq7[4][11:17],
+                                eq6[3][14].copy(), eq7[4][17], eq6[3][21:27], eq7[4][18:24],
+                                eq6[3][20], eq7[5][0], eq6[3][2:6].copy(), eq7[5][1:5],
+                                eq6[3][14].copy(), eq7[5][5], eq6[3][21:27].copy(), eq7[5][6:12],
+                                eq6[3][6:13].copy(), eq7[5][12:19], eq6[3][14].copy(), eq7[5][19],
+                                eq6[3][16:20].copy(), eq7[5][20:24], eq6[3][-1], eq7[5][-1]
+                                ),
+                  FadeOut(eq6[3][1], shift=mh.diff(eq6[3][2], eq7[4][1])),
+                  mh.fade_replace(eq6[3][6], eq7[4][10]),
+                  FadeOut(eq6[3][13], shift=mh.diff(eq6[3][12], eq7[4][16])),
+                  FadeOut(eq6[3][27], shift=mh.diff(eq6[3][26], eq7[4][23])),
+                  FadeOut(eq6[3][15], shift=mh.diff(eq6[3][16], eq7[5][20])),
+                  run_time=1.6)
+        self.wait(0.1)
+        eq7s = [eq7[3][1:12], eq7[5][1:12], eq7[3][13:24], eq7[5][13:24]]
+        lines = [Line(eq.get_corner(DL), eq.get_corner(UR), stroke_color=RED, stroke_width=8).set_z_index(2)
+                 for eq in eq7s]
+        self.play(Create(lines[0]), run_time=0.6)
+        self.play(Create(lines[1]), run_time=0.6)
+        self.wait(0.1)
+        self.play(Create(lines[2]), run_time=0.6)
+        self.play(Create(lines[3]), run_time=0.6)
+        self.wait(0.1)
+        self.play(FadeOut(*lines, eq7[3], eq7[5][:-1]), run_time=1.5)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq7[4][1:], eq7[2][7:]),
+                  FadeOut(eq7[4][0], shift=mh.diff(eq7[4][1], eq7[2][7])),
+                  eq7[5][-1].animate.shift(mh.diff(eq7[5][-2], eq7[2][-1])),
+                  FadeOut(eq7[2][2]),
+                  eq7[2][3:6].animate.move_to(eq7[2][2:6], coor_mask=RIGHT),
+                  run_time=1.4)
+        self.wait(0.1)
+        self.play(mh.rtransform(eq7[:2], eq8[:2], eq7[2][:2], eq8[2][:2],
+                                eq7[2][3:6], eq8[2][2:5], eq7[2][7:], eq8[2][6:-1]),
+                  mh.stretch_replace(eq7[2][6], eq8[2][5]),
+                  mh.stretch_replace(eq7[5][-1], eq8[2][-1]),
+                  run_time=1)
         self.wait()
+
+if __name__ == "__main__":
+    with tempconfig({"quality": "low_quality", "preview": True, 'fps': 15}):
+        AliceState().render()
