@@ -1,4 +1,6 @@
 import math
+
+import json
 import numpy as np
 
 def run_mc(num_runs, num_places=100):
@@ -23,50 +25,92 @@ def mc_results(num_runs):
     print('probability: {:.5f}'.format(p))
     print('std error  : {:.5f}'.format(dev))
 
-# mc_results(400000)
+def grid_results(num_places=100):
+    # 1d probs
+    probs0 = np.zeros(num_places)
+    probs1 = np.zeros(num_places)
+    probs1[:10] = 0.1
+    probs0[0] = 1.
+    for i in range(1, num_places):
+        probs0[i] += probs0[max(i-10, 0):i].sum() * 0.1
+        probs1[i] += probs1[max(i-10, 0):i].sum() * 0.1
 
-num_places=100
+    probs2 = np.zeros(shape=(num_places, num_places))
+    probs_couple = np.zeros(num_places)
 
-# 1d probs
-probs0 = np.zeros(num_places)
-probs1 = np.zeros(num_places)
-probs1[:10] = 0.1
-probs0[0] = 1.
-for i in range(1, num_places):
-    probs0[i] += probs0[max(i-10, 0):i].sum() * 0.1
-    probs1[i] += probs1[max(i-10, 0):i].sum() * 0.1
-
-probs2 = np.zeros(shape=(num_places, num_places))
-probs_couple = np.zeros(num_places)
-
-for i in range(num_places):
-    for j in range(num_places):
-        p = probs2[max(i-10, 0):i, max(j-10, 0):j].sum() * 0.01  # prob of jumping in both x and y dim
-        if j < i:
-            p -= probs2[j, max(j-10, 0):j].sum() * probs0[i-j] * 0.1
-        if i < j:
-            p -= probs2[max(i-10, 0):i, i].sum() * probs0[j-i] * 0.1
-        if i < 10:
-            p += 0.1 * probs1[j]  # prob of starting in x dim
-            if i < j:
-                p -= 0.1 * probs1[i] * probs0[j-i]
-        if j < 10:
-            p += 0.1 * probs1[i]  # prob of starting in y dim
+    for i in range(num_places):
+        for j in range(num_places):
+            p = probs2[max(i-10, 0):i, max(j-10, 0):j].sum() * 0.01  # prob of jumping in both x and y dim
             if j < i:
-                p -= 0.1 * probs1[j] * probs0[i - j]
-        if i < 10 and j < 10:
-            p -= 0.01  # subtract off prob of starting in x and y dim
-        if i != j:
-            probs2[i, j] = p
-        else:
-            probs_couple[i] = p
+                p -= probs2[j, max(j-10, 0):j].sum() * probs0[i-j] * 0.1
+            if i < j:
+                p -= probs2[max(i-10, 0):i, i].sum() * probs0[j-i] * 0.1
+            if i < 10:
+                p += 0.1 * probs1[j]  # prob of starting in x dim
+                if i < j:
+                    p -= 0.1 * probs1[i] * probs0[j-i]
+            if j < 10:
+                p += 0.1 * probs1[i]  # prob of starting in y dim
+                if j < i:
+                    p -= 0.1 * probs1[j] * probs0[i - j]
+            if i < 10 and j < 10:
+                p -= 0.01  # subtract off prob of starting in x and y dim
+            if i != j:
+                probs2[i, j] = p
+            else:
+                probs_couple[i] = p
 
-coincidence_prob = 0.
-for i in range(-10, 0):
-    for j in range(-10, 0):
-        coincidence_prob += probs2[i, j] * 0.01 * (11 - max(-i, -j))
+    coincidence_prob = 0.
+    for i in range(-10, 0):
+        for j in range(-10, 0):
+            coincidence_prob += probs2[i, j] * 0.01 * (11 - max(-i, -j))
 
-print('coupling prob:', sum(probs_couple))
-print('coincidence  :', coincidence_prob)
-print('total prob   :', sum(probs_couple) + coincidence_prob)
+    print('coupling prob:', sum(probs_couple))
+    print('coincidence  :', coincidence_prob)
+    print('total prob   :', sum(probs_couple) + coincidence_prob)
 
+def ending_probs(num_places=100):
+    probs = np.zeros(num_places)
+    probs[:10] = 0.1
+    for i in range(1, num_places):
+        probs[i] += probs[max(i-10, 0):i].sum() * 0.1
+    result = probs[-1:-11:-1].copy() * np.array(range(1, 11))
+    result /= result.sum()
+
+    print(result*55)
+
+def independent_prob():
+    probs = np.array(range(1, 11), dtype=float)
+    probs /= probs.sum()
+    print(probs.dot(probs))
+
+def trial_run(starts=(8, 3), num_places=100, seed=4):
+    np.random.seed(seed)
+    digits = [int(_) for _ in np.random.randint(0, 10, 100)]
+    player_locs = []
+    for i, loc in enumerate(starts):
+        locs = []
+        while loc < 100:
+            locs.append(loc)
+            if i == 0 and len(locs) == 4: digits[loc] = 0
+            digit = digits[loc]
+            loc += 10 if digit == 0 else digit
+        player_locs.append(locs)
+
+    for couple in player_locs[0]:
+        if couple in player_locs[1]:
+            break
+
+    print(digits)
+    print(player_locs)
+    print('final pos   : ', [_[-1] for _ in player_locs])
+    print('final digits: ', [digits[_[-1]] for _ in player_locs])
+    print('coupling    : ', couple)
+    print(json.dumps([digits, *player_locs]))
+
+
+
+# mc_results(400000)
+#grid_results()
+independent_prob()
+#trial_run()
