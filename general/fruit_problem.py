@@ -79,7 +79,6 @@ class Point(tuple):
     def __add__(self, y):
         return -(self * y)
 
-
 """
 we want to solve x/(y+z)+y/(x+z)+z/(x+y)=4
 set (u,v,w)=(y+z,x+z,x+y)
